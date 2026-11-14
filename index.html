@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#071426">
+<meta name="description" content="DIGITAL BUSINESS STORE : services numériques, monétisation TikTok, Facebook, YouTube, PayPal et formations digitales.">
+<title>DIGITAL BUSINESS STORE</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ font-family:Arial,sans-serif;
+ background:#071426;
+ color:white;
+ line-height:1.6;
+}
+header{
+ background:#0d203a;
+ padding:20px 15px;
+ text-align:center;
+ border-bottom:2px solid #d6a83e;
+}
+.logo{font-size:25px;font-weight:bold;color:#f5c75e}
+header p{color:#cbd5e1;font-size:13px}
+nav{
+ display:flex;justify-content:center;gap:18px;
+ flex-wrap:wrap;padding:14px;
+ background:#102944;
+}
+nav a{color:white;text-decoration:none;font-size:14px}
+.hero{
+ text-align:center;padding:65px 18px;
+ background:linear-gradient(135deg,#102b4c,#071426);
+}
+.hero h1{font-size:32px;color:#f5c75e;margin-bottom:12px}
+.hero p{max-width:600px;margin:auto;color:#dbe5f1}
+.btn{
+ display:inline-block;background:#e5b94f;color:#071426;
+ padding:12px 20px;border-radius:8px;
+ text-decoration:none;font-weight:bold;
+ border:none;cursor:pointer;margin-top:15px;
+}
+section{padding:40px 16px;max-width:1100px;margin:auto}
+h2{text-align:center;color:#f5c75e;margin-bottom:25px}
+.products{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+ gap:18px;
+}
+.card{
+ background:#102944;border:1px solid #294663;
+ border-radius:13px;padding:22px;text-align:center;
+}
+.card h3{color:#f5c75e;margin-bottom:10px}
+.card p{color:#d1dbea;font-size:14px}
+.price{font-size:23px;font-weight:bold;margin:14px;color:#f5c75e}
+.card button{width:100%;margin-top:10px}
+.secondary{background:#fff;color:#102944}
+.info{
+ background:#102944;border-radius:12px;padding:22px;
+ margin-bottom:18px;text-align:center;
+}
+.info p{margin:8px}
+.number{color:#f5c75e;font-weight:bold;font-size:19px}
+footer{
+ text-align:center;padding:25px;background:#04101f;
+ color:#9eafc2;font-size:13px;
+}
+button:hover,.btn:hover{opacity:.85}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">DIGITAL BUSINESS STORE</div>
+ <p>Votre partenaire du business numérique</p>
+</header>
+
+<nav>
+ <a href="#accueil">Accueil</a>
+ <a href="#produits">Nos services</a>
+ <a href="#paiement">Paiement</a>
+ <a href="#contact">Contact</a>
+</nav>
+
+<div class="hero" id="accueil">
+ <h1>Bienvenue chez DIGITAL BUSINESS STORE</h1>
+ <p>
+ Découvrez nos services de monétisation des réseaux sociaux,
+ nos solutions PayPal, nos cartes virtuelles et nos formations digitales.
+ Développez votre activité en ligne avec nous.
+ </p>
+ <a href="#produits" class="btn">Découvrir nos services</a>
+</div>
+
+<section id="produits">
+ <h2>Nos produits et services</h2>
+
+ <div class="products">
+
+  <div class="card">
+   <h3>🎵 TikTok monétisé</h3>
+   <p>Service de création et configuration de compte TikTok monétisé.</p>
+   <div class="price">3 000 FCFA</div>
+   <button class="btn" onclick="commander('Création de compte TikTok monétisé','3000 FCFA')">Commander</button>
+  </div>
+
+  <div class="card">
+   <h3>📘 Facebook</h3>
+   <p>Accompagnement pour la configuration et la monétisation Facebook.</p>
+   <div class="price">2 000 FCFA</div>
+   <button class="btn" onclick="commander('Service de monétisation Facebook','2000 FCFA')">Commander</button>
+  </div>
+
+  <div class="card">
+   <h3>💳 PayPal</h3>
+   <p>Accompagnement pour la création et la configuration de compte PayPal.</p>
+   <div class="price">5 000 FCFA</div>
+   <button class="btn" onclick="commander('Service PayPal','5000 FCFA')">Commander</button>
+  </div>
+
+  <div class="card">
+   <h3>💰 Money Fusion</h3>
+   <p>Service d'accompagnement pour les cartes virtuelles.</p>
+   <div class="price">2 000 FCFA</div>
+   <button class="btn" onclick="commander('Carte virtuelle Money Fusion','2000 FCFA')">Commander</button>
+  </div>
+
+  <div class="card">
+   <h3>▶️ YouTube</h3>
+   <p>Accompagnement pour la chaîne YouTube et les démarches de monétisation.</p>
+   <div class="price">Sur demande</div>
+   <button class="btn" onclick="commander('Service de monétisation YouTube','Prix à convenir')">Commander</button>
+  </div>
+
+  <div class="card">
+   <h3>🎓 Formations digitales</h3>
+   <p>Apprenez le business en ligne, la monétisation et les outils numériques.</p>
+   <div class="price">Selon la formation</div>
+   <button class="btn" onclick="commander('Formations digitales','Prix à convenir')">Découvrir</button>
+  </div>
+
+ </div>
+</section>
+
+<section id="paiement">
+ <h2>Moyens de paiement</h2>
+
+ <div class="info">
+  <h3>🟠 Orange Money</h3>
+  <p class="number">+226 66194584</p>
+ </div>
+
+ <div class="info">
+  <h3>🌊 Wave</h3>
+  <p class="number">+226 66194584</p>
+ </div>
+
+ <div class="info">
+  <p>Après votre paiement, envoyez votre preuve de paiement sur WhatsApp pour confirmer votre commande.</p>
+  <a class="btn" href="https://wa.me/22677023249" target="_blank">Envoyer ma preuve de paiement</a>
+ </div>
+</section>
+
+<section id="contact">
+ <h2>Contact et assistance</h2>
+ <div class="info">
+  <p>Une question ? Besoin d'un service ?</p>
+  <p class="number">WhatsApp : +226 77023249</p>
+  <a class="btn" href="https://wa.me/22677023249?text=Bonjour%20DIGITAL%20BUSINESS%20STORE%2C%20je%20souhaite%20des%20informations." target="_blank">Nous contacter sur WhatsApp</a>
+ </div>
+
+ <div class="info">
+  <h3>Notre boutique digitale</h3>
+  <p>Retrouvez également nos produits sur Chariow.</p>
+  <a class="btn secondary" href="https://dekekgex.mychariow.online" target="_blank">Visiter Chariow</a>
+ </div>
+</section>
+
+<footer>
+ <p>© 2026 DIGITAL BUSINESS STORE</p>
+ <p>Tous droits réservés.</p>
+ <p>Votre réussite numérique commence ici.</p>
+</footer>
+
+<script>
+function commander(produit,prix){
+ const numero="22677023249";
+ const message=
+ "Bonjour DIGITAL BUSINESS STORE !"+
+ "\nJe souhaite commander : "+produit+
+ "\nPrix : "+prix+
+ "\nMerci de m'indiquer les étapes de paiement Orange Money ou Wave et la procédure.";
+ const lien="https://wa.me/"+numero+"?text="+encodeURIComponent(message);
+ window.open(lien,"_blank");
+}
+</script>
+
+</body>
+</html>
