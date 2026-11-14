@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101010">
+<title>DIGITAL BUSINESS STORE</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101010;color:#fff;font-family:Arial,sans-serif}
+header{padding:25px 18px;background:#181818;text-align:center;border-bottom:1px solid #bd963e}
+.logo{font-size:25px;font-weight:bold;color:#e5bd62}
+header p{color:#bbb;font-size:13px}
+.hero{padding:35px 20px;text-align:center;background:linear-gradient(140deg,#242019,#101010)}
+.hero h1{font-size:30px;color:#f1c76b}
+.hero p{color:#ccc;line-height:1.6}
+h2{color:#e9bd5e;text-align:center;margin:30px 0 20px}
+.products{padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.card{background:#202020;border:1px solid #51432a;border-radius:13px;padding:15px;text-align:center}
+.card .symbol{font-size:35px}
+.card h3{font-size:15px;min-height:38px}
+.price{color:#f3c76b;font-size:20px;font-weight:bold}
+.card p{font-size:12px;color:#bbb;min-height:30px}
+button{background:#d5aa4e;color:#17120a;border:0;padding:12px;border-radius:8px;font-weight:bold;width:100%;cursor:pointer}
+.section{padding:15px}
+.info{background:#202020;margin:15px;padding:18px;border-radius:12px;line-height:1.7}
+.info h3{color:#e9bd5e}
+.contact{display:block;text-decoration:none;text-align:center;background:#20a65a;color:white;padding:16px;border-radius:10px;margin:15px;font-weight:bold}
+footer{text-align:center;padding:25px;color:#888;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">✦ DIGITAL BUSINESS STORE ✦</div>
+<p>Votre partenaire du business numérique</p>
+</header>
+
+<section class="hero">
+<h1>Développez votre business en ligne</h1>
+<p>Comptes monétisés, PayPal, cartes virtuelles et formations digitales. Découvrez nos services et passez votre commande.</p>
+</section>
+
+<h2> NOS SERVICES</h2>
+<div class="products">
+
+<div class="card">
+<div class="symbol">🎵</div>
+<h3>Compte TikTok monétisé</h3>
+<p>Service de création et accompagnement.</p>
+<div class="price">3 000 F</div>
+<button onclick="order('Compte TikTok monétisé',3000)">Commander</button>
+</div>
+
+<div class="card">
+<div class="symbol">📘</div>
+<h3>Monétisation Facebook</h3>
+<p>Accompagnement à la monétisation.</p>
+<div class="price">2 000 F</div>
+<button onclick="order('Monétisation Facebook',2000)">Commander</button>
+</div>
+
+<div class="card">
+<div class="symbol">💳</div>
+<h3>Création compte PayPal</h3>
+<p>Accompagnement à la configuration.</p>
+<div class="price">5 000 F</div>
+<button onclick="order('Création compte PayPal',5000)">Commander</button>
+</div>
+
+<div class="card">
+<div class="symbol">💰</div>
+<h3>Carte virtuelle Money Fusion</h3>
+<p>Accompagnement à la création.</p>
+<div class="price">2 000 F</div>
+<button onclick="order('Carte virtuelle Money Fusion',2000)">Commander</button>
+</div>
+
+<div class="card">
+<div class="symbol">▶️</div>
+<h3>Monétisation YouTube</h3>
+<p>Formation et accompagnement.</p>
+<div class="price">Sur demande</div>
+<button onclick="order('Monétisation YouTube','Sur demande')">Commander</button>
+</div>
+
+<div class="card">
+<div class="symbol">🎓</div>
+<h3>Formations digitales</h3>
+<p>Apprenez à développer vos revenus en ligne.</p>
+<div class="price">Sur demande</div>
+<button onclick="order('Formation digitale','Sur demande')">Commander</button>
+</div>
+
+</div>
+
+<section class="info">
+<h3>⭐ Pourquoi choisir notre boutique ?</h3>
+<p>✓ Services numériques</p>
+<p>✓ Accompagnement personnalisé</p>
+<p>✓ Formations pratiques</p>
+<p>✓ Assistance après commande</p>
+</section>
+
+<section class="info">
+<h3>💳 Paiement</h3>
+<p>Mode de paiement prévu : Orange Money Burkina Faso.</p>
+<p>Les paiements directs seront activés après validation de l'intégration marchande Orange Money.</p>
+</section>
+
+<a class="contact" href="https://wa.me/?text=Bonjour%2C%20je%20souhaite%20commander%20un%20service%20chez%20DIGITAL%20BUSINESS%20STORE">
+Contacter le vendeur sur WhatsApp
+</a>
+
+<footer>
+DIGITAL BUSINESS STORE © 2026<br>
+Votre réussite numérique commence ici.
+</footer>
+
+<script>
+function order(product,price){
+let message="Bonjour, je souhaite commander : "+product+
+"\nPrix : "+price+" FCFA"+
+"\nBoutique : DIGITAL BUSINESS STORE";
+window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank");
+}
+</script>
+</body>
+</html>
