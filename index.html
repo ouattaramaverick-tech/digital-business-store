@@ -84,10 +84,16 @@ Contacter le vendeur sur WhatsApp
 <footer><p>© 2026 DIGITAL BUSINESS STORE</p></footer>
 
 <script>
-function order(product){
-let msg="Bonjour, je souhaite commander : "+product+" chez DIGITAL BUSINESS STORE.";
-window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-}
-</script>
-</body>
-</html>
+  function order(product) {
+  const message =
+    "Bonjour, je souhaite commander : " + product +
+    "\nBoutique : DIGITAL BUSINESS STORE" +
+    "\nPaiement Orange Money ou Wave : +226 66194584" +
+    "\nJe vous enverrai la preuve de paiement.";
+
+  window.open(
+    "https://wa.me/22677023249?text=" +
+    encodeURIComponent(message),
+    "_blank"
+  );
+  }
