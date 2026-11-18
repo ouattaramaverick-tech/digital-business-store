@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#071426">
+<meta name="description" content="GLOBEXA - Marketplace internationale">
+<title>GLOBEXA - Commerce mondial</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family:Arial,sans-serif;
+background:#071426;
+color:white;
+line-height:1.6
+}
+header{
+background:#0d203a;
+padding:18px;
+border-bottom:2px solid #e5b94f;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:15px
+}
+.logo{font-size:27px;font-weight:bold;color:#f5c75e}
+select{
+padding:10px;
+border-radius:7px;
+background:white;
+color:#111
+}
+nav{
+display:flex;
+justify-content:center;
+gap:15px;
+flex-wrap:wrap;
+padding:15px;
+background:#102944
+}
+nav a{color:white;text-decoration:none;font-size:14px}
+.hero{
+text-align:center;
+padding:75px 18px;
+background:linear-gradient(135deg,#173d60,#071426)
+}
+.hero h1{font-size:36px;color:#f5c75e;margin-bottom:15px}
+.hero p{max-width:650px;margin:auto;color:#dbe5f1}
+.btn{
+display:inline-block;
+background:#e5b94f;
+color:#071426;
+padding:12px 20px;
+border:0;
+border-radius:7px;
+text-decoration:none;
+font-weight:bold;
+cursor:pointer;
+margin:10px 3px
+}
+section{padding:45px 16px;max-width:1150px;margin:auto}
+h2{text-align:center;color:#f5c75e;margin-bottom:25px}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:18px
+}
+.card{
+background:#102944;
+border:1px solid #294663;
+border-radius:12px;
+padding:22px;
+text-align:center
+}
+.card h3{color:#f5c75e;margin-bottom:10px}
+.card p{color:#d1dbea;font-size:14px}
+.info{
+background:#102944;
+padding:25px;
+border-radius:12px;
+text-align:center
+}
+footer{
+text-align:center;
+padding:25px;
+background:#04101f;
+color:#9eafc2
+}
+@media(max-width:600px){
+.hero h1{font-size:27px}
+header{justify-content:center}
+nav{gap:10px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">🌍 GLOBEXA</div>
+
+<select id="language" onchange="changeLanguage(this.value)">
+<option value="fr">🇫🇷 Français</option>
+<option value="en">🇬🇧 English</option>
+<option value="ar">🇸🇦 العربية</option>
+<option value="es">🇪🇸 Español</option>
+<option value="zh">🇨🇳 中文</option>
+<option value="de">🇩🇪 Deutsch</option>
+<option value="pt">🇵🇹 Português</option>
+</select>
+</header>
+
+<nav>
+<a href="#home" data-i18n="home">Accueil</a>
+<a href="#suppliers" data-i18n="suppliers">Fournisseurs</a>
+<a href="#shop" data-i18n="shop">Ma boutique</a>
+<a href="#shipping" data-i18n="shipping">Transitaires</a>
+<a href="#about" data-i18n="about">À propos</a>
+</nav>
+
+<div class="hero" id="home">
+<h1 data-i18n="welcome">Bienvenue chez GLOBEXA</h1>
+
+<p data-i18n="description">
+Achetez et vendez dans le monde entier.
+Trouvez des fournisseurs, discutez directement
+avec eux et choisissez votre transitaire.
+</p>
+
+<a href="#suppliers" class="btn" data-i18n="find">
+Trouver un fournisseur
+</a>
+
+<a href="#shop" class="btn" data-i18n="visit">
+Visiter ma boutique
+</a>
+</div>
+
+<section id="suppliers">
+<h2 data-i18n="international">🌍 Fournisseurs internationaux</h2>
+
+<div class="grid">
+<div class="card">
+<h3>🇨🇳 China</h3>
+<p data-i18n="china">Vêtements, chaussures, téléphones et accessoires.</p>
+</div>
+
+<div class="card">
+<h3>🇦🇪 Dubai</h3>
+<p data-i18n="dubai">Mode, parfums et produits électroniques.</p>
+</div>
+
+<div class="card">
+<h3>🇹🇷 Türkiye</h3>
+<p data-i18n="turkey">Textiles, vêtements et chaussures.</p>
+</div>
+
+<div class="card">
+<h3>🌍 International</h3>
+<p data-i18n="other">Découvrez des fournisseurs du monde entier.</p>
+</div>
+</div>
+</section>
+
+<section id="shop">
+<h2 data-i18n="myshop">🛍️ Ma boutique GLOBEXA</h2>
+<div class="info">
+<p data-i18n="shoptext">
+Découvrez mes produits et passez vos commandes.
+</p>
+</div>
+</section>
+
+<section id="shipping">
+<h2 data-i18n="transit">🚚 Transport international</h2>
+<div class="info">
+<p data-i18n="transittext">
+Chaque client choisit librement son transitaire.
+Les frais de transport sont convenus directement.
+</p>
+</div>
+</section>
+
+<section id="about">
+<h2 data-i18n="about">À propos de GLOBEXA</h2>
+<div class="info">
+<p data-i18n="abouttext">
+GLOBEXA facilite les échanges commerciaux
+entre acheteurs et fournisseurs du monde entier.
+</p>
+</div>
+</section>
+
+<footer>
+<p>© 2026 GLOBEXA - All rights reserved.</p>
+<p>🌍 Global commerce at your fingertips.</p>
+</footer>
+
+<script>
+const translations={
+fr:{
+home:"Accueil",suppliers:"Fournisseurs",shop:"Ma boutique",
+shipping:"Transitaires",about:"À propos",
+welcome:"Bienvenue chez GLOBEXA",
+description:"Achetez et vendez dans le monde entier. Trouvez des fournisseurs, discutez directement avec eux et choisissez votre transitaire.",
+find:"Trouver un fournisseur",visit:"Visiter ma boutique",
+international:"🌍 Fournisseurs internationaux",
+china:"Vêtements, chaussures, téléphones et accessoires.",
+dubai:"Mode, parfums et produits électroniques.",
+turkey:"Textiles, vêtements et chaussures.",
+other:"Découvrez des fournisseurs du monde entier.",
+myshop:"🛍️ Ma boutique GLOBEXA",
+shoptext:"Découvrez mes produits et passez vos commandes.",
+transit:"🚚 Transport international",
+transittext:"Chaque client choisit librement son transitaire. Les frais de transport sont convenus directement.",
+abouttext:"GLOBEXA facilite les échanges commerciaux entre acheteurs et fournisseurs du monde entier."
+},
+en:{
+home:"Home",suppliers:"Suppliers",shop:"My shop",
+shipping:"Shipping agents",about:"About",
+welcome:"Welcome to GLOBEXA",
+description:"Buy and sell worldwide. Find suppliers, contact them directly and choose your own shipping agent.",
+find:"Find a supplier",visit:"Visit my shop",
+international:"🌍 International suppliers",
+china:"Clothing, shoes, phones and accessories.",
+dubai:"Fashion, perfumes and electronics.",
+turkey:"Textiles, clothing and shoes.",
+other:"Discover suppliers worldwide.",
+myshop:"🛍️ My GLOBEXA shop",
+shoptext:"Discover my products and place your orders.",
+transit:"🚚 International shipping",
+transittext:"Every customer freely chooses their shipping agent. Shipping costs are agreed directly.",
+abouttext:"GLOBEXA connects buyers and suppliers worldwide."
+},
+ar:{
+home:"الرئيسية",suppliers:"الموردون",shop:"متجري",
+shipping:"شركات الشحن",about:"من نحن",
+welcome:"مرحباً بكم في GLOBEXA",
+description:"اشترِ وبع في جميع أنحاء العالم. اعثر على الموردين وتواصل معهم مباشرة واختر شركة الشحن الخاصة بك.",
+find:"ابحث عن مورد",visit:"زر متجري",
+international:"🌍 موردون دوليون",
+china:"ملابس وأحذية وهواتف وإكسسوارات.",
+dubai:"الأزياء والعطور والإلكترونيات.",
+turkey:"المنسوجات والملابس والأحذية.",
+other:"اكتشف موردين من جميع أنحاء العالم.",
+myshop:"🛍️ متجري GLOBEXA",
+shoptext:"اكتشف منتجاتي واطلب منتجاتك.",
+transit:"🚚 الشحن الدولي",
+transittext:"يختار كل عميل شركة الشحن بحرية.",
+abouttext:"تربط GLOBEXA المشترين بالموردين حول العالم."
+},
+es:{
+home:"Inicio",suppliers:"Proveedores",shop:"Mi tienda",
+shipping:"Transportistas",about:"Acerca de",
+welcome:"Bienvenido a GLOBEXA",
+description:"Compra y vende en todo el mundo. Encuentra proveedores y contacta directamente con ellos.",
+find:"Buscar proveedor",visit:"Visitar mi tienda",
+international:"🌍 Proveedores internacionales",
+china:"Ropa, zapatos, teléfonos y accesorios.",
+dubai:"Moda, perfumes y electrónica.",
+turkey:"Textiles, ropa y zapatos.",
+other:"Descubre proveedores de todo el mundo.",
+myshop:"🛍️ Mi tienda GLOBEXA",
+shoptext:"Descubre mis productos y haz tus pedidos.",
+transit:"🚚 Transporte internacional",
+transittext:"Cada cliente elige libremente su transportista.",
+abouttext:"GLOBEXA conecta compradores y proveedores de todo el mundo."
+},
+zh:{
+home:"首页",suppliers:"供应商",shop:"我的商店",
+shipping:"货运代理",about:"关于我们",
+welcome:"欢迎来到 GLOBEXA",
+description:"在全球买卖商品。寻找供应商，直接联系他们，并选择自己的货运代理。",
+find:"寻找供应商",visit:"访问我的商店",
+international:"🌍 国际供应商",
+china:"服装、鞋子、手机和配件。",
+dubai:"时尚、香水和电子产品。",
+turkey:"纺织品、服装和鞋子。",
+other:"发现世界各地的供应商。",
+myshop:"🛍️ 我的 GLOBEXA 商店",
+shoptext:"浏览商品并下单。",
+transit:"🚚 国际运输",
+transittext:"每位客户可以自由选择货运代理。",
+abouttext:"GLOBEXA连接全球买家和供应商。"
+},
+de:{
+home:"Startseite",suppliers:"Lieferanten",shop:"Mein Shop",
+shipping:"Spediteure",about:"Über uns",
+welcome:"Willkommen bei GLOBEXA",
+description:"Kaufen und verkaufen Sie weltweit. Finden Sie Lieferanten und kontaktieren Sie sie direkt.",
+find:"Lieferanten finden",visit:"Meinen Shop besuchen",
+international:"🌍 Internationale Lieferanten",
+china:"Kleidung, Schuhe, Telefone und Zubehör.",
+dubai:"Mode, Parfüm und Elektronik.",
+turkey:"Textilien, Kleidung und Schuhe.",
+other:"Entdecken Sie Lieferanten weltweit.",
+myshop:"🛍️ Mein GLOBEXA Shop",
+shoptext:"Entdecken Sie meine Produkte und bestellen Sie.",
+transit:"🚚 Internationaler Versand",
+transittext:"Jeder Kunde wählt seinen Spediteur selbst.",
+abouttext:"GLOBEXA verbindet Käufer und Lieferanten weltweit."
+},
+pt:{
+home:"Início",suppliers:"Fornecedores",shop:"Minha loja",
+shipping:"Transportadoras",about:"Sobre nós",
+welcome:"Bem-vindo à GLOBEXA",
+description:"Compre e venda em todo o mundo. Encontre fornecedores e entre em contato diretamente.",
+find:"Encontrar fornecedor",visit:"Visitar minha loja",
+international:"🌍 Fornecedores internacionais",
+china:"Roupas, sapatos, telefones e acessórios.",
+dubai:"Moda, perfumes e eletrônicos.",
+turkey:"Têxteis, roupas e sapatos.",
+other:"Descubra fornecedores do mundo inteiro.",
+myshop:"🛍️ Minha loja GLOBEXA",
+shoptext:"Descubra meus produtos e faça seus pedidos.",
+transit:"🚚 Transporte internacional",
+transittext:"Cada cliente escolhe livremente sua transportadora.",
+abouttext:"A GLOBEXA conecta compradores e fornecedores de todo o mundo."
+}
+};
+
+function changeLanguage(lang){
+const t=translations[lang]||translations.fr;
+document.documentElement.lang=lang;
+document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+document.querySelectorAll("[data-i18n]").forEach(el=>{
+const key=el.getAttribute("data-i18n");
+if(t[key])el.textContent=t[key];
+});
+localStorage.setItem("globexa_language",lang);
+}
+
+const saved=localStorage.getItem("globexa_language");
+const browser=navigator.language.slice(0,2);
+const supported=["fr","en","ar","es","zh","de","pt"];
+const initial=saved||(supported.includes(browser)?browser:"fr");
+document.getElementById("language").value=initial;
+changeLanguage(initial);
+</script>
+
+</body>
+</html>
