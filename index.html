@@ -40,6 +40,21 @@ img.product-image{width:100%;height:160px;object-fit:cover;border-radius:8px}
 </style>
 </head>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xlxkiyihagoupsajwmze.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+console.log("GLOBEXA connecté à Supabase !");
+</script>
 <body>
 
 <header>
