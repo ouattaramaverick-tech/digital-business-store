@@ -1,0 +1,39 @@
+name: Build GLOBEXA APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Télécharger le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Installer Android
+        uses: android-actions/setup-android@v3
+
+      - name: Préparer Capacitor
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Construire APK
+        run: |
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Télécharger APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLOBEXA-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
