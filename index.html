@@ -3,322 +3,473 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#071426">
-<meta name="description" content="GLOBEXA : marketplace internationale et boutique en ligne.">
-<title>GLOBEXA - Commerce mondial</title>
-
+<title>GLOBEXA | Global Marketplace</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#071426;color:white;line-height:1.6}
-header{background:#0d203a;padding:20px;text-align:center;border-bottom:2px solid #d6a83e}
+body{font-family:Arial,sans-serif;background:#071426;color:#fff;line-height:1.6}
+header{background:#0d203a;padding:18px;text-align:center;border-bottom:2px solid #d6a83e}
 .logo{font-size:30px;font-weight:bold;color:#f5c75e}
-header p{color:#cbd5e1;font-size:13px}
-nav{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;padding:15px;background:#102944}
-nav a{color:white;text-decoration:none;font-size:14px}
+nav{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:14px;background:#102944}
+nav a{color:white;text-decoration:none;font-size:13px}
+button,.btn{background:#e5b94f;color:#071426;padding:11px 17px;border:0;border-radius:7px;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block;margin:5px}
+button:hover,.btn:hover{opacity:.85}
+section{max-width:1150px;margin:auto;padding:35px 16px}
+h2{color:#f5c75e;text-align:center;margin-bottom:20px}
 .hero{text-align:center;padding:65px 18px;background:linear-gradient(135deg,#173d60,#071426)}
-.hero h1{font-size:35px;color:#f5c75e;margin-bottom:15px}
-.hero p{max-width:650px;margin:auto;color:#dbe5f1}
-.btn{display:inline-block;background:#e5b94f;color:#071426;padding:11px 19px;border:0;border-radius:7px;text-decoration:none;font-weight:bold;cursor:pointer;margin:8px 3px}
-section{padding:40px 16px;max-width:1150px;margin:auto}
-h2{text-align:center;color:#f5c75e;margin-bottom:25px}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
-.card,.info{background:#102944;border:1px solid #294663;border-radius:12px;padding:20px;text-align:center}
-.card h3{color:#f5c75e;margin-bottom:10px}
-.card p{font-size:14px;color:#d1dbea}
-.price{font-size:20px;color:#f5c75e;font-weight:bold;margin:12px}
-.card button{width:100%}
-.info{margin:12px 0}
-.number{font-size:21px;color:#f5c75e;font-weight:bold;margin:8px}
-input,select,textarea{width:100%;padding:12px;margin:7px 0;border-radius:7px;border:1px solid #45617d;background:white;color:#111;font-size:15px}
+.hero h1{font-size:36px;color:#f5c75e}
+.hero p{max-width:650px;margin:15px auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:17px}
+.card,.panel{background:#102944;border:1px solid #294663;border-radius:12px;padding:18px;margin-bottom:12px}
+.card h3{color:#f5c75e}
+.card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+.price{color:#f5c75e;font-size:21px;font-weight:bold;margin:10px}
+input,select,textarea{width:100%;padding:12px;margin:7px 0;border-radius:7px;border:1px solid #45617d;font-size:15px}
 form{max-width:550px;margin:auto;background:#102944;padding:20px;border-radius:12px}
 form button{width:100%}
-.small{font-size:12px;color:#aebed0}
-footer{text-align:center;padding:25px;background:#04101f;color:#9eafc2;font-size:13px}
-button:hover,.btn:hover{opacity:.85}
-img.product-image{width:100%;height:160px;object-fit:cover;border-radius:8px}
+.hidden{display:none!important}
+.muted{color:#bdc9d8;font-size:13px}
+.stat{font-size:25px;color:#f5c75e;font-weight:bold}
+footer{text-align:center;padding:25px;background:#04101f;color:#aebed0}
+hr{border:0;border-top:1px solid #294663;margin:15px 0}
 </style>
 </head>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://xlxkiyihagoupsajwmze.supabase.co";
-
-const SUPABASE_KEY = "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-console.log("GLOBEXA connecté à Supabase !");
-</script>
 <body>
 
 <header>
 <div class="logo">🌍 GLOBEXA</div>
-<p>Le commerce mondial à portée de main</p>
+<p>Global International Marketplace</p>
+<select id="language" style="max-width:150px">
+<option value="fr">Français</option>
+<option value="en">English</option>
+<option value="zh">中文</option>
+<option value="ar">العربية</option>
+<option value="es">Español</option>
+<option value="tr">Türkçe</option>
+</select>
 </header>
 
 <nav>
-<a href="#accueil">Accueil</a>
-<a href="#fournisseurs">Fournisseurs</a>
-<a href="#boutique">Ma boutique</a>
-<a href="#transitaires">Transitaires</a>
-<a href="#paiement">Paiement</a>
-<a href="#contact">Contact</a>
+<a href="#home">Accueil</a>
+<a href="#catalogue">Produits</a>
+<a href="#seller">Fournisseurs</a>
+<a href="#account">Compte</a>
+<a href="#admin">Administration</a>
+<a href="#payments">Paiements</a>
 </nav>
 
-<div class="hero" id="accueil">
+<div class="hero" id="home">
 <h1>Bienvenue chez GLOBEXA</h1>
-<p>
-Achetez et vendez dans le monde entier.
-Découvrez des fournisseurs internationaux, contactez-les directement
-et trouvez votre propre transitaire pour transporter vos marchandises.
-</p>
-<a href="#fournisseurs" class="btn">Trouver un fournisseur</a>
-<a href="#boutique" class="btn">Visiter ma boutique</a>
+<p>Découvrez des fournisseurs, achetez et vendez dans le monde entier.</p>
+<a href="#catalogue" class="btn">Explorer les produits</a>
+<a href="#seller" class="btn">Devenir fournisseur</a>
 </div>
 
-<section id="fournisseurs">
-<h2>🌍 Fournisseurs internationaux</h2>
-<p style="text-align:center;margin-bottom:22px">
-Découvrez des fournisseurs de différents pays.
-</p>
-<div class="products">
-<div class="card">
-<h3>🇨🇳 Chine</h3>
-<p>Vêtements, chaussures, téléphones, accessoires et marchandises.</p>
-</div>
-<div class="card">
-<h3>🇦🇪 Dubaï</h3>
-<p>Mode, parfums, accessoires et produits électroniques.</p>
-</div>
-<div class="card">
-<h3>🇹🇷 Turquie</h3>
-<p>Textiles, vêtements, chaussures et autres marchandises.</p>
-</div>
-<div class="card">
-<h3>🌍 Autres pays</h3>
-<p>Découvrez des opportunités commerciales internationales.</p>
-</div>
-</div>
+<section id="catalogue">
+<h2>🌍 Catalogue international</h2>
+<div id="products" class="grid"></div>
 </section>
 
-<section id="annuaire">
-<h2>🤝 Annuaire des fournisseurs</h2>
-<div id="listeFournisseurs" class="products"></div>
-</section>
-
-<section id="ajouter-fournisseur">
-<h2>Inscrire un fournisseur</h2>
-<form id="formFournisseur">
-<input id="nomF" placeholder="Nom du fournisseur" required>
-<select id="paysF" required>
-<option value="">Choisir le pays</option>
-<option>Chine</option>
-<option>Émirats arabes unis</option>
-<option>Turquie</option>
-<option>Autre pays</option>
-</select>
-<input id="produitF" placeholder="Produits proposés" required>
-<input id="contactF" placeholder="WhatsApp avec indicatif international" required>
-<button class="btn" type="submit">Ajouter le fournisseur</button>
+<section id="seller">
+<h2>🏭 Espace fournisseurs</h2>
+<div class="panel">
+<p>Inscrivez votre entreprise et présentez vos marchandises au monde entier.</p>
+</div>
+<form id="sellerForm">
+<input id="sellerName" placeholder="Nom de l'entreprise" required>
+<input id="sellerCountry" placeholder="Pays" required>
+<input id="sellerContact" placeholder="WhatsApp ou téléphone" required>
+<textarea id="sellerDescription" placeholder="Présentation et produits proposés"></textarea>
+<button>Créer mon compte fournisseur</button>
 </form>
-</section>
 
-<section id="boutique">
-<h2>🛍️ Ma boutique GLOBEXA</h2>
-<div class="info">
-<h3>Bienvenue dans ma boutique personnelle</h3>
-<p>Découvre mes produits et passe ta commande directement.</p>
-<a class="btn" href="https://wa.me/22677023249" target="_blank">
-📲 Contacter GLOBEXA sur WhatsApp
-</a>
-</div>
-<div id="mesProduits" class="products"></div>
-</section>
-
-<section id="ajouter-produit">
-<h2>Ajouter mes propres produits</h2>
-<form id="formProduit">
-<input id="nomP" placeholder="Nom du produit" required>
-<input id="prixP" type="number" min="1" placeholder="Prix" required>
-<select id="deviseP">
-<option value="FCFA">FCFA</option>
-<option value="EUR">EUR</option>
-<option value="USD">USD</option>
+<hr>
+<h2>Ajouter un produit</h2>
+<form id="productForm">
+<input id="productName" placeholder="Nom du produit" required>
+<textarea id="productDescription" placeholder="Description" required></textarea>
+<input id="productPrice" type="number" min="0.01" step="0.01" placeholder="Prix" required>
+<select id="productCurrency">
+<option value="USD">USD ($)</option>
+<option value="EUR">EUR (€)</option>
+<option value="CNY">CNY (¥)</option>
+<option value="XOF">FCFA</option>
 </select>
-<input id="imageP" type="url" placeholder="Lien de la photo du produit (facultatif)">
-<textarea id="descriptionP" placeholder="Description du produit" required></textarea>
-<button class="btn" type="submit">Publier mon produit</button>
+<input id="productImage" type="url" placeholder="Lien de la photo">
+<button>Envoyer le produit pour validation</button>
 </form>
+<p class="muted">La publication est soumise à l'approbation de l'administrateur.</p>
 </section>
 
-<section id="transitaires">
-<h2>🚚 Les transitaires</h2>
-<div class="info">
-<p>Chaque client choisit son propre transitaire pour transporter ses marchandises.</p>
-<p>GLOBEXA facilite les échanges entre clients, fournisseurs et transitaires.</p>
-<p>Les frais de transport sont à convenir directement avec le transitaire.</p>
-</div>
-</section>
+<section id="account">
+<h2>👤 Mon compte GLOBEXA</h2>
+<form id="loginForm">
+<h3>Connexion</h3>
+<input id="email" type="email" placeholder="Adresse e-mail" required>
+<input id="password" type="password" placeholder="Mot de passe" required>
+<button type="submit">Se connecter</button>
+</form>
 
-<section id="paiement">
-<h2>💳 Moyens de paiement</h2>
-<div class="info">
-<h3>Numéro de paiement 1</h3>
-<p class="number">+226 66 19 45 84</p>
-<button class="btn" onclick="copier('22666194584')">Copier le numéro</button>
-</div>
-<div class="info">
-<h3>Numéro de paiement 2</h3>
-<p class="number">+226 50 01 25 01</p>
-<button class="btn" onclick="copier('22650012501')">Copier le numéro</button>
-</div>
-<div class="info">
-<p>Après le paiement, contactez GLOBEXA sur WhatsApp pour confirmer votre commande.</p>
-<a class="btn" href="https://wa.me/22677023249?text=Bonjour%20GLOBEXA%2C%20je%20souhaite%20confirmer%20mon%20paiement.">
-Envoyer ma preuve de paiement
-</a>
+<form id="signupForm">
+<h3>Créer un compte</h3>
+<input id="newEmail" type="email" placeholder="Adresse e-mail" required>
+<input id="newPassword" type="password" minlength="6" placeholder="Mot de passe (6 caractères minimum)" required>
+<button type="submit">Créer mon compte</button>
+</form>
+<div class="panel">
+<p id="sessionInfo">Vous n'êtes pas connecté.</p>
+<button id="logout" class="hidden">Se déconnecter</button>
 </div>
 </section>
 
-<section id="commissions">
-<h2>💰 Partenariat et commissions</h2>
-<div class="info">
-<p>GLOBEXA met en relation les acheteurs et les fournisseurs du monde entier.</p>
-<p>Notre objectif est de gagner des commissions sur les ventes réalisées grâce à notre plateforme.</p>
-<p>Les taux et le suivi des commissions seront configurés dans notre système de gestion.</p>
+<section id="orders">
+<h2>📦 Mes commandes</h2>
+<div id="myOrders"></div>
+</section>
+
+<section id="admin">
+<h2>👑 Administration GLOBEXA</h2>
+<div id="adminLocked" class="panel">
+<p>Connectez-vous avec votre compte administrateur pour accéder à cet espace.</p>
+</div>
+
+<div id="adminDashboard" class="hidden">
+<div class="grid">
+<div class="card">Fournisseurs<div class="stat" id="sellerCount">0</div></div>
+<div class="card">Produits<div class="stat" id="productCount">0</div></div>
+<div class="card">Commandes<div class="stat" id="orderCount">0</div></div>
+<div class="card">Commissions<div class="stat" id="commissionTotal">0</div></div>
+</div>
+
+<h3>Validation des fournisseurs</h3>
+<div id="adminSellers"></div>
+<hr>
+<h3>Validation des produits</h3>
+<div id="adminProducts"></div>
+<hr>
+<h3>Commandes</h3>
+<div id="adminOrders"></div>
+<hr>
+<h3>Commissions de 6 %</h3>
+<div id="adminCommissions"></div>
 </div>
 </section>
 
-<section id="contact">
-<h2>📞 Contacter GLOBEXA</h2>
-<div class="info">
-<p>Besoin d'informations ou d'assistance ?</p>
-<p class="number">WhatsApp : +226 77 02 32 49</p>
-<a class="btn" href="https://wa.me/22677023249" target="_blank">
-Discuter avec GLOBEXA
-</a>
+<section id="payments">
+<h2>💳 Paiements internationaux</h2>
+<div class="grid">
+<div class="card"><h3>Visa</h3><p>Paiement par carte Visa, après intégration du prestataire.</p></div>
+<div class="card"><h3>PayPal</h3><p>Paiement PayPal, après connexion du compte marchand.</p></div>
+<div class="card"><h3>Alipay</h3><p>Paiement Alipay, après activation du compte marchand.</p></div>
 </div>
+<p class="muted">Aucun paiement n'est encaissé par ces boutons pour le moment. Ne communiquez jamais vos coordonnées bancaires dans les formulaires GLOBEXA.</p>
 </section>
 
 <footer>
 <p>© 2026 GLOBEXA - Tous droits réservés.</p>
-<p>Le commerce mondial à portée de main.</p>
+<p>Global commerce, one world.</p>
 </footer>
 
 <script>
-const cleF="globexa_fournisseurs";
-const cleP="globexa_produits";
+const SUPABASE_URL = "https://xlxkiyihagoupsajwmze.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
 
-function lire(cle){
-try{return JSON.parse(localStorage.getItem(cle)||"[]")}
-catch(e){return []}
-}
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let fournisseurs=lire(cleF);
-let produits=lire(cleP);
+let currentUser = null;
+let isAdmin = false;
+let mySeller = null;
 
-function securiser(v){
-return String(v).replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",
-'"':"&quot;","'":"&#39;"
+const $ = id => document.getElementById(id);
+const money = (n,c) => Number(n).toFixed(2)+" "+c;
+
+function message(m){alert(m)}
+
+function safe(v){
+return String(v??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[c]));
 }
 
-function afficherFournisseurs(){
-const zone=document.getElementById("listeFournisseurs");
-zone.innerHTML="";
-fournisseurs.forEach(f=>{
-const div=document.createElement("div");
-div.className="card";
-div.innerHTML=`
-<h3>${securiser(f.nom)}</h3>
-<p>${securiser(f.pays)}</p>
-<p>${securiser(f.produit)}</p>
-<a class="btn" href="https://wa.me/${securiser(f.contact)}" target="_blank">Contacter le fournisseur</a>`;
-zone.appendChild(div);
+const translations={
+fr:{home:"Accueil",products:"Produits",seller:"Fournisseurs",account:"Compte"},
+en:{home:"Home",products:"Products",seller:"Suppliers",account:"Account"},
+zh:{home:"首页",products:"产品",seller:"供应商",account:"账户"},
+ar:{home:"الرئيسية",products:"المنتجات",seller:"الموردون",account:"الحساب"},
+es:{home:"Inicio",products:"Productos",seller:"Proveedores",account:"Cuenta"},
+tr:{home:"Ana sayfa",products:"Ürünler",seller:"Tedarikçiler",account:"Hesap"}
+};
+
+$("language").addEventListener("change",e=>{
+const t=translations[e.target.value];
+document.querySelectorAll("nav a").forEach((a,i)=>{
+const keys=["home","products","seller","account"];
+if(keys[i])a.textContent=t[keys[i]];
 });
-}
-
-function afficherProduits(){
-const zone=document.getElementById("mesProduits");
-zone.innerHTML="";
-produits.forEach(p=>{
-const div=document.createElement("div");
-div.className="card";
-let image="";
-if(p.image){
-image=`<img class="product-image" src="${securiser(p.image)}" alt="Produit">`;
-}
-div.innerHTML=`
-${image}
-<h3>${securiser(p.nom)}</h3>
-<p>${securiser(p.description)}</p>
-<div class="price">${securiser(p.prix)} ${securiser(p.devise)}</div>
-<a class="btn" href="https://wa.me/22677023249?text=${encodeURIComponent("Bonjour GLOBEXA, je souhaite commander "+p.nom)}" target="_blank">Commander</a>`;
-zone.appendChild(div);
+document.documentElement.lang=e.target.value;
+document.documentElement.dir=e.target.value==="ar"?"rtl":"ltr";
 });
+
+async function checkSession(){
+const {data,error}=await db.auth.getSession();
+if(error){message(error.message);return}
+currentUser=data.session?.user||null;
+await refreshAccount();
 }
 
-function copier(numero){
-if(navigator.clipboard){
-navigator.clipboard.writeText(numero)
-.then(()=>alert("Numéro copié !"))
-.catch(()=>alert("Copiez ce numéro : "+numero));
-}else{
-alert("Numéro : "+numero);
-}
+async function refreshAccount(){
+$("sessionInfo").textContent=currentUser
+?"Connecté : "+currentUser.email
+:"Vous n'êtes pas connecté.";
+$("loginForm").classList.toggle("hidden",!!currentUser);
+$("signupForm").classList.toggle("hidden",!!currentUser);
+$("logout").classList.toggle("hidden",!currentUser);
+
+isAdmin=false;
+mySeller=null;
+
+if(currentUser){
+const admin=await db.rpc("is_globexa_admin");
+isAdmin=!admin.error && admin.data===true;
+
+const result=await db.from("globexa_sellers")
+.select("*").eq("user_id",currentUser.id).maybeSingle();
+
+if(!result.error)mySeller=result.data;
 }
 
-document.getElementById("formFournisseur").addEventListener("submit",e=>{
+$("adminLocked").classList.toggle("hidden",isAdmin);
+$("adminDashboard").classList.toggle("hidden",!isAdmin);
+
+await loadProducts();
+await loadOrders();
+
+if(isAdmin)await loadAdmin();
+}
+
+$("signupForm").addEventListener("submit",async e=>{
 e.preventDefault();
-const contact=document.getElementById("contactF").value.replace(/\D/g,"");
-if(contact.length<8){alert("Vérifiez le numéro WhatsApp.");return;}
-fournisseurs.push({
-nom:document.getElementById("nomF").value,
-pays:document.getElementById("paysF").value,
-produit:document.getElementById("produitF").value,
-contact:contact
+const {data,error}=await db.auth.signUp({
+email:$("newEmail").value.trim(),
+password:$("newPassword").value
 });
-localStorage.setItem(cleF,JSON.stringify(fournisseurs));
+if(error)return message(error.message);
+message(data.session?"Compte créé et connecté.":"Compte créé. Vérifiez votre e-mail pour confirmer l'inscription.");
+await checkSession();
+});
+
+$("loginForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const {error}=await db.auth.signInWithPassword({
+email:$("email").value.trim(),
+password:$("password").value
+});
+if(error)return message(error.message);
+message("Connexion réussie !");
+await checkSession();
+});
+
+$("logout").addEventListener("click",async()=>{
+const {error}=await db.auth.signOut();
+if(error)return message(error.message);
+currentUser=null;
+await refreshAccount();
+message("Déconnexion réussie.");
+});
+
+$("sellerForm").addEventListener("submit",async e=>{
+e.preventDefault();
+if(!currentUser)return message("Connectez-vous d'abord.");
+
+const {data,error}=await db.from("globexa_sellers").insert({
+user_id:currentUser.id,
+name:$("sellerName").value.trim(),
+country:$("sellerCountry").value.trim(),
+contact:$("sellerContact").value.trim(),
+description:$("sellerDescription").value.trim()
+}).select().single();
+
+if(error)return message(error.message);
+mySeller=data;
 e.target.reset();
-afficherFournisseurs();
-alert("Fournisseur ajouté sur cet appareil.");
+message("Demande envoyée. Attendez la validation de GLOBEXA.");
 });
 
-document.getElementById("formProduit").addEventListener("submit",e=>{
+$("productForm").addEventListener("submit",async e=>{
 e.preventDefault();
-const image=document.getElementById("imageP").value.trim();
+if(!currentUser)return message("Connectez-vous d'abord.");
+if(!mySeller)return message("Inscrivez d'abord votre entreprise.");
+if(mySeller.status!=="approved")return message("Votre compte fournisseur doit être approuvé avant de publier.");
+
+const price=Number($("productPrice").value);
+if(!Number.isFinite(price)||price<=0)return message("Prix invalide.");
+
+const image=$("productImage").value.trim();
 if(image){
 try{
 const u=new URL(image);
 if(!["https:","http:"].includes(u.protocol))throw Error();
-}catch(err){
-alert("Le lien de la photo n'est pas valide.");
+}catch(err){return message("Lien de photo invalide.");}
+}
+
+const {error}=await db.from("globexa_products").insert({
+seller_id:mySeller.id,
+name:$("productName").value.trim(),
+description:$("productDescription").value.trim(),
+price,
+currency:$("productCurrency").value,
+image_url:image||null
+});
+
+if(error)return message(error.message);
+e.target.reset();
+message("Produit envoyé pour validation.");
+await loadProducts();
+});
+
+async function loadProducts(){
+const {data,error}=await db.from("globexa_products")
+.select("id,name,description,price,currency,image_url,seller_id")
+.eq("status","approved")
+.order("created_at",{ascending:false});
+
+if(error){$("products").innerHTML="<p>Impossible de charger les produits.</p>";return}
+
+$("products").innerHTML="";
+(data||[]).forEach(p=>{
+const div=document.createElement("div");
+div.className="card";
+div.innerHTML=`
+${p.image_url?`<img src="${safe(p.image_url)}" alt="Produit">`:""}
+<h3>${safe(p.name)}</h3>
+<p>${safe(p.description)}</p>
+<div class="price">${money(p.price,p.currency)}</div>
+<button class="orderBtn">Commander</button>`;
+div.querySelector("button").addEventListener("click",()=>placeOrder(p));
+$("products").appendChild(div);
+});
+if(!data?.length)$("products").innerHTML="<p>Aucun produit validé pour le moment.</p>";
+}
+
+async function placeOrder(p){
+if(!currentUser)return message("Connectez-vous pour commander.");
+const quantity=Number(prompt("Quelle quantité souhaitez-vous commander ?","1"));
+if(!Number.isInteger(quantity)||quantity<1)return;
+
+const {error}=await db.from("globexa_orders").insert({
+customer_id:currentUser.id,
+product_id:p.id,
+quantity,
+total:0,
+currency:p.currency,
+payment_method:"pending"
+});
+
+if(error)return message(error.message);
+message("Commande créée. Elle est en attente de paiement.");
+await loadOrders();
+}
+
+async function loadOrders(){
+if(!currentUser){$("myOrders").innerHTML="Connectez-vous pour voir vos commandes.";return}
+const {data,error}=await db.from("globexa_orders")
+.select("*").eq("customer_id",currentUser.id)
+.order("created_at",{ascending:false});
+if(error){$("myOrders").textContent=error.message;return}
+$("myOrders").innerHTML=(data||[]).map(o=>`
+<div class="card">
+Commande : ${safe(o.id)}<br>
+Montant : ${money(o.total,o.currency)}<br>
+Paiement : ${safe(o.payment_status)}<br>
+Statut : ${safe(o.status)}
+</div>`).join("")||"Aucune commande.";
+}
+
+async function loadAdmin(){
+const [s,p,o,c]=await Promise.all([
+db.from("globexa_sellers").select("*").order("created_at",{ascending:false}),
+db.from("globexa_products").select("*").order("created_at",{ascending:false}),
+db.from("globexa_orders").select("*").order("created_at",{ascending:false}),
+db.from("commissions").select("*").order("created_at",{ascending:false})
+]);
+
+if(s.error||p.error||o.error||c.error){
+message("Erreur de lecture administrateur : "+[s.error,p.error,o.error,c.error].filter(Boolean).map(x=>x.message).join(" | "));
 return;
 }
+
+$("sellerCount").textContent=s.data.length;
+$("productCount").textContent=p.data.length;
+$("orderCount").textContent=o.data.length;
+
+const total=c.data.reduce((sum,x)=>sum+Number(x.amount||0),0);
+$("commissionTotal").textContent=total.toFixed(2);
+
+$("adminSellers").innerHTML=s.data.map(x=>`
+<div class="card">
+<strong>${safe(x.name)}</strong> — ${safe(x.country)}<br>
+Statut : ${safe(x.status)}
+<button data-id="${x.id}" class="approveSeller">Approuver</button>
+</div>`).join("")||"Aucun fournisseur.";
+
+document.querySelectorAll(".approveSeller").forEach(b=>{
+b.addEventListener("click",()=>approveSeller(b.dataset.id));
+});
+
+$("adminProducts").innerHTML=p.data.map(x=>`
+<div class="card">
+<strong>${safe(x.name)}</strong> — ${money(x.price,x.currency)}<br>
+Statut : ${safe(x.status)}
+<button data-id="${x.id}" class="approveProduct">Approuver</button>
+</div>`).join("")||"Aucun produit.";
+
+document.querySelectorAll(".approveProduct").forEach(b=>{
+b.addEventListener("click",()=>approveProduct(b.dataset.id));
+});
+
+$("adminOrders").innerHTML=o.data.map(x=>`
+<div class="card">
+Commande : ${safe(x.id)}<br>
+Montant : ${money(x.total,x.currency)}<br>
+Paiement : ${safe(x.payment_status)}<br>
+Statut : ${safe(x.status)}
+</div>`).join("")||"Aucune commande.";
+
+$("adminCommissions").innerHTML=c.data.map(x=>`
+<div class="card">
+Commande : ${safe(x.order_id)}<br>
+Base : ${money(x.order_total||0,"")}<br>
+Commission : ${money(x.amount,"")}<br>
+Taux : ${safe(x.rate)} %<br>
+Statut : ${safe(x.status)}
+</div>`).join("")||"Aucune commission.";
 }
-produits.push({
-nom:document.getElementById("nomP").value,
-prix:document.getElementById("prixP").value,
-devise:document.getElementById("deviseP").value,
-image:image,
-description:document.getElementById("descriptionP").value
-});
-localStorage.setItem(cleP,JSON.stringify(produits));
-e.target.reset();
-afficherProduits();
-alert("Produit ajouté sur cet appareil.");
+
+async function approveSeller(id){
+const {error}=await db.from("globexa_sellers")
+.update({status:"approved"}).eq("id",id);
+if(error)return message(error.message);
+message("Fournisseur approuvé.");
+await loadAdmin();
+}
+
+async function approveProduct(id){
+const {error}=await db.from("globexa_products")
+.update({status:"approved"}).eq("id",id);
+if(error)return message(error.message);
+message("Produit approuvé.");
+await loadAdmin();
+await loadProducts();
+}
+
+db.auth.onAuthStateChange((event,session)=>{
+currentUser=session?.user||null;
+setTimeout(()=>refreshAccount(),0);
 });
 
-afficherFournisseurs();
-afficherProduits();
+checkSession();
 </script>
-
 </body>
 </html>
