@@ -3,145 +3,127 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#092746">
-<title>GLOBEXA | Marketplace internationale</title>
+<title>GLOBEXA | Global Marketplace</title>
 
 <style>
 :root{
---blue:#092746;--blue2:#174d77;--orange:#f28c28;
---bg:#f4f7fb;--white:#fff;--text:#172b3e;
---muted:#64748b;--border:#e2e8f0;
+--b:#092746;--b2:#174d77;--o:#f28c28;
+--bg:#f4f7fb;--w:#fff;--t:#172b3e;
+--m:#64748b;--line:#e2e8f0;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
-.topbar{background:var(--blue);color:white;padding:10px;text-align:center;font-size:12px}
-header{background:white;position:sticky;top:0;z-index:20;box-shadow:0 2px 10px #0001}
-.head{max-width:1250px;margin:auto;padding:12px 18px;display:flex;align-items:center;gap:14px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--blue);min-width:175px}
-.brand svg{width:48px;height:48px}
-.brand strong{font-size:25px}
-.brand small{display:block;font-size:10px;letter-spacing:1px;color:#64748b}
-.search{flex:1;display:flex;border:2px solid var(--orange);border-radius:8px;overflow:hidden}
-.search input{flex:1;min-width:0;border:0;padding:12px;outline:none}
-.search button{border:0;background:var(--orange);color:white;padding:0 15px}
-.head button{border:0;background:white;color:var(--blue);font-weight:bold;padding:8px}
-nav{display:flex;justify-content:center;gap:22px;overflow:auto;border-top:1px solid var(--border);padding:12px}
-nav a{text-decoration:none;color:var(--blue);font-size:13px;white-space:nowrap}
-.container{max-width:1250px;margin:auto;padding:22px 18px}
-.hero{background:linear-gradient(120deg,#092746,#174d77);color:white;padding:42px 30px;border-radius:15px;display:flex;justify-content:space-between;align-items:center;gap:20px}
-.hero h1{font-size:clamp(28px,4vw,43px);margin:12px 0}
-.hero p{line-height:1.7;color:#d8e6f3;max-width:570px;margin-bottom:18px}
-.hero .plane{font-size:75px}
-.btn{border:0;border-radius:7px;background:var(--orange);color:white;padding:11px 16px;font-weight:bold}
-.btn.blue{background:var(--blue)}
-.btn.light{background:#eaf1f8;color:var(--blue)}
-.btn.small{padding:8px 11px;font-size:12px}
-.btn:disabled{opacity:.6;cursor:wait}
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:28px 0 15px}
-.section-title h2{color:var(--blue);font-size:22px}
-.muted{font-size:13px;color:var(--muted)}
-.categories{display:flex;gap:9px;overflow:auto;padding:5px 0 12px}
-.cat{background:white;border:1px solid var(--border);border-radius:25px;padding:10px 16px;white-space:nowrap;color:var(--blue)}
-.cat.active{background:var(--blue);color:white}
-.products{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
-.product{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-.product img{width:100%;height:175px;object-fit:cover;background:#eaf0f6}
-.pbody{padding:13px;display:flex;flex-direction:column;flex:1}
-.pbody h3{font-size:15px;margin-bottom:7px}
-.desc{font-size:12px;color:var(--muted);line-height:1.5;min-height:35px}
+.top{background:var(--b);color:white;text-align:center;padding:10px;font-size:13px}
+header{background:white;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px #0001}
+.head{max-width:1250px;margin:auto;padding:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:bold;color:var(--b);text-decoration:none}
+.logo span{color:var(--o)}
+.search{display:flex;flex:1;min-width:200px;border:2px solid var(--o);border-radius:8px;overflow:hidden}
+.search input{flex:1;border:0;padding:12px;min-width:0;outline:none}
+.search button{background:var(--o);color:white;border:0;padding:10px}
+nav{display:flex;gap:20px;justify-content:center;padding:12px;border-top:1px solid var(--line);overflow:auto}
+nav a{text-decoration:none;color:var(--b);white-space:nowrap;font-size:13px}
+main{max-width:1250px;margin:auto;padding:20px 14px}
+.hero{background:linear-gradient(120deg,var(--b),var(--b2));color:white;padding:40px 25px;border-radius:14px;margin-bottom:25px}
+.hero h1{font-size:clamp(28px,5vw,43px);margin:15px 0}
+.hero p{line-height:1.7;color:#dbe8f5;max-width:650px}
+.btn{background:var(--o);color:white;border:0;border-radius:7px;padding:11px 15px;font-weight:bold}
+.btn.blue{background:var(--b)}
+.btn.light{background:#eaf1f8;color:var(--b)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.section{margin:25px 0;scroll-margin-top:150px}
+.section h2{color:var(--b);margin-bottom:14px}
+.panel{background:white;border:1px solid var(--line);border-radius:11px;padding:17px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.product{background:white;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.product img{width:100%;height:165px;object-fit:cover;background:#eaf1f8}
+.pbody{padding:12px}
+.pbody h3{font-size:15px;margin-bottom:8px}
 .price{font-size:19px;font-weight:bold;color:#d86f12;margin:10px 0}
-.pactions{display:flex;gap:6px;margin-top:auto}
-.pactions button{flex:1}
-.empty{background:white;border:1px dashed #cbd5e1;border-radius:10px;padding:25px;text-align:center;color:var(--muted);grid-column:1/-1;overflow-wrap:anywhere}
-.panel{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;margin:12px 0}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-form h3{color:var(--blue);margin-bottom:12px}
-.field{margin:10px 0}
-.field label{display:block;font-size:12px;font-weight:bold;margin-bottom:5px;color:#475569}
-.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:7px;outline:none;background:white}
-.field textarea{min-height:85px}
-.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--orange)}
-.hidden{display:none!important}
-.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.stat{background:white;padding:15px;border:1px solid var(--border);border-radius:10px}
-.stat b{display:block;font-size:24px;color:var(--blue);margin-top:6px}
-.listrow{background:white;border:1px solid var(--border);padding:13px;border-radius:9px;margin:9px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.badge{font-size:11px;background:#fff2e5;color:#a94e00;padding:5px 9px;border-radius:20px}
+.muted{font-size:13px;color:var(--m);line-height:1.6}
+.actions{display:flex;gap:7px;margin-top:12px}
+.actions button{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.field{margin:11px 0}
+.field label{display:block;font-size:12px;font-weight:bold;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:7px;background:white}
+.field textarea{min-height:80px}
+.categories{display:flex;gap:8px;overflow:auto;margin:12px 0}
+.cat{padding:9px 14px;border:1px solid var(--line);border-radius:25px;background:white;white-space:nowrap}
+.cat.active{background:var(--b);color:white}
+.row{background:white;border:1px solid var(--line);padding:13px;border-radius:8px;margin:9px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{background:#fff1df;color:#a94e00;padding:5px 9px;border-radius:20px;font-size:11px}
 .badge.ok{background:#e5f7ef;color:#087548}
-footer{background:#061a2e;color:white;padding:30px;text-align:center;margin-top:35px}
-footer strong{font-size:24px}
-.modal{position:fixed;inset:0;background:#000a;z-index:90;display:grid;place-items:center;padding:15px}
-.modalbox{background:white;border-radius:12px;padding:20px;max-width:550px;width:100%;max-height:90vh;overflow:auto}
-.modalbox img{width:100%;max-height:250px;object-fit:contain}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;padding:13px 18px;border-radius:8px;z-index:100;max-width:90%;font-size:13px}
-.statusmsg{padding:12px;margin-top:12px;border-radius:7px;font-size:13px;display:none;line-height:1.5;overflow-wrap:anywhere}
-.statusmsg.success{display:block;background:#e5f7ef;color:#087548}
-.statusmsg.error{display:block;background:#fff1f0;color:#b42318}
-.statusmsg.info{display:block;background:#eaf1f8;color:#092746}
-@media(max-width:900px){.products{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:650px){
-.head{flex-wrap:wrap;gap:8px}
-.brand{flex:1}
-.search{order:3;flex-basis:100%}
-.hero{padding:27px 20px}
-.hero .plane{font-size:45px}
-.products{grid-template-columns:repeat(2,1fr);gap:9px}
-.product img{height:135px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:white;padding:15px;border:1px solid var(--line);border-radius:9px}
+.stat b{display:block;font-size:23px;color:var(--b);margin-top:7px}
+.hidden{display:none!important}
+.status{padding:10px;border-radius:7px;margin-top:10px;font-size:13px;overflow-wrap:anywhere}
+.success{background:#e5f7ef;color:#087548}
+.error{background:#fff0ef;color:#b42318}
+footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:35px}
+.modal{position:fixed;inset:0;background:#000a;z-index:50;display:grid;place-items:center;padding:15px}
+.modalbox{background:white;padding:20px;border-radius:12px;width:100%;max-width:500px;max-height:90vh;overflow:auto}
+.modalbox img{width:100%;max-height:220px;object-fit:contain;margin:12px 0}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--b);color:white;padding:13px 18px;border-radius:8px;z-index:100;max-width:90%;text-align:center}
+@media(max-width:850px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){
+.grid{grid-template-columns:repeat(2,1fr);gap:8px}
 .two{grid-template-columns:1fr}
-.statgrid{grid-template-columns:repeat(2,1fr)}
-.container{padding:15px 12px}
+.stats{grid-template-columns:repeat(2,1fr)}
+.hero{padding:27px 18px}
+.head .search{order:3;flex-basis:100%}
 }
 </style>
 </head>
 
 <body>
-<div class="topbar">🌍 GLOBEXA — Marketplace internationale · Commerce mondial</div>
+
+<div class="top">🌍 GLOBEXA — ACHETER · VENDRE · CONNECTER LE MONDE</div>
 
 <header>
 <div class="head">
-<a href="#home" class="brand">
-<svg viewBox="0 0 48 48" fill="none">
-<circle cx="22" cy="24" r="17" stroke="#092746" stroke-width="2.5"/>
-<path d="M6 24h32M22 7c-9 9-9 25 0 34M22 7c9 9 9 25 0 34" stroke="#092746" stroke-width="1.5"/>
-<path d="M17 24c9-3 15-10 23-17l-3 11 7 4-18 4-9-2Z" fill="#f28c28"/>
-</svg>
-<span><strong>GLOBEXA</strong><small>GLOBAL MARKETPLACE</small></span>
-</a>
+<a class="logo" href="#home">✈ GLOBE<span>XA</span></a>
+
 <div class="search">
-<input id="searchInput" placeholder="Rechercher un produit...">
+<input id="search" placeholder="Rechercher un produit...">
 <button id="searchBtn">Rechercher</button>
 </div>
-<button onclick="location.href='#account'">Mon compte</button>
-<button onclick="location.href='#orders'">Commandes</button>
+
+<button class="btn blue" onclick="location.hash='account'">Mon compte</button>
 </div>
+
 <nav>
 <a href="#home">Accueil</a>
-<a href="#catalogue">Produits</a>
+<a href="#catalogue">Catalogue</a>
 <a href="#supplier">Fournisseurs</a>
 <a href="#account">Connexion</a>
-<a href="#orders">Mes commandes</a>
+<a href="#orders">Commandes</a>
 <a href="#admin">Administration</a>
 </nav>
 </header>
 
 <main>
-<section class="container" id="home">
-<div class="hero">
-<div>
-<p style="color:#ffbd72;font-weight:bold">ACHETER · VENDRE · CONNECTER LE MONDE</p>
-<h1>Le commerce mondial à portée de main.</h1>
-<p>Découvrez des produits proposés par des fournisseurs internationaux. Comparez les offres et commandez depuis une seule plateforme.</p>
-<button class="btn" onclick="location.href='#catalogue'">Explorer les produits</button>
-<button class="btn light" onclick="location.href='#supplier'">Devenir fournisseur</button>
-</div>
-<div class="plane">✈️🌍</div>
-</div>
 
-<div class="section-title"><h2>Explorer les catégories</h2></div>
-<div class="categories" id="categoryRow">
+<section id="home">
+<div class="hero">
+<p>MARKETPLACE INTERNATIONALE</p>
+<h1>Le commerce mondial à portée de main.</h1>
+<p>Découvrez des fournisseurs internationaux, comparez les produits et développez votre commerce avec GLOBEXA.</p>
+<br>
+<button class="btn" onclick="location.hash='catalogue'">Explorer le catalogue</button>
+<button class="btn light" onclick="location.hash='supplier'">Devenir fournisseur</button>
+</div>
+</section>
+
+<section class="section" id="catalogue">
+<h2>Catalogue international</h2>
+
+<div class="categories" id="categories">
 <button class="cat active" data-cat="Tous">Tout</button>
 <button class="cat" data-cat="Électronique">Électronique</button>
 <button class="cat" data-cat="Mode">Mode</button>
@@ -152,271 +134,362 @@ footer strong{font-size:24px}
 <button class="cat" data-cat="Autres">Autres</button>
 </div>
 
-<div class="section-title" id="catalogue">
-<h2>Catalogue international</h2>
-<span id="productCount" class="muted"></span>
-</div>
-<div id="products" class="products">
-<div class="empty">Connexion au catalogue...</div>
+<p id="count" class="muted"></p>
+<div class="grid" id="products">
+<div class="panel">Chargement du catalogue...</div>
 </div>
 </section>
 
-<section class="container" id="supplier">
-<div class="section-title"><h2>Espace fournisseurs</h2></div>
+<section class="section" id="supplier">
+<h2>Espace fournisseurs</h2>
+
 <div class="two">
 <div class="panel">
-<h3>Inscription fournisseur</h3>
-<p class="muted">Présentez votre entreprise aux acheteurs du monde entier.</p>
+<h3>Inscrire mon entreprise</h3>
+
 <form id="sellerForm">
-<div class="field"><label>Nom de l'entreprise</label><input id="sellerName" required></div>
-<div class="field"><label>Pays</label><input id="sellerCountry" required placeholder="Chine"></div>
-<div class="field"><label>WhatsApp ou téléphone</label><input id="sellerContact" required></div>
-<div class="field"><label>Description</label><textarea id="sellerDescription"></textarea></div>
+<div class="field">
+<label>Entreprise</label>
+<input id="sellerName" required>
+</div>
+
+<div class="field">
+<label>Pays</label>
+<input id="sellerCountry" required>
+</div>
+
+<div class="field">
+<label>WhatsApp / Téléphone</label>
+<input id="sellerContact" required>
+</div>
+
+<div class="field">
+<label>Description</label>
+<textarea id="sellerDescription"></textarea>
+</div>
+
 <button class="btn">Envoyer ma demande</button>
 </form>
-<div id="sellerStatus" class="muted"></div>
+
+<p id="sellerStatus" class="muted"></p>
 </div>
 
 <div class="panel">
 <h3>Publier un produit</h3>
+
 <form id="productForm">
-<div class="field"><label>Nom du produit</label><input id="productName" required></div>
-<div class="field"><label>Catégorie</label>
+<div class="field">
+<label>Nom du produit</label>
+<input id="productName" required>
+</div>
+
+<div class="field">
+<label>Catégorie</label>
 <select id="productCategory">
-<option>Électronique</option><option>Mode</option><option>Maison</option>
-<option>Beauté</option><option>Automobile</option><option>Industrie</option><option>Autres</option>
-</select></div>
-<div class="field"><label>Description</label><textarea id="productDescription" required></textarea></div>
-<div class="field"><label>Prix</label><input id="productPrice" type="number" min="0.01" step="0.01" required></div>
-<div class="field"><label>Devise</label>
+<option>Électronique</option>
+<option>Mode</option>
+<option>Maison</option>
+<option>Beauté</option>
+<option>Automobile</option>
+<option>Industrie</option>
+<option>Autres</option>
+</select>
+</div>
+
+<div class="field">
+<label>Description</label>
+<textarea id="productDescription" required></textarea>
+</div>
+
+<div class="field">
+<label>Prix</label>
+<input id="productPrice" type="number" min="0.01" step="0.01" required>
+</div>
+
+<div class="field">
+<label>Devise</label>
 <select id="productCurrency">
-<option value="USD">USD ($)</option><option value="EUR">EUR (€)</option>
-<option value="CNY">CNY (¥)</option><option value="XOF">FCFA</option>
-</select></div>
-<div class="field"><label>Lien photo du produit</label><input id="productImage" type="url"></div>
+<option>USD</option>
+<option>EUR</option>
+<option>CNY</option>
+<option>XOF</option>
+</select>
+</div>
+
+<div class="field">
+<label>Lien photo HTTPS</label>
+<input id="productImage" type="url">
+</div>
+
 <button class="btn">Soumettre le produit</button>
 </form>
 </div>
 </div>
-<div class="panel"><h3>Mes produits</h3><div id="myProducts" class="muted">Connectez-vous pour voir vos produits.</div></div>
+
+<div class="panel">
+<h3>Mes produits</h3>
+<div id="myProducts" class="muted">Connectez-vous.</div>
+</div>
 </section>
 
-<section class="container" id="account">
-<div class="section-title"><h2>Mon compte GLOBEXA</h2></div>
+<section class="section" id="account">
+<h2>Mon compte GLOBEXA</h2>
+
 <div class="two">
 <form id="loginForm" class="panel">
 <h3>Connexion</h3>
-<div class="field"><label>E-mail</label><input id="email" type="email" required autocomplete="email"></div>
-<div class="field"><label>Mot de passe</label><input id="password" type="password" required autocomplete="current-password"></div>
-<button class="btn" type="submit">Se connecter</button>
-<button type="button" class="btn light" id="showForgot">Mot de passe oublié ?</button>
-<div id="loginStatus" class="statusmsg"></div>
+
+<div class="field">
+<label>E-mail</label>
+<input id="email" type="email" required>
+</div>
+
+<div class="field">
+<label>Mot de passe</label>
+<input id="password" type="password" required>
+</div>
+
+<button class="btn">Se connecter</button>
+<button type="button" class="btn light" id="forgotBtn">Mot de passe oublié</button>
+<div id="loginMsg"></div>
 </form>
 
 <form id="signupForm" class="panel">
 <h3>Créer un compte</h3>
-<p class="muted">Rejoignez la marketplace internationale GLOBEXA.</p>
-<div class="field"><label>E-mail</label><input id="newEmail" type="email" autocomplete="email" required></div>
-<div class="field"><label>Mot de passe (6 caractères minimum)</label><input id="newPassword" type="password" minlength="6" autocomplete="new-password" required></div>
-<button class="btn" id="signupButton" type="submit">Créer mon compte</button>
-<div id="signupStatus" class="statusmsg"></div>
-</form>
+
+<div class="field">
+<label>E-mail</label>
+<input id="newEmail" type="email" required>
 </div>
 
-<form id="forgotForm" class="panel hidden">
-<h3>Récupérer mon mot de passe</h3>
-<div class="field"><label>E-mail</label><input id="forgotEmail" type="email" required></div>
-<button class="btn" type="submit">Envoyer le lien</button>
-<button type="button" class="btn light" id="backLogin">Retour</button>
-<div id="forgotStatus" class="statusmsg"></div>
-</form>
+<div class="field">
+<label>Mot de passe (6 caractères minimum)</label>
+<input id="newPassword" type="password" minlength="6" required>
+</div>
 
-<form id="resetForm" class="panel hidden">
-<h3>Nouveau mot de passe</h3>
-<div class="field"><label>Nouveau mot de passe</label><input id="resetPassword" type="password" minlength="6" required></div>
-<div class="field"><label>Confirmer le mot de passe</label><input id="resetConfirm" type="password" required></div>
-<button class="btn" type="submit">Enregistrer</button>
-<div id="resetStatus" class="statusmsg"></div>
+<button class="btn">Créer mon compte</button>
+<div id="signupMsg"></div>
 </form>
+</div>
 
 <div class="panel">
 <p id="sessionInfo">Connexion au serveur...</p>
 <button id="logout" class="btn light hidden">Se déconnecter</button>
 </div>
+
+<form id="forgotForm" class="panel hidden">
+<h3>Récupérer mon compte</h3>
+<div class="field">
+<label>E-mail</label>
+<input id="forgotEmail" type="email" required>
+</div>
+<button class="btn">Envoyer le lien</button>
+<div id="forgotMsg"></div>
+</form>
 </section>
 
-<section class="container" id="orders">
-<div class="section-title"><h2>Mes commandes</h2></div>
-<div id="myOrders" class="panel">Connectez-vous pour consulter vos commandes.</div>
+<section class="section" id="orders">
+<h2>Mes commandes</h2>
+<div class="panel" id="myOrders">Connectez-vous pour voir vos commandes.</div>
 </section>
 
-<section class="container" id="admin">
-<div class="section-title"><h2>Administration GLOBEXA</h2></div>
-<div id="adminLocked" class="panel">Connectez-vous avec votre compte administrateur.</div>
+<section class="section" id="admin">
+<h2>Administration GLOBEXA</h2>
+
+<div class="panel" id="adminLocked">
+Accès réservé aux administrateurs.
+</div>
+
 <div id="adminDashboard" class="hidden">
-<div class="statgrid">
+<div class="stats">
 <div class="stat">Fournisseurs<b id="sellerCount">0</b></div>
-<div class="stat">Produits<b id="adminProductCount">0</b></div>
+<div class="stat">Produits<b id="productCountAdmin">0</b></div>
 <div class="stat">Commandes<b id="orderCount">0</b></div>
 <div class="stat">Commissions<b id="commissionTotal">0</b></div>
 </div>
-<div class="panel"><h3>Fournisseurs</h3><div id="adminSellers"></div></div>
-<div class="panel"><h3>Produits à valider</h3><div id="adminProducts"></div></div>
-<div class="panel"><h3>Commandes</h3><div id="adminOrders"></div></div>
-<div class="panel"><h3>Commissions de 6 %</h3><div id="adminCommissions"></div></div>
+
+<div class="panel">
+<h3>Demandes fournisseurs</h3>
+<div id="adminSellers"></div>
+</div>
+
+<div class="panel">
+<h3>Validation des produits</h3>
+<div id="adminProducts"></div>
+</div>
+
+<div class="panel">
+<h3>Commandes</h3>
+<div id="adminOrders"></div>
+</div>
+
+<div class="panel">
+<h3>Commissions GLOBEXA</h3>
+<p class="muted">Taux de commission prévu : 6 %.</p>
+<div id="adminCommissions"></div>
+</div>
 </div>
 </section>
+
 </main>
 
 <footer>
-<strong>✈️ GLOBEXA 🌍</strong>
+<h2>✈ GLOBEXA 🌍</h2>
 <p>Global commerce, one world.</p>
-<p>© 2026 GLOBEXA - Tous droits réservés.</p>
+<p>© 2026 GLOBEXA — Tous droits réservés.</p>
 </footer>
 
-<div id="productModal" class="modal hidden">
+<div id="modal" class="modal hidden">
 <div class="modalbox">
-<button id="closeModal" class="btn light">Fermer ✕</button>
-<h2 id="modalTitle"></h2>
+<button class="btn light" id="closeModal">Fermer ✕</button>
+<h2 id="modalName"></h2>
 <img id="modalImage" alt="Produit">
 <p id="modalDescription"></p>
 <div class="price" id="modalPrice"></div>
-<div class="field"><label>Quantité</label><input id="modalQuantity" type="number" min="1" value="1"></div>
-<button id="modalOrder" class="btn">Commander</button>
+
+<div class="field">
+<label>Quantité</label>
+<input id="quantity" type="number" min="1" value="1">
+</div>
+
+<button class="btn" id="orderBtn">Commander</button>
 </div>
 </div>
-<div id="toast" class="toast hidden"></div>
+
+<div id="toast" class="hidden"></div>
 
 <script type="module">
-/* GLOBEXA - CONNEXION SUPABASE */
+
+/* CONFIGURATION SUPABASE */
 const SUPABASE_URL="https://xlxkiyihagoupsajwmze.supabase.co";
 const SUPABASE_KEY="sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
 
 const $=id=>document.getElementById(id);
 
-let db=null,currentUser=null,isAdmin=false,mySeller=null;
-let selectedProduct=null,allProducts=[],activeCategory="Tous";
-let refreshing=false;
+let db=null;
+let user=null;
+let admin=false;
+let seller=null;
+let products=[];
+let selected=null;
+let category="Tous";
+let busy=false;
+let toastTimer=null;
 
-function notify(msg){
-const t=$("toast");
-t.textContent=msg;
-t.classList.remove("hidden");
-setTimeout(()=>t.classList.add("hidden"),4500);
+function toast(message){
+const el=$("toast");
+el.textContent=message;
+el.classList.remove("hidden");
+clearTimeout(toastTimer);
+toastTimer=setTimeout(()=>el.classList.add("hidden"),4500);
 }
 
-function message(id,msg,type="info"){
-const el=$(id);
-if(!el)return;
-el.textContent=msg;
-el.className="statusmsg "+type;
-}
-
-function safe(v){
-return String(v??"").replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+function safe(value){
+return String(value??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
 }[c]));
 }
 
-function money(n,c){
-return Number(n||0).toFixed(2)+" "+(c||"");
+function money(value,currency){
+return Number(value||0).toFixed(2)+" "+(currency||"");
 }
 
-function showForm(id){
-["loginForm","signupForm","forgotForm","resetForm"].forEach(x=>{
-$(x).classList.add("hidden");
-});
-if(id)$(id).classList.remove("hidden");
+function msg(id,message,ok=false){
+$(id).innerHTML='<div class="status '+(ok?"success":"error")+'">'+safe(message)+'</div>';
 }
 
-function friendlyError(err){
-const m=err?.message||String(err);
-if(/Failed to fetch|NetworkError|fetch/i.test(m))
-return "Connexion impossible. Vérifiez Internet et réessayez.";
-if(/Invalid login credentials/i.test(m))
-return "Adresse e-mail ou mot de passe incorrect.";
-if(/Email not confirmed/i.test(m))
-return "Confirmez votre adresse e-mail avant de vous connecter.";
-if(/User already registered/i.test(m))
-return "Cette adresse e-mail possède déjà un compte. Connectez-vous.";
-return m;
+function err(error){
+let message=error?.message||String(error);
+
+if(/Failed to fetch|NetworkError|Load failed/i.test(message))
+return "Connexion Internet impossible. Vérifiez votre connexion.";
+
+if(/Invalid login credentials/i.test(message))
+return "E-mail ou mot de passe incorrect.";
+
+if(/Email not confirmed/i.test(message))
+return "Confirmez votre adresse e-mail.";
+
+if(/row-level security|permission denied/i.test(message))
+return "Accès refusé par les règles de sécurité Supabase. Les autorisations de cette table doivent être vérifiées.";
+
+if(/relation .* does not exist/i.test(message))
+return "Une table nécessaire est introuvable dans Supabase : "+message;
+
+return message;
 }
 
-/* Initialisation avec import JavaScript */
-async function initialize(){
-setupEvents();
+function requireLogin(){
+if(user)return true;
+toast("Connectez-vous d'abord à GLOBEXA.");
+location.hash="account";
+return false;
+}
 
-$("products").innerHTML='<div class="empty">Connexion au serveur GLOBEXA...</div>';
+function setButtonLoading(button,loading,label){
+if(!button)return;
+button.disabled=loading;
+if(loading){
+button.dataset.oldText=button.textContent;
+button.textContent=label||"Chargement...";
+}else{
+button.textContent=button.dataset.oldText||button.textContent;
+}
+}
+
+/* INITIALISATION */
+async function start(){
+$("sessionInfo").textContent="Connexion à Supabase...";
 
 try{
-let supabaseModule;
+const mod=await import("https://esm.sh/@supabase/supabase-js@2");
 
-try{
-supabaseModule=await import("https://esm.sh/@supabase/supabase-js@2");
-}catch(firstError){
-console.warn("Premier CDN indisponible, deuxième tentative.",firstError);
-supabaseModule=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
-}
-
-const createClient=supabaseModule.createClient;
-
-if(typeof createClient!=="function")
-throw new Error("La bibliothèque Supabase ne fournit pas createClient.");
-
-db=createClient(SUPABASE_URL,SUPABASE_KEY,{
+db=mod.createClient(SUPABASE_URL,SUPABASE_KEY,{
 auth:{
-autoRefreshToken:true,
 persistSession:true,
+autoRefreshToken:true,
 detectSessionInUrl:true
 }
 });
 
 db.auth.onAuthStateChange((event,session)=>{
-currentUser=session?.user||null;
-if(event==="PASSWORD_RECOVERY")showForm("resetForm");
-if(event!=="INITIAL_SESSION"){
-setTimeout(()=>refresh(),200);
+user=session?.user||null;
+
+if(event==="PASSWORD_RECOVERY"){
+$("forgotForm").classList.remove("hidden");
 }
+
+setTimeout(()=>{
+refresh();
+},0);
 });
 
 await refresh();
 
-}catch(err){
-console.error("Initialisation Supabase:",err);
-const errorText=friendlyError(err);
-$("products").innerHTML=
-'<div class="empty">Impossible de connecter GLOBEXA.<br><br>'+safe(errorText)+'</div>';
-$("sessionInfo").textContent="Le serveur GLOBEXA est momentanément indisponible.";
-message("signupStatus","Connexion Supabase impossible : "+errorText,"error");
-message("loginStatus","Connexion Supabase impossible : "+errorText,"error");
-notify(errorText);
+}catch(error){
+console.error("GLOBEXA INIT:",error);
+$("sessionInfo").textContent="Impossible de connecter Supabase : "+err(error);
+$("products").innerHTML='<div class="panel">Le service Supabase ne répond pas. Vérifiez Internet et actualisez la page.</div>';
 }
 }
 
 /* INSCRIPTION */
-$("signupForm").addEventListener("submit",async e=>{
-e.preventDefault();
+$("signupForm").addEventListener("submit",async event=>{
+event.preventDefault();
 
-const email=$("newEmail").value.trim();
-const password=$("newPassword").value;
-const button=$("signupButton");
+if(!db)return toast("Serveur indisponible.");
 
-if(!db){
-message("signupStatus","Le serveur n'est pas disponible. Actualisez la page.","error");
-return;
-}
-if(password.length<6){
-message("signupStatus","Le mot de passe doit contenir au moins 6 caractères.","error");
-return;
-}
-
-button.disabled=true;
-button.textContent="Création en cours...";
-message("signupStatus","Création de votre compte...","info");
+const button=event.target.querySelector("button");
+setButtonLoading(button,true,"Création...");
 
 try{
 const {data,error}=await db.auth.signUp({
-email,password,
+email:$("newEmail").value.trim(),
+password:$("newPassword").value,
 options:{
 emailRedirectTo:location.origin+location.pathname
 }
@@ -424,165 +497,147 @@ emailRedirectTo:location.origin+location.pathname
 
 if(error)throw error;
 
-if(data.user&&data.session){
-message("signupStatus","Félicitations ! Votre compte GLOBEXA est créé et vous êtes connecté.","success");
-notify("Compte créé avec succès !");
+if(data.session){
+msg("signupMsg","Compte créé et connexion réussie.",true);
 await refresh();
-}else if(data.user){
-message("signupStatus","Inscription enregistrée. Vérifiez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.","success");
-notify("Consultez votre boîte e-mail.");
 }else{
-throw new Error("Le serveur n'a pas confirmé la création du compte.");
+msg("signupMsg","Inscription enregistrée. Vérifiez votre e-mail pour confirmer votre compte.",true);
 }
 
-}catch(err){
-console.error("Inscription:",err);
-message("signupStatus","Inscription impossible : "+friendlyError(err),"error");
+}catch(error){
+msg("signupMsg",err(error));
 }finally{
-button.disabled=false;
-button.textContent="Créer mon compte";
+setButtonLoading(button,false);
 }
 });
 
 /* CONNEXION */
-$("loginForm").addEventListener("submit",async e=>{
-e.preventDefault();
+$("loginForm").addEventListener("submit",async event=>{
+event.preventDefault();
 
-if(!db){
-message("loginStatus","Le serveur n'est pas disponible. Actualisez la page.","error");
-return;
-}
+if(!db)return toast("Serveur indisponible.");
 
-const button=$("loginForm").querySelector('button[type="submit"]');
-button.disabled=true;
-button.textContent="Connexion...";
+const button=event.target.querySelector('button[type="submit"]')||event.target.querySelector("button");
+setButtonLoading(button,true,"Connexion...");
 
 try{
 const {error}=await db.auth.signInWithPassword({
 email:$("email").value.trim(),
 password:$("password").value
 });
+
 if(error)throw error;
 
-message("loginStatus","Connexion réussie !","success");
-notify("Bienvenue sur GLOBEXA !");
+msg("loginMsg","Connexion réussie.",true);
 await refresh();
 
-}catch(err){
-message("loginStatus",friendlyError(err),"error");
+}catch(error){
+msg("loginMsg",err(error));
 }finally{
-button.disabled=false;
-button.textContent="Se connecter";
+setButtonLoading(button,false);
 }
 });
 
-/* MOT DE PASSE OUBLIE */
-$("showForgot").onclick=()=>{
-$("forgotEmail").value=$("email").value.trim();
-showForm("forgotForm");
+/* MOT DE PASSE OUBLIÉ */
+$("forgotBtn").onclick=()=>{
+$("forgotEmail").value=$("email").value;
+$("forgotForm").classList.toggle("hidden");
 };
-$("backLogin").onclick=()=>showForm("loginForm");
 
-$("forgotForm").addEventListener("submit",async e=>{
-e.preventDefault();
-if(!db)return message("forgotStatus","Serveur indisponible.","error");
+$("forgotForm").addEventListener("submit",async event=>{
+event.preventDefault();
 
 try{
 const {error}=await db.auth.resetPasswordForEmail(
 $("forgotEmail").value.trim(),
 {redirectTo:location.origin+location.pathname}
 );
+
 if(error)throw error;
-message("forgotStatus","Si cette adresse possède un compte, un lien de récupération a été envoyé. Vérifiez vos e-mails.","success");
-}catch(err){
-message("forgotStatus",friendlyError(err),"error");
+
+msg("forgotMsg","Consultez votre boîte e-mail pour récupérer votre compte.",true);
+
+}catch(error){
+msg("forgotMsg",err(error));
 }
 });
 
-/* NOUVEAU MOT DE PASSE */
-$("resetForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-const p=$("resetPassword").value;
-if(p!==$("resetConfirm").value)
-return message("resetStatus","Les mots de passe ne correspondent pas.","error");
-if(p.length<6)
-return message("resetStatus","Minimum 6 caractères.","error");
-if(!db)return message("resetStatus","Serveur indisponible.","error");
-
-try{
-const {error}=await db.auth.updateUser({password:p});
-if(error)throw error;
-
-message("resetStatus","Mot de passe modifié avec succès.","success");
-await db.auth.signOut();
-history.replaceState(null,document.title,location.pathname);
-await refresh();
-showForm("loginForm");
-}catch(err){
-message("resetStatus",friendlyError(err),"error");
-}
-});
-
-/* DECONNEXION */
+/* DÉCONNEXION */
 $("logout").onclick=async()=>{
 if(!db)return;
+
 const {error}=await db.auth.signOut();
-if(error)return notify(friendlyError(error));
+
+if(error)return toast(err(error));
+
 await refresh();
-notify("Déconnexion réussie.");
+toast("Déconnexion réussie.");
 };
 
-/* SESSION ET ACTUALISATION */
+/* CHARGEMENT DU COMPTE */
 async function refresh(){
-if(!db||refreshing)return;
-refreshing=true;
+if(!db||busy)return;
+
+busy=true;
 
 try{
 const {data,error}=await db.auth.getSession();
 if(error)throw error;
 
-currentUser=data.session?.user||null;
-isAdmin=false;
-mySeller=null;
+user=data.session?.user||null;
+seller=null;
+admin=false;
 
-if(currentUser){
-const a=await db.rpc("is_globexa_admin");
-isAdmin=!a.error&&a.data===true;
+if(user){
 
-const s=await db.from("globexa_sellers")
-.select("*")
-.eq("user_id",currentUser.id)
+const profile=await db.from("profiles")
+.select("id,is_admin,role")
+.eq("id",user.id)
 .maybeSingle();
 
-if(!s.error)mySeller=s.data;
+if(profile.error){
+console.warn("Profil:",profile.error.message);
+}else if(profile.data){
+admin=profile.data.is_admin===true||
+profile.data.role==="admin";
 }
 
-$("sessionInfo").textContent=currentUser
-?"Connecté : "+currentUser.email
-:"Vous n'êtes pas connecté.";
+const sellerResult=await db.from("globexa_sellers")
+.select("*")
+.eq("user_id",user.id)
+.maybeSingle();
 
-$("loginForm").classList.toggle("hidden",!!currentUser);
-$("signupForm").classList.toggle("hidden",!!currentUser);
-$("logout").classList.toggle("hidden",!currentUser);
+if(sellerResult.error){
+console.warn("Fournisseur:",sellerResult.error.message);
+}else{
+seller=sellerResult.data;
+}
+}
 
-$("adminLocked").classList.toggle("hidden",isAdmin);
-$("adminDashboard").classList.toggle("hidden",!isAdmin);
+$("sessionInfo").textContent=user?
+"Connecté : "+user.email:
+"Vous n'êtes pas connecté.";
 
-$("sellerStatus").textContent=mySeller
-?"Statut fournisseur : "+mySeller.status:"";
+$("loginForm").classList.toggle("hidden",!!user);
+$("signupForm").classList.toggle("hidden",!!user);
+$("logout").classList.toggle("hidden",!user);
+
+$("adminLocked").classList.toggle("hidden",admin);
+$("adminDashboard").classList.toggle("hidden",!admin);
 
 await loadProducts();
 await loadMyProducts();
 await loadOrders();
 
-if(isAdmin)await loadAdmin();
+if(admin){
+await loadAdmin();
+}
 
-}catch(err){
-console.error("Erreur de session:",err);
-notify("Erreur de chargement : "+friendlyError(err));
+}catch(error){
+console.error("REFRESH:",error);
+toast(err(error));
 }finally{
-refreshing=false;
+busy=false;
 }
 }
 
@@ -591,361 +646,480 @@ async function loadProducts(){
 if(!db)return;
 
 const {data,error}=await db.from("globexa_products")
-.select("id,name,description,price,currency,image_url,seller_id,category,status")
+.select("*")
 .eq("status","approved")
 .order("created_at",{ascending:false});
 
 if(error){
+console.error("CATALOGUE:",error);
 $("products").innerHTML=
-'<div class="empty">Erreur du catalogue : '+safe(friendlyError(error))+'</div>';
+'<div class="panel">Erreur catalogue : '+safe(err(error))+'</div>';
+$("count").textContent="";
 return;
 }
 
-allProducts=data||[];
-filterProducts();
+products=data||[];
+filter();
 }
 
-function renderProducts(data){
-const root=$("products");
-root.innerHTML="";
-$("productCount").textContent=data.length+" produit(s)";
+function filter(){
+const q=$("search").value.trim().toLowerCase();
 
-if(!data.length){
-root.innerHTML='<div class="empty">Aucun produit disponible pour le moment.</div>';
+const found=products.filter(product=>{
+const productCategory=String(product.category||"Autres").toLowerCase();
+
+const categoryMatch=
+category==="Tous"||
+productCategory===category.toLowerCase();
+
+const searchText=[
+product.name,
+product.description,
+product.category
+].join(" ").toLowerCase();
+
+return categoryMatch&&searchText.includes(q);
+});
+
+$("count").textContent=found.length+" produit(s) disponible(s)";
+$("products").innerHTML="";
+
+if(!found.length){
+$("products").innerHTML=
+'<div class="panel">Aucun produit disponible pour cette recherche.</div>';
 return;
 }
 
-data.forEach(p=>{
+found.forEach(product=>{
 const card=document.createElement("article");
 card.className="product";
 
-const photo=p.image_url
-?'<img src="'+safe(p.image_url)+'" alt="'+safe(p.name)+'" loading="lazy">'
-:'<div style="height:175px;display:grid;place-items:center;font-size:48px;background:#edf2f7">📦</div>';
+const photo=product.image_url?
+'<img src="'+safe(product.image_url)+'" alt="'+safe(product.name)+'" loading="lazy" onerror="this.style.display=\'none\'">':
+'<div style="height:165px;display:grid;place-items:center;font-size:45px;background:#eaf1f8">📦</div>';
 
 card.innerHTML=photo+`
 <div class="pbody">
-<h3>${safe(p.name)}</h3>
-<div class="desc">${safe(p.description)}</div>
-<div class="price">${money(p.price,p.currency)}</div>
-<div class="pactions">
-<button class="btn small detail">Détails</button>
-<button class="btn blue small buy">Acheter</button>
+<h3>${safe(product.name)}</h3>
+<p class="muted">${safe(product.category||"Autres")}</p>
+<p class="muted">${safe((product.description||"").slice(0,100))}</p>
+<div class="price">${money(product.price,product.currency)}</div>
+<div class="actions">
+<button class="btn detail">Détails</button>
+<button class="btn blue buy">Acheter</button>
 </div>
 </div>`;
 
-card.querySelector(".detail").onclick=()=>openProduct(p);
-card.querySelector(".buy").onclick=()=>openProduct(p);
-root.appendChild(card);
+card.querySelector(".detail").onclick=()=>openProduct(product);
+card.querySelector(".buy").onclick=()=>openProduct(product);
+
+$("products").appendChild(card);
 });
 }
 
-function filterProducts(){
-const q=$("searchInput").value.trim().toLowerCase();
+$("searchBtn").onclick=filter;
+$("search").oninput=filter;
 
-const filtered=allProducts.filter(p=>{
-const cat=String(p.category||"Autres").toLowerCase();
-const matchCat=activeCategory==="Tous"||cat===activeCategory.toLowerCase();
-const matchText=(p.name+" "+p.description+" "+cat).toLowerCase().includes(q);
-return matchCat&&matchText;
-});
-renderProducts(filtered);
-}
+$("categories").onclick=event=>{
+const button=event.target.closest("[data-cat]");
+if(!button)return;
 
-$("searchBtn").onclick=filterProducts;
-$("searchInput").addEventListener("keydown",e=>{
-if(e.key==="Enter")filterProducts();
+category=button.dataset.cat;
+
+document.querySelectorAll(".cat").forEach(item=>{
+item.classList.toggle("active",item===button);
 });
 
-$("categoryRow").onclick=e=>{
-const b=e.target.closest("[data-cat]");
-if(!b)return;
-activeCategory=b.dataset.cat;
-document.querySelectorAll(".cat").forEach(x=>{
-x.classList.toggle("active",x===b);
-});
-filterProducts();
+filter();
 };
 
 /* FICHE PRODUIT */
-function openProduct(p){
-selectedProduct=p;
-$("modalTitle").textContent=p.name;
-$("modalDescription").textContent=p.description||"";
-$("modalPrice").textContent=money(p.price,p.currency);
-$("modalImage").src=p.image_url||"";
-$("modalImage").style.display=p.image_url?"block":"none";
-$("modalQuantity").value=1;
-$("productModal").classList.remove("hidden");
+function openProduct(product){
+selected=product;
+
+$("modalName").textContent=product.name;
+$("modalDescription").textContent=product.description||"";
+$("modalPrice").textContent=money(product.price,product.currency);
+
+$("modalImage").src=product.image_url||"";
+$("modalImage").style.display=product.image_url?"block":"none";
+
+$("quantity").value=1;
+$("modal").classList.remove("hidden");
 }
 
 $("closeModal").onclick=()=>{
-$("productModal").classList.add("hidden");
+$("modal").classList.add("hidden");
 };
 
-/* COMMANDER */
-$("modalOrder").onclick=async()=>{
-if(!currentUser){
-notify("Connectez-vous pour commander.");
-location.hash="account";
-return;
+$("modal").onclick=event=>{
+if(event.target===$("modal")){
+$("modal").classList.add("hidden");
 }
-if(!selectedProduct)return;
+};
 
-const qty=Number($("modalQuantity").value);
-if(!Number.isInteger(qty)||qty<1)
-return notify("Quantité invalide.");
+/* CRÉATION DE COMMANDE */
+$("orderBtn").onclick=async()=>{
+if(!requireLogin()||!selected)return;
 
-const button=$("modalOrder");
-button.disabled=true;
-button.textContent="Enregistrement...";
+const quantity=Number($("quantity").value);
+
+if(!Number.isInteger(quantity)||quantity<1){
+return toast("Quantité invalide.");
+}
+
+if(selected.seller_id===seller?.id){
+return toast("Vous ne pouvez pas commander votre propre produit.");
+}
+
+const button=$("orderBtn");
+setButtonLoading(button,true,"Enregistrement...");
 
 try{
-const total=Number(selectedProduct.price)*qty;
+const total=Number(selected.price)*quantity;
+
+if(!Number.isFinite(total)||total<=0){
+throw new Error("Montant de commande invalide.");
+}
 
 const {error}=await db.from("globexa_orders").insert({
-customer_id:currentUser.id,
-product_id:selectedProduct.id,
-quantity:qty,
+customer_id:user.id,
+seller_id:selected.seller_id,
+product_id:selected.id,
+quantity:quantity,
 total:total,
-currency:selectedProduct.currency,
-payment_method:"pending"
+currency:selected.currency||"USD",
+payment_method:"pending",
+payment_status:"pending",
+status:"pending"
 });
 
 if(error)throw error;
 
-$("productModal").classList.add("hidden");
-notify("Commande enregistrée. Paiement en attente.");
+$("modal").classList.add("hidden");
+
+toast("Commande enregistrée. Paiement en attente.");
+
 await loadOrders();
 
-}catch(err){
-notify("Erreur commande : "+friendlyError(err));
+}catch(error){
+console.error("COMMANDE:",error);
+toast("Commande : "+err(error));
 }finally{
-button.disabled=false;
-button.textContent="Commander";
+setButtonLoading(button,false);
 }
 };
 
-/* FOURNISSEURS */
-$("sellerForm").addEventListener("submit",async e=>{
-e.preventDefault();
+/* INSCRIPTION FOURNISSEUR */
+$("sellerForm").addEventListener("submit",async event=>{
+event.preventDefault();
 
-if(!currentUser){
-notify("Connectez-vous d'abord.");
-location.hash="account";
-return;
+if(!requireLogin())return;
+
+if(seller){
+return toast("Vous avez déjà une demande fournisseur.");
 }
-if(!mySeller)return await createSeller(e);
-notify("Votre demande fournisseur existe déjà.");
-});
 
-async function createSeller(e){
+const button=event.target.querySelector("button");
+setButtonLoading(button,true,"Envoi...");
+
 try{
-const {data,error}=await db.from("globexa_sellers").insert({
-user_id:currentUser.id,
+const {data,error}=await db.from("globexa_sellers")
+.insert({
+user_id:user.id,
 name:$("sellerName").value.trim(),
 country:$("sellerCountry").value.trim(),
 contact:$("sellerContact").value.trim(),
-description:$("sellerDescription").value.trim()
-}).select().single();
+description:$("sellerDescription").value.trim(),
+status:"pending"
+})
+.select()
+.single();
 
 if(error)throw error;
 
-mySeller=data;
-e.target.reset();
-$("sellerStatus").textContent="Demande envoyée : "+data.status;
-notify("Demande fournisseur envoyée.");
-}catch(err){
-notify("Erreur fournisseur : "+friendlyError(err));
+seller=data;
+
+$("sellerForm").reset();
+$("sellerStatus").textContent="Demande envoyée. Statut : "+data.status;
+
+toast("Demande fournisseur envoyée.");
+
+await loadMyProducts();
+
+}catch(error){
+console.error("FOURNISSEUR:",error);
+toast("Fournisseur : "+err(error));
+}finally{
+setButtonLoading(button,false);
 }
-}
+});
 
 /* PUBLICATION PRODUIT */
-$("productForm").addEventListener("submit",async e=>{
-e.preventDefault();
+$("productForm").addEventListener("submit",async event=>{
+event.preventDefault();
 
-if(!currentUser){
-notify("Connectez-vous d'abord.");
-location.hash="account";
-return;
+if(!requireLogin())return;
+
+if(!seller){
+return toast("Inscrivez d'abord votre entreprise.");
 }
-if(!mySeller)return notify("Inscrivez d'abord votre entreprise.");
-if(mySeller.status!=="approved")
-return notify("Votre compte fournisseur doit être approuvé.");
+
+if(seller.status!=="approved"){
+return toast("Votre compte fournisseur doit être approuvé.");
+}
 
 const price=Number($("productPrice").value);
 const image=$("productImage").value.trim();
 
-if(!Number.isFinite(price)||price<=0)
-return notify("Prix invalide.");
+if(!Number.isFinite(price)||price<=0){
+return toast("Prix invalide.");
+}
 
 if(image){
 try{
-const u=new URL(image);
-if(!["http:","https:"].includes(u.protocol))throw Error();
+const url=new URL(image);
+if(!["http:","https:"].includes(url.protocol))throw Error();
 }catch{
-return notify("Lien de photo invalide.");
+return toast("Lien de photo invalide.");
 }
 }
 
-const button=e.target.querySelector('button[type="submit"],button:not([type])');
-if(button){button.disabled=true;button.textContent="Envoi...";}
+const button=event.target.querySelector("button");
+setButtonLoading(button,true,"Publication...");
 
 try{
-const {error}=await db.from("globexa_products").insert({
-seller_id:mySeller.id,
+const {error}=await db.from("globexa_products")
+.insert({
+seller_id:seller.id,
 name:$("productName").value.trim(),
 category:$("productCategory").value,
 description:$("productDescription").value.trim(),
 price:price,
 currency:$("productCurrency").value,
-image_url:image||null
+image_url:image||null,
+status:"pending"
 });
+
 if(error)throw error;
 
-e.target.reset();
-notify("Produit envoyé pour validation.");
+event.target.reset();
+
+toast("Produit envoyé pour validation.");
+
 await loadMyProducts();
-}catch(err){
-notify("Erreur produit : "+friendlyError(err));
+
+}catch(error){
+console.error("PUBLICATION:",error);
+toast("Publication : "+err(error));
 }finally{
-if(button){button.disabled=false;button.textContent="Soumettre le produit";}
+setButtonLoading(button,false);
 }
 });
 
 /* MES PRODUITS */
 async function loadMyProducts(){
-if(!currentUser||!mySeller){
-$("myProducts").textContent="Connectez-vous comme fournisseur pour voir vos produits.";
+if(!user||!seller){
+$("myProducts").textContent="Connectez-vous et inscrivez votre entreprise comme fournisseur.";
 return;
 }
 
 const {data,error}=await db.from("globexa_products")
 .select("*")
-.eq("seller_id",mySeller.id)
+.eq("seller_id",seller.id)
 .order("created_at",{ascending:false});
 
 if(error){
-$("myProducts").textContent=friendlyError(error);
+$("myProducts").textContent=err(error);
 return;
 }
 
-$("myProducts").innerHTML=(data||[]).map(p=>`
-<div class="listrow">
-<div><b>${safe(p.name)}</b><br>${money(p.price,p.currency)}</div>
-<span class="badge ${p.status==="approved"?"ok":""}">${safe(p.status)}</span>
-</div>`).join("")||"Aucun produit publié.";
+$("myProducts").innerHTML=(data||[]).map(product=>`
+<div class="row">
+<div>
+<b>${safe(product.name)}</b><br>
+${money(product.price,product.currency)}
+</div>
+<span class="badge ${product.status==="approved"?"ok":""}">
+${safe(product.status||"pending")}
+</span>
+</div>
+`).join("")||"Aucun produit publié.";
 }
 
 /* MES COMMANDES */
 async function loadOrders(){
-if(!currentUser){
+if(!user){
 $("myOrders").textContent="Connectez-vous pour consulter vos commandes.";
 return;
 }
 
 const {data,error}=await db.from("globexa_orders")
 .select("*")
-.eq("customer_id",currentUser.id)
+.eq("customer_id",user.id)
 .order("created_at",{ascending:false});
 
 if(error){
-$("myOrders").textContent=friendlyError(error);
+$("myOrders").textContent=err(error);
 return;
 }
 
-$("myOrders").innerHTML=(data||[]).map(o=>`
-<div class="listrow">
+$("myOrders").innerHTML=(data||[]).map(order=>`
+<div class="row">
 <div>
-<b>Commande ${safe(String(o.id).slice(0,12))}</b><br>
-${money(o.total,o.currency)} · Quantité : ${safe(o.quantity)}
+<b>Commande ${safe(String(order.id).slice(0,12))}</b><br>
+${money(order.total,order.currency)}
+· Quantité : ${safe(order.quantity)}
 </div>
-<span class="badge">${safe(o.payment_status||"En attente")}</span>
-</div>`).join("")||"Aucune commande.";
+<span class="badge ${order.payment_status==="paid"?"ok":""}">
+${safe(order.payment_status||"pending")}
+</span>
+</div>
+`).join("")||"Aucune commande.";
 }
 
 /* ADMINISTRATION */
 async function loadAdmin(){
-const [s,p,o,c]=await Promise.all([
+if(!admin)return;
+
+const results=await Promise.all([
 db.from("globexa_sellers").select("*").order("created_at",{ascending:false}),
 db.from("globexa_products").select("*").order("created_at",{ascending:false}),
 db.from("globexa_orders").select("*").order("created_at",{ascending:false}),
 db.from("commissions").select("*").order("created_at",{ascending:false})
 ]);
 
-const err=[s,p,o,c].find(x=>x.error);
-if(err){
-notify("Erreur administration : "+friendlyError(err.error));
+const [sellersResult,productsResult,ordersResult,commissionsResult]=results;
+
+const failed=results.find(result=>result.error);
+
+if(failed){
+toast("Administration : "+err(failed.error));
 return;
 }
 
-$("sellerCount").textContent=s.data.length;
-$("adminProductCount").textContent=p.data.length;
-$("orderCount").textContent=o.data.length;
-$("commissionTotal").textContent=
-c.data.reduce((n,x)=>n+Number(x.amount||0),0).toFixed(2);
+const sellers=sellersResult.data||[];
+const allProducts=productsResult.data||[];
+const orders=ordersResult.data||[];
+const commissions=commissionsResult.data||[];
 
-$("adminSellers").innerHTML=s.data.map(x=>`
-<div class="listrow">
-<div><b>${safe(x.name)}</b><br>${safe(x.country)}<br>Statut : ${safe(x.status)}</div>
-${x.status==="approved"?"":'<button class="btn small approveSeller" data-id="'+safe(x.id)+'">Approuver</button>'}
-</div>`).join("")||"Aucun fournisseur.";
+$("sellerCount").textContent=sellers.length;
+$("productCountAdmin").textContent=allProducts.length;
+$("orderCount").textContent=orders.length;
 
-$("adminProducts").innerHTML=p.data.map(x=>`
-<div class="listrow">
-<div><b>${safe(x.name)}</b><br>${money(x.price,x.currency)}<br>Statut : ${safe(x.status)}</div>
-${x.status==="approved"?"":'<button class="btn small approveProduct" data-id="'+safe(x.id)+'">Approuver</button>'}
-</div>`).join("")||"Aucun produit.";
+const commissionSum=commissions.reduce(
+(total,item)=>total+Number(item.amount||0),0
+);
 
-$("adminOrders").innerHTML=o.data.map(x=>`
-<div class="listrow">
-<div>Commande ${safe(String(x.id).slice(0,12))}<br>${money(x.total,x.currency)}</div>
-<span class="badge">${safe(x.status||"En attente")}</span>
-</div>`).join("")||"Aucune commande.";
+$("commissionTotal").textContent=commissionSum.toFixed(2);
 
-$("adminCommissions").innerHTML=c.data.map(x=>`
-<div class="listrow">
-<div>Commande ${safe(String(x.order_id||"").slice(0,12))}<br>Taux : ${safe(x.rate)} %</div>
-<b>${money(x.amount,"")}</b>
-</div>`).join("")||"Aucune commission.";
+$("adminSellers").innerHTML=sellers.map(item=>`
+<div class="row">
+<div>
+<b>${safe(item.name)}</b><br>
+${safe(item.country||"")}<br>
+Statut : ${safe(item.status||"pending")}
+</div>
+${item.status==="approved"?
+'<span class="badge ok">Approuvé</span>':
+'<button class="btn approveSeller" data-id="'+safe(item.id)+'">Approuver</button>'}
+</div>
+`).join("")||"Aucun fournisseur.";
 
-document.querySelectorAll(".approveSeller").forEach(b=>{
-b.onclick=()=>approveSeller(b.dataset.id);
+$("adminProducts").innerHTML=allProducts.map(item=>`
+<div class="row">
+<div>
+<b>${safe(item.name)}</b><br>
+${money(item.price,item.currency)}<br>
+Statut : ${safe(item.status||"pending")}
+</div>
+${item.status==="approved"?
+'<span class="badge ok">Approuvé</span>':
+'<button class="btn approveProduct" data-id="'+safe(item.id)+'">Approuver</button>'}
+</div>
+`).join("")||"Aucun produit.";
+
+$("adminOrders").innerHTML=orders.map(item=>`
+<div class="row">
+<div>
+Commande ${safe(String(item.id).slice(0,12))}<br>
+${money(item.total,item.currency)}
+</div>
+<span class="badge">${safe(item.status||"pending")}</span>
+</div>
+`).join("")||"Aucune commande.";
+
+$("adminCommissions").innerHTML=commissions.map(item=>`
+<div class="row">
+<div>
+Commande ${safe(String(item.order_id).slice(0,12))}<br>
+Taux : ${safe(item.rate)} %
+</div>
+<b>${money(item.amount,item.currency)}</b>
+</div>
+`).join("")||"Aucune commission enregistrée.";
+
+document.querySelectorAll(".approveSeller").forEach(button=>{
+button.onclick=()=>approveSeller(button.dataset.id,button);
 });
-document.querySelectorAll(".approveProduct").forEach(b=>{
-b.onclick=()=>approveProduct(b.dataset.id);
+
+document.querySelectorAll(".approveProduct").forEach(button=>{
+button.onclick=()=>approveProduct(button.dataset.id,button);
 });
 }
 
 /* APPROBATION FOURNISSEUR */
-async function approveSeller(id){
+async function approveSeller(id,button){
+if(!admin)return;
+
+setButtonLoading(button,true,"Validation...");
+
+try{
 const {error}=await db.from("globexa_sellers")
-.update({status:"approved"}).eq("id",id);
-if(error)return notify(friendlyError(error));
-notify("Fournisseur approuvé.");
+.update({status:"approved"})
+.eq("id",id);
+
+if(error)throw error;
+
+toast("Fournisseur approuvé.");
+
 await refresh();
+
+}catch(error){
+toast("Validation : "+err(error));
+}finally{
+setButtonLoading(button,false);
+}
 }
 
 /* APPROBATION PRODUIT */
-async function approveProduct(id){
+async function approveProduct(id,button){
+if(!admin)return;
+
+setButtonLoading(button,true,"Validation...");
+
+try{
 const {error}=await db.from("globexa_products")
-.update({status:"approved"}).eq("id",id);
-if(error)return notify(friendlyError(error));
-notify("Produit approuvé.");
+.update({status:"approved"})
+.eq("id",id);
+
+if(error)throw error;
+
+toast("Produit approuvé.");
+
 await loadProducts();
 await loadAdmin();
+
+}catch(error){
+toast("Validation : "+err(error));
+}finally{
+setButtonLoading(button,false);
+}
 }
 
-/* EVENEMENTS */
-function setupEvents(){
-$("productModal").addEventListener("click",e=>{
-if(e.target===$("productModal"))
-$("productModal").classList.add("hidden");
-});
-}
+/* DÉMARRAGE */
+start();
 
-/* DEMARRAGE */
-initialize();
 </script>
 </body>
 </html>
