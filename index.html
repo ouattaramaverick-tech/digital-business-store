@@ -9,14 +9,9 @@
 
 <style>
 :root{
---blue:#092746;
---blue2:#174d77;
---orange:#f28c28;
---bg:#f4f7fb;
---white:#fff;
---text:#172b3e;
---muted:#64748b;
---border:#e2e8f0;
+--blue:#092746;--blue2:#174d77;--orange:#f28c28;
+--bg:#f4f7fb;--white:#fff;--text:#172b3e;
+--muted:#64748b;--border:#e2e8f0;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -60,7 +55,7 @@ nav a{text-decoration:none;color:var(--blue);font-size:13px;white-space:nowrap}
 .price{font-size:19px;font-weight:bold;color:#d86f12;margin:10px 0}
 .pactions{display:flex;gap:6px;margin-top:auto}
 .pactions button{flex:1}
-.empty{background:white;border:1px dashed #cbd5e1;border-radius:10px;padding:25px;text-align:center;color:var(--muted);grid-column:1/-1}
+.empty{background:white;border:1px dashed #cbd5e1;border-radius:10px;padding:25px;text-align:center;color:var(--muted);grid-column:1/-1;overflow-wrap:anywhere}
 .panel{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;margin:12px 0}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 form h3{color:var(--blue);margin-bottom:12px}
@@ -103,7 +98,6 @@ footer strong{font-size:24px}
 </head>
 
 <body>
-
 <div class="topbar">🌍 GLOBEXA — Marketplace internationale · Commerce mondial</div>
 
 <header>
@@ -134,7 +128,6 @@ footer strong{font-size:24px}
 </header>
 
 <main>
-
 <section class="container" id="home">
 <div class="hero">
 <div>
@@ -164,14 +157,13 @@ footer strong{font-size:24px}
 <span id="productCount" class="muted"></span>
 </div>
 <div id="products" class="products">
-<div class="empty">Chargement des produits...</div>
+<div class="empty">Connexion au catalogue...</div>
 </div>
 </section>
 
 <section class="container" id="supplier">
 <div class="section-title"><h2>Espace fournisseurs</h2></div>
 <div class="two">
-
 <div class="panel">
 <h3>Inscription fournisseur</h3>
 <p class="muted">Présentez votre entreprise aux acheteurs du monde entier.</p>
@@ -191,22 +183,15 @@ footer strong{font-size:24px}
 <div class="field"><label>Nom du produit</label><input id="productName" required></div>
 <div class="field"><label>Catégorie</label>
 <select id="productCategory">
-<option>Électronique</option>
-<option>Mode</option>
-<option>Maison</option>
-<option>Beauté</option>
-<option>Automobile</option>
-<option>Industrie</option>
-<option>Autres</option>
+<option>Électronique</option><option>Mode</option><option>Maison</option>
+<option>Beauté</option><option>Automobile</option><option>Industrie</option><option>Autres</option>
 </select></div>
 <div class="field"><label>Description</label><textarea id="productDescription" required></textarea></div>
 <div class="field"><label>Prix</label><input id="productPrice" type="number" min="0.01" step="0.01" required></div>
 <div class="field"><label>Devise</label>
 <select id="productCurrency">
-<option value="USD">USD ($)</option>
-<option value="EUR">EUR (€)</option>
-<option value="CNY">CNY (¥)</option>
-<option value="XOF">FCFA</option>
+<option value="USD">USD ($)</option><option value="EUR">EUR (€)</option>
+<option value="CNY">CNY (¥)</option><option value="XOF">FCFA</option>
 </select></div>
 <div class="field"><label>Lien photo du produit</label><input id="productImage" type="url"></div>
 <button class="btn">Soumettre le produit</button>
@@ -219,11 +204,10 @@ footer strong{font-size:24px}
 <section class="container" id="account">
 <div class="section-title"><h2>Mon compte GLOBEXA</h2></div>
 <div class="two">
-
 <form id="loginForm" class="panel">
 <h3>Connexion</h3>
-<div class="field"><label>E-mail</label><input id="email" type="email" required></div>
-<div class="field"><label>Mot de passe</label><input id="password" type="password" required></div>
+<div class="field"><label>E-mail</label><input id="email" type="email" required autocomplete="email"></div>
+<div class="field"><label>Mot de passe</label><input id="password" type="password" required autocomplete="current-password"></div>
 <button class="btn" type="submit">Se connecter</button>
 <button type="button" class="btn light" id="showForgot">Mot de passe oublié ?</button>
 <div id="loginStatus" class="statusmsg"></div>
@@ -256,7 +240,7 @@ footer strong{font-size:24px}
 </form>
 
 <div class="panel">
-<p id="sessionInfo">Vous n'êtes pas connecté.</p>
+<p id="sessionInfo">Connexion au serveur...</p>
 <button id="logout" class="btn light hidden">Se déconnecter</button>
 </div>
 </section>
@@ -301,96 +285,18 @@ footer strong{font-size:24px}
 <button id="modalOrder" class="btn">Commander</button>
 </div>
 </div>
-
 <div id="toast" class="toast hidden"></div>
 
-<script>
-/* =========================================
-   CONFIGURATION GLOBEXA / SUPABASE
-========================================= */
-
+<script type="module">
+/* GLOBEXA - CONNEXION SUPABASE */
 const SUPABASE_URL="https://xlxkiyihagoupsajwmze.supabase.co";
 const SUPABASE_KEY="sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
 
 const $=id=>document.getElementById(id);
 
-let db=null;
-let currentUser=null;
-let isAdmin=false;
-let mySeller=null;
-let selectedProduct=null;
-let allProducts=[];
-let activeCategory="Tous";
+let db=null,currentUser=null,isAdmin=false,mySeller=null;
+let selectedProduct=null,allProducts=[],activeCategory="Tous";
 let refreshing=false;
-
-/* =========================================
-   CHARGEMENT AUTOMATIQUE SUPABASE
-========================================= */
-
-function loadSupabaseLibrary(){
-
-return new Promise((resolve,reject)=>{
-
-if(window.supabase && window.supabase.createClient){
-resolve();
-return;
-}
-
-const sources=[
-"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
-"https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"
-];
-
-let index=0;
-
-function tryNext(){
-
-if(index>=sources.length){
-reject(new Error("Les deux serveurs Supabase sont inaccessibles. Vérifiez Internet ou réessayez plus tard."));
-return;
-}
-
-const url=sources[index++];
-const script=document.createElement("script");
-
-script.src=url;
-script.async=true;
-
-const timeout=setTimeout(()=>{
-script.onerror=null;
-script.onload=null;
-script.remove();
-tryNext();
-},15000);
-
-script.onload=()=>{
-clearTimeout(timeout);
-
-if(window.supabase && window.supabase.createClient){
-resolve();
-}else{
-script.remove();
-tryNext();
-}
-};
-
-script.onerror=()=>{
-clearTimeout(timeout);
-script.remove();
-tryNext();
-};
-
-document.head.appendChild(script);
-}
-
-tryNext();
-
-});
-}
-
-/* =========================================
-   MESSAGES
-========================================= */
 
 function notify(msg){
 const t=$("toast");
@@ -408,11 +314,7 @@ el.className="statusmsg "+type;
 
 function safe(v){
 return String(v??"").replace(/[&<>"']/g,c=>({
-"&":"&amp;",
-"<":"&lt;",
-">":"&gt;",
-'"':"&quot;",
-"'":"&#39;"
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[c]));
 }
 
@@ -427,76 +329,72 @@ $(x).classList.add("hidden");
 if(id)$(id).classList.remove("hidden");
 }
 
-/* =========================================
-   INITIALISATION
-========================================= */
+function friendlyError(err){
+const m=err?.message||String(err);
+if(/Failed to fetch|NetworkError|fetch/i.test(m))
+return "Connexion impossible. Vérifiez Internet et réessayez.";
+if(/Invalid login credentials/i.test(m))
+return "Adresse e-mail ou mot de passe incorrect.";
+if(/Email not confirmed/i.test(m))
+return "Confirmez votre adresse e-mail avant de vous connecter.";
+if(/User already registered/i.test(m))
+return "Cette adresse e-mail possède déjà un compte. Connectez-vous.";
+return m;
+}
 
+/* Initialisation avec import JavaScript */
 async function initialize(){
-
 setupEvents();
 
-$("products").innerHTML=
-'<div class="empty">Connexion au serveur GLOBEXA...</div>';
+$("products").innerHTML='<div class="empty">Connexion au serveur GLOBEXA...</div>';
 
 try{
+let supabaseModule;
 
-await loadSupabaseLibrary();
+try{
+supabaseModule=await import("https://esm.sh/@supabase/supabase-js@2");
+}catch(firstError){
+console.warn("Premier CDN indisponible, deuxième tentative.",firstError);
+supabaseModule=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+}
 
-db=window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY,
-{
+const createClient=supabaseModule.createClient;
+
+if(typeof createClient!=="function")
+throw new Error("La bibliothèque Supabase ne fournit pas createClient.");
+
+db=createClient(SUPABASE_URL,SUPABASE_KEY,{
 auth:{
 autoRefreshToken:true,
 persistSession:true,
 detectSessionInUrl:true
 }
-}
-);
-
-console.log("Supabase connecté et initialisé.");
+});
 
 db.auth.onAuthStateChange((event,session)=>{
-
 currentUser=session?.user||null;
-
-if(event==="PASSWORD_RECOVERY"){
-showForm("resetForm");
-}
-
+if(event==="PASSWORD_RECOVERY")showForm("resetForm");
 if(event!=="INITIAL_SESSION"){
-setTimeout(()=>refresh(),100);
+setTimeout(()=>refresh(),200);
 }
-
 });
 
 await refresh();
 
 }catch(err){
-
-console.error("Erreur Supabase :",err);
-
+console.error("Initialisation Supabase:",err);
+const errorText=friendlyError(err);
 $("products").innerHTML=
-'<div class="empty">Impossible de charger Supabase. Vérifiez votre connexion Internet et actualisez la page.<br><br>'+safe(err.message)+'</div>';
-
-message(
-"signupStatus",
-"Service Supabase indisponible : "+err.message,
-"error"
-);
-
-notify("Impossible de connecter GLOBEXA au serveur.");
-
+'<div class="empty">Impossible de connecter GLOBEXA.<br><br>'+safe(errorText)+'</div>';
+$("sessionInfo").textContent="Le serveur GLOBEXA est momentanément indisponible.";
+message("signupStatus","Connexion Supabase impossible : "+errorText,"error");
+message("loginStatus","Connexion Supabase impossible : "+errorText,"error");
+notify(errorText);
+}
 }
 
-}
-
-/* =========================================
-   INSCRIPTION
-========================================= */
-
+/* INSCRIPTION */
 $("signupForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
 
 const email=$("newEmail").value.trim();
@@ -504,10 +402,9 @@ const password=$("newPassword").value;
 const button=$("signupButton");
 
 if(!db){
-message("signupStatus","Serveur indisponible. Actualisez la page.","error");
+message("signupStatus","Le serveur n'est pas disponible. Actualisez la page.","error");
 return;
 }
-
 if(password.length<6){
 message("signupStatus","Le mot de passe doit contenir au moins 6 caractères.","error");
 return;
@@ -515,241 +412,134 @@ return;
 
 button.disabled=true;
 button.textContent="Création en cours...";
-
-message("signupStatus","Connexion au serveur GLOBEXA...","info");
+message("signupStatus","Création de votre compte...","info");
 
 try{
-
 const {data,error}=await db.auth.signUp({
-email:email,
-password:password,
+email,password,
 options:{
 emailRedirectTo:location.origin+location.pathname
 }
 });
 
-if(error){
-message("signupStatus","Inscription refusée : "+error.message,"error");
-return;
-}
+if(error)throw error;
 
-if(data.user){
-
-if(data.session){
-
-message(
-"signupStatus",
-"Félicitations ! Votre compte GLOBEXA est créé et connecté.",
-"success"
-);
-
+if(data.user&&data.session){
+message("signupStatus","Félicitations ! Votre compte GLOBEXA est créé et vous êtes connecté.","success");
 notify("Compte créé avec succès !");
 await refresh();
-
+}else if(data.user){
+message("signupStatus","Inscription enregistrée. Vérifiez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.","success");
+notify("Consultez votre boîte e-mail.");
 }else{
-
-message(
-"signupStatus",
-"Votre inscription est enregistrée. Consultez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.",
-"success"
-);
-
-notify("Vérifiez votre boîte e-mail.");
-
-}
-
-}else{
-
-message(
-"signupStatus",
-"Le serveur n'a pas confirmé la création du compte.",
-"error"
-);
-
+throw new Error("Le serveur n'a pas confirmé la création du compte.");
 }
 
 }catch(err){
-
-message("signupStatus","Erreur : "+err.message,"error");
-
+console.error("Inscription:",err);
+message("signupStatus","Inscription impossible : "+friendlyError(err),"error");
 }finally{
-
 button.disabled=false;
 button.textContent="Créer mon compte";
-
 }
-
 });
 
-/* =========================================
-   CONNEXION
-========================================= */
-
+/* CONNEXION */
 $("loginForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
 
 if(!db){
-message("loginStatus","Serveur indisponible.","error");
+message("loginStatus","Le serveur n'est pas disponible. Actualisez la page.","error");
 return;
 }
 
 const button=$("loginForm").querySelector('button[type="submit"]');
-
 button.disabled=true;
 button.textContent="Connexion...";
 
 try{
-
-const {data,error}=await db.auth.signInWithPassword({
+const {error}=await db.auth.signInWithPassword({
 email:$("email").value.trim(),
 password:$("password").value
 });
-
-if(error){
-message("loginStatus",error.message,"error");
-return;
-}
+if(error)throw error;
 
 message("loginStatus","Connexion réussie !","success");
 notify("Bienvenue sur GLOBEXA !");
-
 await refresh();
 
 }catch(err){
-
-message("loginStatus",err.message,"error");
-
+message("loginStatus",friendlyError(err),"error");
 }finally{
-
 button.disabled=false;
 button.textContent="Se connecter";
-
 }
-
 });
 
-/* =========================================
-   MOT DE PASSE OUBLIE
-========================================= */
-
+/* MOT DE PASSE OUBLIE */
 $("showForgot").onclick=()=>{
 $("forgotEmail").value=$("email").value.trim();
 showForm("forgotForm");
 };
-
 $("backLogin").onclick=()=>showForm("loginForm");
 
 $("forgotForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
-
-if(!db){
-message("forgotStatus","Serveur indisponible.","error");
-return;
-}
+if(!db)return message("forgotStatus","Serveur indisponible.","error");
 
 try{
-
 const {error}=await db.auth.resetPasswordForEmail(
 $("forgotEmail").value.trim(),
 {redirectTo:location.origin+location.pathname}
 );
-
-if(error){
-message("forgotStatus",error.message,"error");
-return;
-}
-
-message(
-"forgotStatus",
-"Lien envoyé si cette adresse correspond à un compte. Vérifiez votre boîte e-mail.",
-"success"
-);
-
+if(error)throw error;
+message("forgotStatus","Si cette adresse possède un compte, un lien de récupération a été envoyé. Vérifiez vos e-mails.","success");
 }catch(err){
-
-message("forgotStatus",err.message,"error");
-
+message("forgotStatus",friendlyError(err),"error");
 }
-
 });
 
-/* =========================================
-   NOUVEAU MOT DE PASSE
-========================================= */
-
+/* NOUVEAU MOT DE PASSE */
 $("resetForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
 
 const p=$("resetPassword").value;
-
-if(p!==$("resetConfirm").value){
+if(p!==$("resetConfirm").value)
 return message("resetStatus","Les mots de passe ne correspondent pas.","error");
-}
-
-if(p.length<6){
+if(p.length<6)
 return message("resetStatus","Minimum 6 caractères.","error");
-}
+if(!db)return message("resetStatus","Serveur indisponible.","error");
 
 try{
-
 const {error}=await db.auth.updateUser({password:p});
-
-if(error){
-message("resetStatus",error.message,"error");
-return;
-}
+if(error)throw error;
 
 message("resetStatus","Mot de passe modifié avec succès.","success");
-
 await db.auth.signOut();
-
 history.replaceState(null,document.title,location.pathname);
-
 await refresh();
 showForm("loginForm");
-
 }catch(err){
-
-message("resetStatus",err.message,"error");
-
+message("resetStatus",friendlyError(err),"error");
 }
-
 });
 
-/* =========================================
-   DECONNEXION
-========================================= */
-
+/* DECONNEXION */
 $("logout").onclick=async()=>{
-
 if(!db)return;
-
 const {error}=await db.auth.signOut();
-
-if(error)return notify(error.message);
-
+if(error)return notify(friendlyError(error));
 await refresh();
 notify("Déconnexion réussie.");
-
 };
 
-/* =========================================
-   SESSION ET COMPTE
-========================================= */
-
+/* SESSION ET ACTUALISATION */
 async function refresh(){
-
 if(!db||refreshing)return;
-
 refreshing=true;
 
 try{
-
 const {data,error}=await db.auth.getSession();
-
 if(error)throw error;
 
 currentUser=data.session?.user||null;
@@ -757,9 +547,7 @@ isAdmin=false;
 mySeller=null;
 
 if(currentUser){
-
 const a=await db.rpc("is_globexa_admin");
-
 isAdmin=!a.error&&a.data===true;
 
 const s=await db.from("globexa_sellers")
@@ -768,7 +556,6 @@ const s=await db.from("globexa_sellers")
 .maybeSingle();
 
 if(!s.error)mySeller=s.data;
-
 }
 
 $("sessionInfo").textContent=currentUser
@@ -783,8 +570,7 @@ $("adminLocked").classList.toggle("hidden",isAdmin);
 $("adminDashboard").classList.toggle("hidden",!isAdmin);
 
 $("sellerStatus").textContent=mySeller
-?"Statut fournisseur : "+mySeller.status
-:"";
+?"Statut fournisseur : "+mySeller.status:"";
 
 await loadProducts();
 await loadMyProducts();
@@ -793,23 +579,16 @@ await loadOrders();
 if(isAdmin)await loadAdmin();
 
 }catch(err){
-
-console.error("Erreur de session :",err);
-notify("Erreur de chargement : "+err.message);
-
+console.error("Erreur de session:",err);
+notify("Erreur de chargement : "+friendlyError(err));
 }finally{
-
 refreshing=false;
-
+}
 }
 
-}
-
-/* =========================================
-   CATALOGUE
-========================================= */
-
+/* CATALOGUE */
 async function loadProducts(){
+if(!db)return;
 
 const {data,error}=await db.from("globexa_products")
 .select("id,name,description,price,currency,image_url,seller_id,category,status")
@@ -817,42 +596,31 @@ const {data,error}=await db.from("globexa_products")
 .order("created_at",{ascending:false});
 
 if(error){
-
 $("products").innerHTML=
-'<div class="empty">Impossible de charger les produits : '+safe(error.message)+'</div>';
-
+'<div class="empty">Erreur du catalogue : '+safe(friendlyError(error))+'</div>';
 return;
-
 }
 
 allProducts=data||[];
 filterProducts();
-
 }
 
 function renderProducts(data){
-
 const root=$("products");
-
 root.innerHTML="";
 $("productCount").textContent=data.length+" produit(s)";
 
 if(!data.length){
-
-root.innerHTML=
-'<div class="empty">Aucun produit disponible pour le moment.</div>';
-
+root.innerHTML='<div class="empty">Aucun produit disponible pour le moment.</div>';
 return;
-
 }
 
 data.forEach(p=>{
-
 const card=document.createElement("article");
 card.className="product";
 
 const photo=p.image_url
-?`<img src="${safe(p.image_url)}" alt="${safe(p.name)}" loading="lazy">`
+?'<img src="'+safe(p.image_url)+'" alt="'+safe(p.name)+'" loading="lazy">'
 :'<div style="height:175px;display:grid;place-items:center;font-size:48px;background:#edf2f7">📦</div>';
 
 card.innerHTML=photo+`
@@ -868,202 +636,163 @@ card.innerHTML=photo+`
 
 card.querySelector(".detail").onclick=()=>openProduct(p);
 card.querySelector(".buy").onclick=()=>openProduct(p);
-
 root.appendChild(card);
-
 });
-
 }
 
 function filterProducts(){
-
 const q=$("searchInput").value.trim().toLowerCase();
 
 const filtered=allProducts.filter(p=>{
-
 const cat=String(p.category||"Autres").toLowerCase();
-
-const matchCat=activeCategory==="Tous"||
-cat===activeCategory.toLowerCase();
-
-const matchText=(p.name+" "+p.description+" "+cat)
-.toLowerCase().includes(q);
-
+const matchCat=activeCategory==="Tous"||cat===activeCategory.toLowerCase();
+const matchText=(p.name+" "+p.description+" "+cat).toLowerCase().includes(q);
 return matchCat&&matchText;
-
 });
-
 renderProducts(filtered);
-
 }
 
 $("searchBtn").onclick=filterProducts;
-
 $("searchInput").addEventListener("keydown",e=>{
 if(e.key==="Enter")filterProducts();
 });
 
 $("categoryRow").onclick=e=>{
-
 const b=e.target.closest("[data-cat]");
 if(!b)return;
-
 activeCategory=b.dataset.cat;
-
 document.querySelectorAll(".cat").forEach(x=>{
 x.classList.toggle("active",x===b);
 });
-
 filterProducts();
-
 };
 
-/* =========================================
-   FICHE PRODUIT
-========================================= */
-
+/* FICHE PRODUIT */
 function openProduct(p){
-
 selectedProduct=p;
-
 $("modalTitle").textContent=p.name;
 $("modalDescription").textContent=p.description||"";
 $("modalPrice").textContent=money(p.price,p.currency);
-
 $("modalImage").src=p.image_url||"";
 $("modalImage").style.display=p.image_url?"block":"none";
-
 $("modalQuantity").value=1;
-
 $("productModal").classList.remove("hidden");
-
 }
 
 $("closeModal").onclick=()=>{
 $("productModal").classList.add("hidden");
 };
 
-/* =========================================
-   COMMANDER
-========================================= */
-
+/* COMMANDER */
 $("modalOrder").onclick=async()=>{
-
 if(!currentUser){
 notify("Connectez-vous pour commander.");
+location.hash="account";
 return;
 }
-
 if(!selectedProduct)return;
 
 const qty=Number($("modalQuantity").value);
-
-if(!Number.isInteger(qty)||qty<1){
+if(!Number.isInteger(qty)||qty<1)
 return notify("Quantité invalide.");
-}
 
+const button=$("modalOrder");
+button.disabled=true;
+button.textContent="Enregistrement...";
+
+try{
 const total=Number(selectedProduct.price)*qty;
 
 const {error}=await db.from("globexa_orders").insert({
-
 customer_id:currentUser.id,
 product_id:selectedProduct.id,
 quantity:qty,
 total:total,
 currency:selectedProduct.currency,
 payment_method:"pending"
-
 });
 
-if(error){
-return notify("Erreur commande : "+error.message);
-}
+if(error)throw error;
 
 $("productModal").classList.add("hidden");
-
 notify("Commande enregistrée. Paiement en attente.");
-
 await loadOrders();
 
+}catch(err){
+notify("Erreur commande : "+friendlyError(err));
+}finally{
+button.disabled=false;
+button.textContent="Commander";
+}
 };
 
-/* =========================================
-   FOURNISSEURS
-========================================= */
-
+/* FOURNISSEURS */
 $("sellerForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
 
-if(!currentUser)return notify("Connectez-vous d'abord.");
+if(!currentUser){
+notify("Connectez-vous d'abord.");
+location.hash="account";
+return;
+}
+if(!mySeller)return await createSeller(e);
+notify("Votre demande fournisseur existe déjà.");
+});
 
-if(mySeller)return notify("Votre demande fournisseur existe déjà.");
-
+async function createSeller(e){
+try{
 const {data,error}=await db.from("globexa_sellers").insert({
-
 user_id:currentUser.id,
 name:$("sellerName").value.trim(),
 country:$("sellerCountry").value.trim(),
 contact:$("sellerContact").value.trim(),
 description:$("sellerDescription").value.trim()
-
 }).select().single();
 
-if(error){
-return notify("Erreur fournisseur : "+error.message);
-}
+if(error)throw error;
 
 mySeller=data;
-
 e.target.reset();
-
 $("sellerStatus").textContent="Demande envoyée : "+data.status;
-
 notify("Demande fournisseur envoyée.");
+}catch(err){
+notify("Erreur fournisseur : "+friendlyError(err));
+}
+}
 
-});
-
-/* =========================================
-   PUBLICATION PRODUIT
-========================================= */
-
+/* PUBLICATION PRODUIT */
 $("productForm").addEventListener("submit",async e=>{
-
 e.preventDefault();
 
-if(!currentUser)return notify("Connectez-vous d'abord.");
-
-if(!mySeller)return notify("Inscrivez d'abord votre entreprise.");
-
-if(mySeller.status!=="approved"){
-return notify("Votre compte fournisseur doit être approuvé.");
+if(!currentUser){
+notify("Connectez-vous d'abord.");
+location.hash="account";
+return;
 }
+if(!mySeller)return notify("Inscrivez d'abord votre entreprise.");
+if(mySeller.status!=="approved")
+return notify("Votre compte fournisseur doit être approuvé.");
 
 const price=Number($("productPrice").value);
 const image=$("productImage").value.trim();
 
-if(!Number.isFinite(price)||price<=0){
+if(!Number.isFinite(price)||price<=0)
 return notify("Prix invalide.");
-}
 
 if(image){
+try{
+const u=new URL(image);
+if(!["http:","https:"].includes(u.protocol))throw Error();
+}catch{
+return notify("Lien de photo invalide.");
+}
+}
+
+const button=e.target.querySelector('button[type="submit"],button:not([type])');
+if(button){button.disabled=true;button.textContent="Envoi...";}
 
 try{
-
-const u=new URL(image);
-
-if(!["http:","https:"].includes(u.protocol))throw Error();
-
-}catch{
-
-return notify("Lien de photo invalide.");
-
-}
-
-}
-
 const {error}=await db.from("globexa_products").insert({
-
 seller_id:mySeller.id,
 name:$("productName").value.trim(),
 category:$("productCategory").value,
@@ -1071,34 +800,24 @@ description:$("productDescription").value.trim(),
 price:price,
 currency:$("productCurrency").value,
 image_url:image||null
-
 });
-
-if(error){
-return notify("Erreur produit : "+error.message);
-}
+if(error)throw error;
 
 e.target.reset();
-
 notify("Produit envoyé pour validation.");
-
 await loadMyProducts();
-
+}catch(err){
+notify("Erreur produit : "+friendlyError(err));
+}finally{
+if(button){button.disabled=false;button.textContent="Soumettre le produit";}
+}
 });
 
-/* =========================================
-   MES PRODUITS
-========================================= */
-
+/* MES PRODUITS */
 async function loadMyProducts(){
-
 if(!currentUser||!mySeller){
-
-$("myProducts").textContent=
-"Connectez-vous comme fournisseur pour voir vos produits.";
-
+$("myProducts").textContent="Connectez-vous comme fournisseur pour voir vos produits.";
 return;
-
 }
 
 const {data,error}=await db.from("globexa_products")
@@ -1107,41 +826,22 @@ const {data,error}=await db.from("globexa_products")
 .order("created_at",{ascending:false});
 
 if(error){
-
-$("myProducts").textContent=error.message;
+$("myProducts").textContent=friendlyError(error);
 return;
-
 }
 
 $("myProducts").innerHTML=(data||[]).map(p=>`
-
 <div class="listrow">
-<div>
-<b>${safe(p.name)}</b><br>
-${money(p.price,p.currency)}
-</div>
-<span class="badge ${p.status==="approved"?"ok":""}">
-${safe(p.status)}
-</span>
-</div>
-
-`).join("")||"Aucun produit publié.";
-
+<div><b>${safe(p.name)}</b><br>${money(p.price,p.currency)}</div>
+<span class="badge ${p.status==="approved"?"ok":""}">${safe(p.status)}</span>
+</div>`).join("")||"Aucun produit publié.";
 }
 
-/* =========================================
-   MES COMMANDES
-========================================= */
-
+/* MES COMMANDES */
 async function loadOrders(){
-
 if(!currentUser){
-
-$("myOrders").textContent=
-"Connectez-vous pour consulter vos commandes.";
-
+$("myOrders").textContent="Connectez-vous pour consulter vos commandes.";
 return;
-
 }
 
 const {data,error}=await db.from("globexa_orders")
@@ -1150,196 +850,102 @@ const {data,error}=await db.from("globexa_orders")
 .order("created_at",{ascending:false});
 
 if(error){
-
-$("myOrders").textContent=error.message;
+$("myOrders").textContent=friendlyError(error);
 return;
-
 }
 
 $("myOrders").innerHTML=(data||[]).map(o=>`
-
 <div class="listrow">
 <div>
 <b>Commande ${safe(String(o.id).slice(0,12))}</b><br>
 ${money(o.total,o.currency)} · Quantité : ${safe(o.quantity)}
 </div>
-<span class="badge">
-${safe(o.payment_status||"En attente")}
-</span>
-</div>
-
-`).join("")||"Aucune commande.";
-
+<span class="badge">${safe(o.payment_status||"En attente")}</span>
+</div>`).join("")||"Aucune commande.";
 }
 
-/* =========================================
-   ADMINISTRATION
-========================================= */
-
+/* ADMINISTRATION */
 async function loadAdmin(){
-
 const [s,p,o,c]=await Promise.all([
-
-db.from("globexa_sellers")
-.select("*")
-.order("created_at",{ascending:false}),
-
-db.from("globexa_products")
-.select("*")
-.order("created_at",{ascending:false}),
-
-db.from("globexa_orders")
-.select("*")
-.order("created_at",{ascending:false}),
-
-db.from("commissions")
-.select("*")
-.order("created_at",{ascending:false})
-
+db.from("globexa_sellers").select("*").order("created_at",{ascending:false}),
+db.from("globexa_products").select("*").order("created_at",{ascending:false}),
+db.from("globexa_orders").select("*").order("created_at",{ascending:false}),
+db.from("commissions").select("*").order("created_at",{ascending:false})
 ]);
 
 const err=[s,p,o,c].find(x=>x.error);
-
 if(err){
-
-notify("Erreur admin : "+err.error.message);
+notify("Erreur administration : "+friendlyError(err.error));
 return;
-
 }
 
 $("sellerCount").textContent=s.data.length;
 $("adminProductCount").textContent=p.data.length;
 $("orderCount").textContent=o.data.length;
-
 $("commissionTotal").textContent=
 c.data.reduce((n,x)=>n+Number(x.amount||0),0).toFixed(2);
 
 $("adminSellers").innerHTML=s.data.map(x=>`
-
 <div class="listrow">
-<div>
-<b>${safe(x.name)}</b><br>
-${safe(x.country)}<br>
-Statut : ${safe(x.status)}
-</div>
-${x.status==="approved"?"":`
-<button class="btn small approveSeller" data-id="${safe(x.id)}">
-Approuver
-</button>`}
-</div>
-
-`).join("")||"Aucun fournisseur.";
+<div><b>${safe(x.name)}</b><br>${safe(x.country)}<br>Statut : ${safe(x.status)}</div>
+${x.status==="approved"?"":'<button class="btn small approveSeller" data-id="'+safe(x.id)+'">Approuver</button>'}
+</div>`).join("")||"Aucun fournisseur.";
 
 $("adminProducts").innerHTML=p.data.map(x=>`
-
 <div class="listrow">
-<div>
-<b>${safe(x.name)}</b><br>
-${money(x.price,x.currency)}<br>
-Statut : ${safe(x.status)}
-</div>
-${x.status==="approved"?"":`
-<button class="btn small approveProduct" data-id="${safe(x.id)}">
-Approuver
-</button>`}
-</div>
-
-`).join("")||"Aucun produit.";
+<div><b>${safe(x.name)}</b><br>${money(x.price,x.currency)}<br>Statut : ${safe(x.status)}</div>
+${x.status==="approved"?"":'<button class="btn small approveProduct" data-id="'+safe(x.id)+'">Approuver</button>'}
+</div>`).join("")||"Aucun produit.";
 
 $("adminOrders").innerHTML=o.data.map(x=>`
-
 <div class="listrow">
-<div>
-Commande ${safe(String(x.id).slice(0,12))}<br>
-${money(x.total,x.currency)}
-</div>
+<div>Commande ${safe(String(x.id).slice(0,12))}<br>${money(x.total,x.currency)}</div>
 <span class="badge">${safe(x.status||"En attente")}</span>
-</div>
-
-`).join("")||"Aucune commande.";
+</div>`).join("")||"Aucune commande.";
 
 $("adminCommissions").innerHTML=c.data.map(x=>`
-
 <div class="listrow">
-<div>
-Commande ${safe(String(x.order_id||"").slice(0,12))}<br>
-Taux : ${safe(x.rate)} %
-</div>
+<div>Commande ${safe(String(x.order_id||"").slice(0,12))}<br>Taux : ${safe(x.rate)} %</div>
 <b>${money(x.amount,"")}</b>
-</div>
-
-`).join("")||"Aucune commission.";
+</div>`).join("")||"Aucune commission.";
 
 document.querySelectorAll(".approveSeller").forEach(b=>{
 b.onclick=()=>approveSeller(b.dataset.id);
 });
-
 document.querySelectorAll(".approveProduct").forEach(b=>{
 b.onclick=()=>approveProduct(b.dataset.id);
 });
-
 }
 
-/* =========================================
-   APPROUVER FOURNISSEUR
-========================================= */
-
+/* APPROBATION FOURNISSEUR */
 async function approveSeller(id){
-
 const {error}=await db.from("globexa_sellers")
-.update({status:"approved"})
-.eq("id",id);
-
-if(error)return notify(error.message);
-
+.update({status:"approved"}).eq("id",id);
+if(error)return notify(friendlyError(error));
 notify("Fournisseur approuvé.");
-
 await refresh();
-
 }
 
-/* =========================================
-   APPROUVER PRODUIT
-========================================= */
-
+/* APPROBATION PRODUIT */
 async function approveProduct(id){
-
 const {error}=await db.from("globexa_products")
-.update({status:"approved"})
-.eq("id",id);
-
-if(error)return notify(error.message);
-
+.update({status:"approved"}).eq("id",id);
+if(error)return notify(friendlyError(error));
 notify("Produit approuvé.");
-
 await loadProducts();
 await loadAdmin();
-
 }
 
-/* =========================================
-   EVENEMENTS GENERAUX
-========================================= */
-
+/* EVENEMENTS */
 function setupEvents(){
-
 $("productModal").addEventListener("click",e=>{
-
-if(e.target===$("productModal")){
+if(e.target===$("productModal"))
 $("productModal").classList.add("hidden");
-}
-
 });
-
 }
 
-/* =========================================
-   DEMARRAGE
-========================================= */
-
+/* DEMARRAGE */
 initialize();
-
 </script>
-
 </body>
 </html>
