@@ -1,3 +1,4 @@
+
 name: Build GLOBEXA APK
 
 on:
@@ -20,16 +21,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Préparer Capacitor
         run: |
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-
-      - name: Créer le projet Android
-        run: |
-          npx cap init GLOBEXA com.globexa.app --web-dir=www
 
       - name: Préparer les fichiers GLOBEXA
         run: |
@@ -39,6 +36,9 @@ jobs:
           else
             echo "<h1>GLOBEXA</h1>" > www/index.html
           fi
+
+      - name: Créer le projet Android
+        run: npx cap init GLOBEXA com.globexa.app --web-dir=www
 
       - name: Ajouter Android
         run: npx cap add android
