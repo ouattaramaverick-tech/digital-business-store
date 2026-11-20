@@ -1,11 +1,7 @@
-
 name: Build GLOBEXA APK
 
 on:
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   build:
@@ -26,42 +22,38 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Installer Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Préparer Capacitor
         run: |
-          set -e
-          mkdir -p www
-          cp index.html www/index.html
-          if [ -d assets ]; then cp -R assets www/; fi
-          if [ -d images ]; then cp -R images www/; fi
           npm init -y
-          npm install --no-audit --no-fund @capacitor/core@6 @capacitor/android@6
-          npm install --save-dev --no-audit --no-fund @capacitor/cli@6
-          cat > capacitor.config.json <<'EOF'
-          {
-            "appId": "com.globexa.marketplace",
-            "appName": "GLOBEXA",
-            "webDir": "www"
-          }
-          EOF
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Créer le projet Android
+        run: |
+          npx cap init GLOBEXA com.globexa.app --web-dir=www
+
+      - name: Préparer les fichiers GLOBEXA
+        run: |
+          mkdir -p www
+          if [ -f index.html ]; then
+            cp index.html www/index.html
+          else
+            echo "<h1>GLOBEXA</h1>" > www/index.html
+          fi
+
+      - name: Ajouter Android
         run: npx cap add android
 
       - name: Synchroniser GLOBEXA
         run: npx cap sync android
 
       - name: Construire APK
-        working-directory: android
         run: |
+          cd android
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew assembleDebug
 
       - name: Télécharger APK
         uses: actions/upload-artifact@v4
         with:
           name: GLOBEXA-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
