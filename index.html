@@ -88,15 +88,12 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 <header>
 <div class="head">
 <a class="logo" href="#home">✈ GLOBE<span>XA</span></a>
-
 <div class="search">
 <input id="search" placeholder="Rechercher un produit...">
 <button id="searchBtn">Rechercher</button>
 </div>
-
 <button class="btn blue" onclick="location.hash='account'">Mon compte</button>
 </div>
-
 <nav>
 <a href="#home">Accueil</a>
 <a href="#catalogue">Catalogue</a>
@@ -122,7 +119,6 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 
 <section class="section" id="catalogue">
 <h2>Catalogue international</h2>
-
 <div class="categories" id="categories">
 <button class="cat active" data-cat="Tous">Tout</button>
 <button class="cat" data-cat="Électronique">Électronique</button>
@@ -133,7 +129,6 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 <button class="cat" data-cat="Industrie">Industrie</button>
 <button class="cat" data-cat="Autres">Autres</button>
 </div>
-
 <p id="count" class="muted"></p>
 <div class="grid" id="products">
 <div class="panel">Chargement du catalogue...</div>
@@ -142,86 +137,68 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 
 <section class="section" id="supplier">
 <h2>Espace fournisseurs</h2>
-
 <div class="two">
+
 <div class="panel">
 <h3>Inscrire mon entreprise</h3>
-
 <form id="sellerForm">
 <div class="field">
 <label>Entreprise</label>
 <input id="sellerName" required>
 </div>
-
 <div class="field">
 <label>Pays</label>
 <input id="sellerCountry" required>
 </div>
-
 <div class="field">
 <label>WhatsApp / Téléphone</label>
 <input id="sellerContact" required>
 </div>
-
 <div class="field">
 <label>Description</label>
 <textarea id="sellerDescription"></textarea>
 </div>
-
-<button class="btn">Envoyer ma demande</button>
+<button class="btn" type="submit">Envoyer ma demande</button>
 </form>
-
-<p id="sellerStatus" class="muted"></p>
+<div id="sellerStatus"></div>
 </div>
 
 <div class="panel">
 <h3>Publier un produit</h3>
-
 <form id="productForm">
 <div class="field">
 <label>Nom du produit</label>
 <input id="productName" required>
 </div>
-
 <div class="field">
 <label>Catégorie</label>
 <select id="productCategory">
-<option>Électronique</option>
-<option>Mode</option>
-<option>Maison</option>
-<option>Beauté</option>
-<option>Automobile</option>
-<option>Industrie</option>
+<option>Électronique</option><option>Mode</option>
+<option>Maison</option><option>Beauté</option>
+<option>Automobile</option><option>Industrie</option>
 <option>Autres</option>
 </select>
 </div>
-
 <div class="field">
 <label>Description</label>
 <textarea id="productDescription" required></textarea>
 </div>
-
 <div class="field">
 <label>Prix</label>
 <input id="productPrice" type="number" min="0.01" step="0.01" required>
 </div>
-
 <div class="field">
 <label>Devise</label>
 <select id="productCurrency">
-<option>USD</option>
-<option>EUR</option>
-<option>CNY</option>
-<option>XOF</option>
+<option>USD</option><option>EUR</option>
+<option>CNY</option><option>XOF</option>
 </select>
 </div>
-
 <div class="field">
 <label>Lien photo HTTPS</label>
 <input id="productImage" type="url">
 </div>
-
-<button class="btn">Soumettre le produit</button>
+<button class="btn" type="submit">Soumettre le produit</button>
 </form>
 </div>
 </div>
@@ -234,42 +211,37 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 
 <section class="section" id="account">
 <h2>Mon compte GLOBEXA</h2>
-
 <div class="two">
+
 <form id="loginForm" class="panel">
 <h3>Connexion</h3>
-
 <div class="field">
 <label>E-mail</label>
 <input id="email" type="email" required>
 </div>
-
 <div class="field">
 <label>Mot de passe</label>
 <input id="password" type="password" required>
 </div>
-
-<button class="btn">Se connecter</button>
+<button class="btn" type="submit">Se connecter</button>
 <button type="button" class="btn light" id="forgotBtn">Mot de passe oublié</button>
 <div id="loginMsg"></div>
 </form>
 
 <form id="signupForm" class="panel">
 <h3>Créer un compte</h3>
-
 <div class="field">
 <label>E-mail</label>
 <input id="newEmail" type="email" required>
 </div>
-
 <div class="field">
 <label>Mot de passe (6 caractères minimum)</label>
 <input id="newPassword" type="password" minlength="6" required>
 </div>
-
-<button class="btn">Créer mon compte</button>
+<button class="btn" type="submit">Créer mon compte</button>
 <div id="signupMsg"></div>
 </form>
+
 </div>
 
 <div class="panel">
@@ -283,7 +255,7 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 <label>E-mail</label>
 <input id="forgotEmail" type="email" required>
 </div>
-<button class="btn">Envoyer le lien</button>
+<button class="btn" type="submit">Envoyer le lien</button>
 <div id="forgotMsg"></div>
 </form>
 </section>
@@ -295,10 +267,7 @@ footer{background:#061a2e;color:white;text-align:center;padding:30px;margin-top:
 
 <section class="section" id="admin">
 <h2>Administration GLOBEXA</h2>
-
-<div class="panel" id="adminLocked">
-Accès réservé aux administrateurs.
-</div>
+<div class="panel" id="adminLocked">Accès réservé aux administrateurs.</div>
 
 <div id="adminDashboard" class="hidden">
 <div class="stats">
@@ -312,17 +281,14 @@ Accès réservé aux administrateurs.
 <h3>Demandes fournisseurs</h3>
 <div id="adminSellers"></div>
 </div>
-
 <div class="panel">
 <h3>Validation des produits</h3>
 <div id="adminProducts"></div>
 </div>
-
 <div class="panel">
 <h3>Commandes</h3>
 <div id="adminOrders"></div>
 </div>
-
 <div class="panel">
 <h3>Commissions GLOBEXA</h3>
 <p class="muted">Taux de commission prévu : 6 %.</p>
@@ -346,12 +312,10 @@ Accès réservé aux administrateurs.
 <img id="modalImage" alt="Produit">
 <p id="modalDescription"></p>
 <div class="price" id="modalPrice"></div>
-
 <div class="field">
 <label>Quantité</label>
 <input id="quantity" type="number" min="1" value="1">
 </div>
-
 <button class="btn" id="orderBtn">Commander</button>
 </div>
 </div>
@@ -381,16 +345,12 @@ const el=$("toast");
 el.textContent=message;
 el.classList.remove("hidden");
 clearTimeout(toastTimer);
-toastTimer=setTimeout(()=>el.classList.add("hidden"),4500);
+toastTimer=setTimeout(()=>el.classList.add("hidden"),5000);
 }
 
 function safe(value){
 return String(value??"").replace(/[&<>"']/g,c=>({
-"&":"&amp;",
-"<":"&lt;",
-">":"&gt;",
-'"':"&quot;",
-"'":"&#39;"
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
 }[c]));
 }
 
@@ -404,22 +364,16 @@ $(id).innerHTML='<div class="status '+(ok?"success":"error")+'">'+safe(message)+
 
 function err(error){
 let message=error?.message||String(error);
-
 if(/Failed to fetch|NetworkError|Load failed/i.test(message))
 return "Connexion Internet impossible. Vérifiez votre connexion.";
-
 if(/Invalid login credentials/i.test(message))
 return "E-mail ou mot de passe incorrect.";
-
 if(/Email not confirmed/i.test(message))
 return "Confirmez votre adresse e-mail.";
-
 if(/row-level security|permission denied/i.test(message))
-return "Accès refusé par les règles de sécurité Supabase. Les autorisations de cette table doivent être vérifiées.";
-
+return "Accès refusé par les règles de sécurité Supabase. Vérifiez les autorisations RLS.";
 if(/relation .* does not exist/i.test(message))
-return "Une table nécessaire est introuvable dans Supabase : "+message;
-
+return "Une table nécessaire est introuvable : "+message;
 return message;
 }
 
@@ -444,7 +398,6 @@ button.textContent=button.dataset.oldText||button.textContent;
 /* INITIALISATION */
 async function start(){
 $("sessionInfo").textContent="Connexion à Supabase...";
-
 try{
 const mod=await import("https://esm.sh/@supabase/supabase-js@2");
 
@@ -458,14 +411,10 @@ detectSessionInUrl:true
 
 db.auth.onAuthStateChange((event,session)=>{
 user=session?.user||null;
-
 if(event==="PASSWORD_RECOVERY"){
 $("forgotForm").classList.remove("hidden");
 }
-
-setTimeout(()=>{
-refresh();
-},0);
+setTimeout(()=>refresh(),0);
 });
 
 await refresh();
@@ -477,13 +426,12 @@ $("products").innerHTML='<div class="panel">Le service Supabase ne répond pas. 
 }
 }
 
-/* INSCRIPTION */
+/* INSCRIPTION COMPTE */
 $("signupForm").addEventListener("submit",async event=>{
 event.preventDefault();
-
 if(!db)return toast("Serveur indisponible.");
 
-const button=event.target.querySelector("button");
+const button=event.target.querySelector('button[type="submit"]');
 setButtonLoading(button,true,"Création...");
 
 try{
@@ -494,7 +442,6 @@ options:{
 emailRedirectTo:location.origin+location.pathname
 }
 });
-
 if(error)throw error;
 
 if(data.session){
@@ -503,7 +450,6 @@ await refresh();
 }else{
 msg("signupMsg","Inscription enregistrée. Vérifiez votre e-mail pour confirmer votre compte.",true);
 }
-
 }catch(error){
 msg("signupMsg",err(error));
 }finally{
@@ -514,10 +460,9 @@ setButtonLoading(button,false);
 /* CONNEXION */
 $("loginForm").addEventListener("submit",async event=>{
 event.preventDefault();
-
 if(!db)return toast("Serveur indisponible.");
 
-const button=event.target.querySelector('button[type="submit"]')||event.target.querySelector("button");
+const button=event.target.querySelector('button[type="submit"]');
 setButtonLoading(button,true,"Connexion...");
 
 try{
@@ -525,12 +470,9 @@ const {error}=await db.auth.signInWithPassword({
 email:$("email").value.trim(),
 password:$("password").value
 });
-
 if(error)throw error;
-
 msg("loginMsg","Connexion réussie.",true);
 await refresh();
-
 }catch(error){
 msg("loginMsg",err(error));
 }finally{
@@ -546,17 +488,14 @@ $("forgotForm").classList.toggle("hidden");
 
 $("forgotForm").addEventListener("submit",async event=>{
 event.preventDefault();
-
+if(!db)return;
 try{
 const {error}=await db.auth.resetPasswordForEmail(
 $("forgotEmail").value.trim(),
 {redirectTo:location.origin+location.pathname}
 );
-
 if(error)throw error;
-
 msg("forgotMsg","Consultez votre boîte e-mail pour récupérer votre compte.",true);
-
 }catch(error){
 msg("forgotMsg",err(error));
 }
@@ -565,11 +504,8 @@ msg("forgotMsg",err(error));
 /* DÉCONNEXION */
 $("logout").onclick=async()=>{
 if(!db)return;
-
 const {error}=await db.auth.signOut();
-
 if(error)return toast(err(error));
-
 await refresh();
 toast("Déconnexion réussie.");
 };
@@ -577,7 +513,6 @@ toast("Déconnexion réussie.");
 /* CHARGEMENT DU COMPTE */
 async function refresh(){
 if(!db||busy)return;
-
 busy=true;
 
 try{
@@ -598,8 +533,7 @@ const profile=await db.from("profiles")
 if(profile.error){
 console.warn("Profil:",profile.error.message);
 }else if(profile.data){
-admin=profile.data.is_admin===true||
-profile.data.role==="admin";
+admin=profile.data.is_admin===true||profile.data.role==="admin";
 }
 
 const sellerResult=await db.from("globexa_sellers")
@@ -615,13 +549,11 @@ seller=sellerResult.data;
 }
 
 $("sessionInfo").textContent=user?
-"Connecté : "+user.email:
-"Vous n'êtes pas connecté.";
+"Connecté : "+user.email:"Vous n'êtes pas connecté.";
 
 $("loginForm").classList.toggle("hidden",!!user);
 $("signupForm").classList.toggle("hidden",!!user);
 $("logout").classList.toggle("hidden",!user);
-
 $("adminLocked").classList.toggle("hidden",admin);
 $("adminDashboard").classList.toggle("hidden",!admin);
 
@@ -629,9 +561,7 @@ await loadProducts();
 await loadMyProducts();
 await loadOrders();
 
-if(admin){
-await loadAdmin();
-}
+if(admin)await loadAdmin();
 
 }catch(error){
 console.error("REFRESH:",error);
@@ -652,12 +582,10 @@ const {data,error}=await db.from("globexa_products")
 
 if(error){
 console.error("CATALOGUE:",error);
-$("products").innerHTML=
-'<div class="panel">Erreur catalogue : '+safe(err(error))+'</div>';
+$("products").innerHTML='<div class="panel">Erreur catalogue : '+safe(err(error))+'</div>';
 $("count").textContent="";
 return;
 }
-
 products=data||[];
 filter();
 }
@@ -667,17 +595,8 @@ const q=$("search").value.trim().toLowerCase();
 
 const found=products.filter(product=>{
 const productCategory=String(product.category||"Autres").toLowerCase();
-
-const categoryMatch=
-category==="Tous"||
-productCategory===category.toLowerCase();
-
-const searchText=[
-product.name,
-product.description,
-product.category
-].join(" ").toLowerCase();
-
+const categoryMatch=category==="Tous"||productCategory===category.toLowerCase();
+const searchText=[product.name,product.description,product.category].join(" ").toLowerCase();
 return categoryMatch&&searchText.includes(q);
 });
 
@@ -685,8 +604,7 @@ $("count").textContent=found.length+" produit(s) disponible(s)";
 $("products").innerHTML="";
 
 if(!found.length){
-$("products").innerHTML=
-'<div class="panel">Aucun produit disponible pour cette recherche.</div>';
+$("products").innerHTML='<div class="panel">Aucun produit disponible pour cette recherche.</div>';
 return;
 }
 
@@ -712,7 +630,6 @@ card.innerHTML=photo+`
 
 card.querySelector(".detail").onclick=()=>openProduct(product);
 card.querySelector(".buy").onclick=()=>openProduct(product);
-
 $("products").appendChild(card);
 });
 }
@@ -723,71 +640,56 @@ $("search").oninput=filter;
 $("categories").onclick=event=>{
 const button=event.target.closest("[data-cat]");
 if(!button)return;
-
 category=button.dataset.cat;
-
 document.querySelectorAll(".cat").forEach(item=>{
 item.classList.toggle("active",item===button);
 });
-
 filter();
 };
 
 /* FICHE PRODUIT */
 function openProduct(product){
 selected=product;
-
 $("modalName").textContent=product.name;
 $("modalDescription").textContent=product.description||"";
 $("modalPrice").textContent=money(product.price,product.currency);
-
 $("modalImage").src=product.image_url||"";
 $("modalImage").style.display=product.image_url?"block":"none";
-
 $("quantity").value=1;
 $("modal").classList.remove("hidden");
 }
 
-$("closeModal").onclick=()=>{
-$("modal").classList.add("hidden");
-};
+$("closeModal").onclick=()=>{$("modal").classList.add("hidden");};
 
 $("modal").onclick=event=>{
-if(event.target===$("modal")){
-$("modal").classList.add("hidden");
-}
+if(event.target===$("modal"))$("modal").classList.add("hidden");
 };
 
-/* CRÉATION DE COMMANDE */
+/* COMMANDES */
 $("orderBtn").onclick=async()=>{
 if(!requireLogin()||!selected)return;
 
 const quantity=Number($("quantity").value);
-
-if(!Number.isInteger(quantity)||quantity<1){
+if(!Number.isInteger(quantity)||quantity<1)
 return toast("Quantité invalide.");
-}
 
-if(selected.seller_id===seller?.id){
+if(selected.seller_id===seller?.id)
 return toast("Vous ne pouvez pas commander votre propre produit.");
-}
 
 const button=$("orderBtn");
 setButtonLoading(button,true,"Enregistrement...");
 
 try{
 const total=Number(selected.price)*quantity;
-
-if(!Number.isFinite(total)||total<=0){
+if(!Number.isFinite(total)||total<=0)
 throw new Error("Montant de commande invalide.");
-}
 
 const {error}=await db.from("globexa_orders").insert({
 customer_id:user.id,
 seller_id:selected.seller_id,
 product_id:selected.id,
-quantity:quantity,
-total:total,
+quantity,
+total,
 currency:selected.currency||"USD",
 payment_method:"pending",
 payment_status:"pending",
@@ -795,13 +697,9 @@ status:"pending"
 });
 
 if(error)throw error;
-
 $("modal").classList.add("hidden");
-
 toast("Commande enregistrée. Paiement en attente.");
-
 await loadOrders();
-
 }catch(error){
 console.error("COMMANDE:",error);
 toast("Commande : "+err(error));
@@ -810,46 +708,92 @@ setButtonLoading(button,false);
 }
 };
 
-/* INSCRIPTION FOURNISSEUR */
+/* INSCRIPTION ENTREPRISE - CORRIGÉE */
 $("sellerForm").addEventListener("submit",async event=>{
 event.preventDefault();
 
+if(!db)return toast("Serveur indisponible.");
 if(!requireLogin())return;
 
-if(seller){
-return toast("Vous avez déjà une demande fournisseur.");
+const name=$("sellerName").value.trim();
+const country=$("sellerCountry").value.trim();
+const contact=$("sellerContact").value.trim();
+const description=$("sellerDescription").value.trim();
+
+if(!name||!country||!contact){
+msg("sellerStatus","Remplissez le nom de l'entreprise, le pays et le téléphone.");
+return;
 }
 
-const button=event.target.querySelector("button");
-setButtonLoading(button,true,"Envoi...");
+const button=event.target.querySelector('button[type="submit"]');
+setButtonLoading(button,true,"Inscription en cours...");
 
 try{
-const {data,error}=await db.from("globexa_sellers")
+
+/* Vérifier si une entreprise existe déjà */
+const {data:existing,error:checkError}=await db
+.from("globexa_sellers")
+.select("id,user_id,name,country,contact,description,status")
+.eq("user_id",user.id)
+.maybeSingle();
+
+if(checkError)throw checkError;
+
+if(existing){
+seller=existing;
+msg("sellerStatus",
+"Votre entreprise est déjà enregistrée. Statut : "+(existing.status||"pending"),true);
+toast("Entreprise déjà inscrite.");
+return;
+}
+
+/* INSERTION SANS SELECT AUTOMATIQUE */
+const {error:insertError}=await db
+.from("globexa_sellers")
 .insert({
 user_id:user.id,
-name:$("sellerName").value.trim(),
-country:$("sellerCountry").value.trim(),
-contact:$("sellerContact").value.trim(),
-description:$("sellerDescription").value.trim(),
+name:name,
+country:country,
+contact:contact,
+description:description||null,
 status:"pending"
-})
-.select()
-.single();
+});
 
-if(error)throw error;
+if(insertError)throw insertError;
 
-seller=data;
+/* Récupérer l'entreprise après son insertion */
+const {data:created,error:readError}=await db
+.from("globexa_sellers")
+.select("*")
+.eq("user_id",user.id)
+.maybeSingle();
 
-$("sellerForm").reset();
-$("sellerStatus").textContent="Demande envoyée. Statut : "+data.status;
+if(readError)throw readError;
 
-toast("Demande fournisseur envoyée.");
+if(!created){
+throw new Error("Entreprise enregistrée, mais impossible de récupérer son profil. Vérifiez la politique SELECT de globexa_sellers.");
+}
+
+seller=created;
+
+event.target.reset();
+
+msg("sellerStatus",
+"Félicitations ! Votre entreprise est enregistrée. Statut : En attente de validation.",true);
+
+toast("Entreprise inscrite avec succès !");
 
 await loadMyProducts();
 
 }catch(error){
-console.error("FOURNISSEUR:",error);
-toast("Fournisseur : "+err(error));
+console.error("INSCRIPTION ENTREPRISE:",error);
+
+const message=(error.message||String(error))+
+(error.code?" | Code : "+error.code:"");
+
+msg("sellerStatus","Erreur : "+message);
+toast("Inscription impossible : "+message);
+
 }finally{
 setButtonLoading(button,false);
 }
@@ -860,21 +804,15 @@ $("productForm").addEventListener("submit",async event=>{
 event.preventDefault();
 
 if(!requireLogin())return;
-
-if(!seller){
-return toast("Inscrivez d'abord votre entreprise.");
-}
-
-if(seller.status!=="approved"){
+if(!seller)return toast("Inscrivez d'abord votre entreprise.");
+if(seller.status!=="approved")
 return toast("Votre compte fournisseur doit être approuvé.");
-}
 
 const price=Number($("productPrice").value);
 const image=$("productImage").value.trim();
 
-if(!Number.isFinite(price)||price<=0){
+if(!Number.isFinite(price)||price<=0)
 return toast("Prix invalide.");
-}
 
 if(image){
 try{
@@ -885,17 +823,16 @@ return toast("Lien de photo invalide.");
 }
 }
 
-const button=event.target.querySelector("button");
+const button=event.target.querySelector('button[type="submit"]');
 setButtonLoading(button,true,"Publication...");
 
 try{
-const {error}=await db.from("globexa_products")
-.insert({
+const {error}=await db.from("globexa_products").insert({
 seller_id:seller.id,
 name:$("productName").value.trim(),
 category:$("productCategory").value,
 description:$("productDescription").value.trim(),
-price:price,
+price,
 currency:$("productCurrency").value,
 image_url:image||null,
 status:"pending"
@@ -904,9 +841,7 @@ status:"pending"
 if(error)throw error;
 
 event.target.reset();
-
 toast("Produit envoyé pour validation.");
-
 await loadMyProducts();
 
 }catch(error){
@@ -936,13 +871,8 @@ return;
 
 $("myProducts").innerHTML=(data||[]).map(product=>`
 <div class="row">
-<div>
-<b>${safe(product.name)}</b><br>
-${money(product.price,product.currency)}
-</div>
-<span class="badge ${product.status==="approved"?"ok":""}">
-${safe(product.status||"pending")}
-</span>
+<div><b>${safe(product.name)}</b><br>${money(product.price,product.currency)}</div>
+<span class="badge ${product.status==="approved"?"ok":""}">${safe(product.status||"pending")}</span>
 </div>
 `).join("")||"Aucun produit publié.";
 }
@@ -968,8 +898,7 @@ $("myOrders").innerHTML=(data||[]).map(order=>`
 <div class="row">
 <div>
 <b>Commande ${safe(String(order.id).slice(0,12))}</b><br>
-${money(order.total,order.currency)}
-· Quantité : ${safe(order.quantity)}
+${money(order.total,order.currency)} · Quantité : ${safe(order.quantity)}
 </div>
 <span class="badge ${order.payment_status==="paid"?"ok":""}">
 ${safe(order.payment_status||"pending")}
@@ -990,7 +919,6 @@ db.from("commissions").select("*").order("created_at",{ascending:false})
 ]);
 
 const [sellersResult,productsResult,ordersResult,commissionsResult]=results;
-
 const failed=results.find(result=>result.error);
 
 if(failed){
@@ -1010,7 +938,6 @@ $("orderCount").textContent=orders.length;
 const commissionSum=commissions.reduce(
 (total,item)=>total+Number(item.amount||0),0
 );
-
 $("commissionTotal").textContent=commissionSum.toFixed(2);
 
 $("adminSellers").innerHTML=sellers.map(item=>`
@@ -1041,10 +968,7 @@ ${item.status==="approved"?
 
 $("adminOrders").innerHTML=orders.map(item=>`
 <div class="row">
-<div>
-Commande ${safe(String(item.id).slice(0,12))}<br>
-${money(item.total,item.currency)}
-</div>
+<div>Commande ${safe(String(item.id).slice(0,12))}<br>${money(item.total,item.currency)}</div>
 <span class="badge">${safe(item.status||"pending")}</span>
 </div>
 `).join("")||"Aucune commande.";
@@ -1073,18 +997,14 @@ async function approveSeller(id,button){
 if(!admin)return;
 
 setButtonLoading(button,true,"Validation...");
-
 try{
 const {error}=await db.from("globexa_sellers")
 .update({status:"approved"})
 .eq("id",id);
 
 if(error)throw error;
-
 toast("Fournisseur approuvé.");
-
 await refresh();
-
 }catch(error){
 toast("Validation : "+err(error));
 }finally{
@@ -1097,19 +1017,15 @@ async function approveProduct(id,button){
 if(!admin)return;
 
 setButtonLoading(button,true,"Validation...");
-
 try{
 const {error}=await db.from("globexa_products")
 .update({status:"approved"})
 .eq("id",id);
 
 if(error)throw error;
-
 toast("Produit approuvé.");
-
 await loadProducts();
 await loadAdmin();
-
 }catch(error){
 toast("Validation : "+err(error));
 }finally{
