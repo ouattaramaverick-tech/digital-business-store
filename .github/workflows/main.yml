@@ -28,14 +28,27 @@ jobs:
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Préparer GLOBEXA
+      - name: Copier GLOBEXA
         run: |
+          test -f index.html
           mkdir -p www
-          if [ -f index.html ]; then
-            cp index.html www/index.html
-          else
-            echo "<h1>GLOBEXA</h1>" > www/index.html
-          fi
+          cp -a index.html www/
+          for file in *.html; do
+            if [ -f "$file" ] && [ "$file" != "index.html" ]; then
+              cp -a "$file" www/
+            fi
+          done
+          for dir in assets css js images img fonts; do
+            if [ -d "$dir" ]; then
+              cp -a "$dir" www/
+            fi
+          done
+
+      - name: Vérifier les pages
+        run: |
+          test -s www/index.html
+          test -s www/boutique.html
+          test -s www/globexa-nouveau.html
 
       - name: Créer Android
         run: npx cap init GLOBEXA com.globexa.app --web-dir=www
@@ -43,23 +56,8 @@ jobs:
       - name: Ajouter Android
         run: npx cap add android
 
-      - name: Synchroniser GLOBEXA
+      - name: Synchroniser
         run: npx cap sync android
-
-      - name: Corriger les dépendances Kotlin
-        run: |
-          cat >> android/build.gradle <<'EOF'
-          allprojects {
-              configurations.all {
-                  resolutionStrategy.eachDependency { details ->
-                      if (details.requested.group == 'org.jetbrains.kotlin' &&
-                          details.requested.name.startsWith('kotlin-stdlib')) {
-                          details.useVersion '1.8.22'
-                      }
-                  }
-              }
-          }
-          EOF
 
       - name: Construire APK
         run: |
@@ -67,8 +65,14 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Vérifier APK
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+
       - name: Télécharger APK
         uses: actions/upload-artifact@v4
         with:
           name: GLOBEXA-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
