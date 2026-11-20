@@ -59,6 +59,15 @@ jobs:
       - name: Synchroniser
         run: npx cap sync android
 
+      - name: Corriger les doublons Kotlin
+        run: |
+          cat >> android/app/build.gradle <<'EOF'
+          configurations.configureEach {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+          EOF
+
       - name: Construire APK
         run: |
           cd android
