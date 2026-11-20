@@ -28,7 +28,7 @@ jobs:
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Préparer les fichiers GLOBEXA
+      - name: Préparer GLOBEXA
         run: |
           mkdir -p www
           if [ -f index.html ]; then
@@ -37,7 +37,7 @@ jobs:
             echo "<h1>GLOBEXA</h1>" > www/index.html
           fi
 
-      - name: Créer le projet Android
+      - name: Créer Android
         run: npx cap init GLOBEXA com.globexa.app --web-dir=www
 
       - name: Ajouter Android
@@ -45,6 +45,21 @@ jobs:
 
       - name: Synchroniser GLOBEXA
         run: npx cap sync android
+
+      - name: Corriger les dépendances Kotlin
+        run: |
+          cat >> android/build.gradle <<'EOF'
+          allprojects {
+              configurations.all {
+                  resolutionStrategy.eachDependency { details ->
+                      if (details.requested.group == 'org.jetbrains.kotlin' &&
+                          details.requested.name.startsWith('kotlin-stdlib')) {
+                          details.useVersion '1.8.22'
+                      }
+                  }
+              }
+          }
+          EOF
 
       - name: Construire APK
         run: |
