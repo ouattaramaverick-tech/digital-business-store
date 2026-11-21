@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#092746">
+<title>GLOBEXA — Marketplace internationale</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{--navy:#092746;--blue:#12558a;--orange:#f28b24;--bg:#f4f6f8;--white:#fff;--text:#182b3b;--muted:#718096;--line:#e5eaf0;--green:#13845b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}
+.topbar{background:#061b30;color:#dce8f4;padding:9px 5%;font-size:12px;display:flex;justify-content:space-between;gap:10px}
+.header{background:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 9px #0001}
+.head{max-width:1350px;margin:auto;padding:14px 20px;display:flex;align-items:center;gap:20px}
+.logo{font-size:28px;font-weight:900;color:var(--navy);white-space:nowrap;letter-spacing:-1px}.logo span{color:var(--orange)}
+.search{height:44px;display:flex;flex:1;border:2px solid var(--orange);border-radius:6px;overflow:hidden}
+.search input{border:0;outline:0;padding:0 13px;flex:1;min-width:40px}.search select{border:0;border-left:1px solid var(--line);padding:0 8px;max-width:140px}
+.search button{border:0;background:var(--orange);color:#fff;padding:0 18px}
+.head-actions{display:flex;gap:14px;align-items:center}.head-action{border:0;background:#fff;color:var(--navy);font-size:11px;display:grid;justify-items:center;gap:3px}
+.head-action i{width:21px;height:21px}.count{background:var(--orange);color:#fff;border-radius:20px;padding:2px 6px}
+.nav{border-top:1px solid var(--line);display:flex;justify-content:center;gap:27px;padding:12px;overflow:auto;white-space:nowrap}
+.nav a{font-size:13px;font-weight:bold;color:#29445c}.nav a:hover{color:var(--orange)}
+.wrap{max-width:1350px;margin:auto;padding:20px}
+.hero{display:grid;grid-template-columns:225px 1fr 215px;gap:14px;margin-bottom:22px}
+.categories,.hero-main,.side-card{border-radius:9px;overflow:hidden}
+.categories{background:#fff;border:1px solid var(--line);padding:15px}.categories h3{font-size:15px;margin-bottom:10px;color:var(--navy)}
+.cat-link{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid #f0f2f5;font-size:13px;color:#46586a;cursor:pointer}
+.cat-link:hover{color:var(--orange)}
+.hero-main{background:linear-gradient(115deg,#092746,#145a8c);color:#fff;padding:35px;min-height:285px;position:relative}
+.hero-main:after{content:"🌍";position:absolute;right:30px;bottom:10px;font-size:115px;opacity:.17}
+.hero-main small{color:#ffbd71;font-weight:bold;letter-spacing:2px}.hero-main h1{font-size:clamp(27px,4vw,43px);line-height:1.13;margin:17px 0;max-width:550px}
+.hero-main p{color:#d8e5f0;line-height:1.7;max-width:520px;font-size:14px}
+.hero-buttons{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;position:relative;z-index:1}
+.btn{border:0;border-radius:5px;background:var(--orange);color:#fff;padding:11px 16px;font-weight:bold;font-size:13px}
+.btn:hover{filter:brightness(.94)}.btn-blue{background:var(--navy)}.btn-white{background:#fff;color:var(--navy)}.btn-light{background:#eaf1f7;color:var(--navy)}.btn-danger{background:#b42318}.btn-green{background:var(--green)}
+.side-stack{display:grid;gap:11px}.side-card{background:#fff;border:1px solid var(--line);padding:16px}
+.side-card h3{font-size:14px;color:var(--navy);margin-bottom:8px}.side-card p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.section{margin:25px 0;scroll-margin-top:135px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.section-head h2{font-size:21px;color:var(--navy)}.section-head p{font-size:12px;color:var(--muted);margin-top:5px}
+.text-link{color:var(--blue);font-size:13px;font-weight:bold;cursor:pointer}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:18px 0}
+.feature{background:#fff;border:1px solid var(--line);border-radius:8px;padding:15px;display:flex;gap:10px;align-items:center}
+.feature i{color:var(--orange);width:26px;height:26px}.feature b{font-size:13px;display:block}.feature small{font-size:11px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.toolbar input,.toolbar select{padding:10px;border:1px solid var(--line);border-radius:5px;background:#fff}
+.product-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.product{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:.2s}
+.product:hover{box-shadow:0 5px 20px #102d4615;transform:translateY(-2px)}
+.product-photo{height:160px;background:#edf2f6;display:grid;place-items:center;position:relative;overflow:hidden}
+.product-photo img{width:100%;height:100%;object-fit:cover}.placeholder{font-size:52px}
+.heart{position:absolute;right:8px;top:8px;border:0;border-radius:50%;width:32px;height:32px;background:#fff;color:#697b8d}
+.product-info{padding:11px}.product-info h3{font-size:13px;line-height:1.4;height:36px;overflow:hidden}
+.product-price{font-size:17px;color:#c96b12;font-weight:bold;margin:8px 0 5px}
+.product-info p{font-size:11px;color:var(--muted);margin:5px 0}.country{color:var(--green)!important}
+.product-actions{display:flex;gap:5px;margin-top:10px}.product-actions button{flex:1;padding:8px 4px;font-size:11px}
+.banner{background:#fff0df;border-radius:9px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.banner h2{color:var(--navy);font-size:21px;margin-bottom:6px}.banner p{font-size:13px;color:#596b7d}
+.box{background:#fff;border:1px solid var(--line);border-radius:9px;padding:18px;margin:12px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin:11px 0}
+.field label{display:block;font-size:12px;font-weight:bold;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;border:1px solid #d5dee7;border-radius:5px;padding:11px;background:#fff;outline-color:var(--orange)}
+.field textarea{min-height:85px;resize:vertical}
+.muted{font-size:12px;color:var(--muted);line-height:1.6}
+.result{font-size:13px;margin-top:9px;padding:10px;border-radius:5px;overflow-wrap:anywhere}.ok{background:#e5f7ef;color:#087548}.err{background:#fff0ef;color:#b42318}
+.list-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 3px;border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:13px}
+.pill{font-size:10px;border-radius:20px;padding:5px 9px;background:#fff0df;color:#a85c0b}.pill-green{background:#e5f7ef;color:#087548}
+.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:#061b30bb;z-index:60;display:grid;place-items:center;padding:14px}
+.modal-card{width:min(680px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:10px;padding:20px}
+.modal-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:14px}.close{border:0;background:#edf1f5;border-radius:5px;padding:8px 12px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.detail-grid img{width:100%;height:230px;object-fit:contain;background:#f1f4f7}
+.detail-grid h2{font-size:20px;color:var(--navy);margin:10px 0}.cart-line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px;align-items:center}
+.footer{background:#061b30;color:#fff;margin-top:38px;padding:32px 20px}.footer-inner{max-width:1300px;margin:auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:24px}
+.footer p,.footer a{font-size:12px;color:#c4d2df;line-height:2}.footer h3{margin-bottom:10px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100;background:var(--navy);color:#fff;padding:12px 17px;border-radius:7px;font-size:13px;max-width:92%;text-align:center}
+.payment-card{border:1px solid var(--line);border-radius:7px;padding:12px;margin:9px 0}
+@media(max-width:1050px){.hero{grid-template-columns:190px 1fr}.side-stack{display:none}.product-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:750px){.topbar{justify-content:center}.topbar span:last-child{display:none}.head{flex-wrap:wrap;gap:10px;padding:11px}
+.logo{font-size:24px}.search{order:3;flex-basis:100%;height:41px}.search select{display:none}
+.head-actions{margin-left:auto;gap:11px}.head-action span{font-size:10px}.nav{justify-content:flex-start;gap:19px}
+.wrap{padding:11px}.hero{display:block}.categories{display:none}.hero-main{min-height:270px;padding:25px 18px}
+.hero-main:after{font-size:75px;right:12px}.features{grid-template-columns:1fr 1fr;gap:8px}.feature{padding:11px}
+.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.product-photo{height:130px}
+.product-info{padding:9px}.product-info h3{font-size:12px}.section-head h2{font-size:18px}
+.two,.detail-grid{grid-template-columns:1fr}.banner{align-items:flex-start;flex-direction:column}.footer-inner{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar"><span>🌍 Bienvenue sur GLOBEXA — Votre marché international</span><span>Commerce mondial · Fournisseurs · Acheteurs</span></div>
+<header class="header">
+ <div class="head">
+  <a class="logo" href="#accueil">GLOBE<span>XA</span></a>
+  <div class="search"><input id="searchInput" placeholder="Que recherchez-vous aujourd'hui ?"><select id="searchCategory"><option value="">Toutes catégories</option></select><button id="searchButton" aria-label="Rechercher"><i data-lucide="search"></i></button></div>
+  <div class="head-actions">
+   <button class="head-action" onclick="go('account')"><i data-lucide="user-round"></i><span>Compte</span></button>
+   <button class="head-action" onclick="go('favorites')"><i data-lucide="heart"></i><span>Favoris</span></button>
+   <button class="head-action" onclick="openCart()"><i data-lucide="shopping-cart"></i><span>Panier <b class="count" id="cartCount">0</b></span></button>
+  </div>
+ </div>
+ <nav class="nav">
+  <a href="#accueil">Accueil</a><a href="#products">Produits</a><a href="#stores">Fournisseurs</a>
+  <a href="#rfq">Demandes de devis</a><a href="#supplier">Espace fournisseur</a>
+  <a href="#orders">Commandes</a><a href="#messages">Messagerie</a>
+ </nav>
+</header>
+
+<main class="wrap">
+<section class="hero" id="accueil">
+ <aside class="categories"><h3>☰ Toutes les catégories</h3><div id="categoryMenu">Chargement...</div></aside>
+ <div class="hero-main"><small>GLOBEXA INTERNATIONAL MARKETPLACE</small><h1>Découvrez le commerce sans frontières.</h1>
+  <p>Trouvez des produits, comparez les fournisseurs et développez votre activité partout dans le monde.</p>
+  <div class="hero-buttons"><button class="btn" onclick="go('products')">Explorer les produits →</button><button class="btn btn-white" onclick="go('supplier')">Devenir fournisseur</button></div>
+ </div>
+ <div class="side-stack">
+  <div class="side-card"><h3>Vous êtes acheteur ?</h3><p>Trouvez des fournisseurs et demandez des prix adaptés à vos besoins.</p><button class="btn btn-blue" onclick="go('rfq')">Demander un devis</button></div>
+  <div class="side-card"><h3>Vous êtes vendeur ?</h3><p>Présentez votre entreprise et vos produits aux acheteurs.</p><button class="btn" onclick="go('supplier')">Créer ma boutique</button></div>
+ </div>
+</section>
+<div class="features">
+ <div class="feature"><i data-lucide="globe"></i><div><b>Marché international</b><small>Commerce sans frontières</small></div></div>
+ <div class="feature"><i data-lucide="store"></i><div><b>Fournisseurs</b><small>Boutiques professionnelles</small></div></div>
+ <div class="feature"><i data-lucide="file-text"></i><div><b>Demandes de devis</b><small>Comparez les propositions</small></div></div>
+ <div class="feature"><i data-lucide="shield-check"></i><div><b>Commandes suivies</b><small>Commission GLOBEXA : 6 %</small></div></div>
+</div>
+
+<section class="section" id="products">
+ <div class="section-head"><div><h2>Produits populaires</h2><p>Découvrez les offres disponibles sur GLOBEXA</p></div><a class="text-link" onclick="resetFilters()">Voir tout →</a></div>
+ <div class="toolbar"><input id="filterText" placeholder="Rechercher un produit..."><select id="filterCategory"><option value="">Toutes les catégories</option></select>
+  <select id="sortProducts"><option value="recent">Plus récents</option><option value="priceAsc">Prix croissant</option><option value="priceDesc">Prix décroissant</option></select></div>
+ <p class="muted" id="productCount"></p><div class="product-grid" id="productGrid"><div class="box">Chargement des produits...</div></div>
+</section>
+
+<section class="section"><div class="banner"><div><h2>Vous recherchez un produit précis ?</h2><p>Publiez une demande et recevez des propositions de fournisseurs.</p></div><button class="btn btn-blue" onclick="go('rfq')">Publier une demande →</button></div></section>
+
+<section class="section" id="stores"><div class="section-head"><div><h2>Fournisseurs et boutiques</h2><p>Découvrez les entreprises présentes sur GLOBEXA</p></div></div><div class="box" id="storeList">Chargement des boutiques...</div></section>
+
+<section class="section" id="rfq">
+ <div class="section-head"><div><h2>Demandes de devis</h2><p>Les acheteurs publient leurs besoins et les fournisseurs répondent.</p></div></div>
+ <div class="two">
+  <form class="box" id="rfqForm"><h3>Publier une demande d'achat</h3>
+   <div class="field"><label>Produit recherché</label><input id="rfqTitle" required></div>
+   <div class="field"><label>Description détaillée</label><textarea id="rfqDetails" required></textarea></div>
+   <div class="two"><div class="field"><label>Quantité</label><input id="rfqQuantity" type="number" min="1" required></div><div class="field"><label>Prix cible</label><input id="rfqPrice" type="number" min="0" step=".01"></div></div>
+   <div class="two"><div class="field"><label>Devise</label><select id="rfqCurrency"><option>USD</option><option>EUR</option><option>CNY</option><option>XOF</option></select></div><div class="field"><label>Pays de destination</label><input id="rfqCountry"></div></div>
+   <button class="btn">Publier ma demande</button><div id="rfqMessage"></div>
+  </form>
+  <div class="box"><h3>Demandes ouvertes</h3><div id="rfqList">Chargement...</div></div>
+ </div>
+</section>
+
+<section class="section" id="supplier">
+ <div class="section-head"><div><h2>Espace fournisseur</h2><p>Créez votre boutique, publiez vos produits et configurez vos paiements.</p></div></div>
+ <div class="two">
+  <form class="box" id="storeForm"><h3>Créer mon entreprise</h3>
+   <div class="field"><label>Nom de l'entreprise</label><input id="storeName" required></div>
+   <div class="field"><label>Pays</label><input id="storeCountry" required></div>
+   <div class="field"><label>Ville</label><input id="storeCity"></div>
+   <div class="field"><label>Description</label><textarea id="storeDescription"></textarea></div>
+   <button class="btn">Soumettre ma boutique</button><div id="storeMessage"></div>
+  </form>
+  <form class="box" id="productForm"><h3>Publier un produit</h3>
+   <div class="field"><label>Nom du produit</label><input id="newProductName" required></div>
+   <div class="field"><label>Catégorie</label><select id="newProductCategory"><option value="">Sans catégorie</option></select></div>
+   <div class="field"><label>Description</label><textarea id="newProductDescription" required></textarea></div>
+   <div class="two"><div class="field"><label>Prix unitaire</label><input id="newProductPrice" type="number" min=".01" step=".01" required></div><div class="field"><label>Devise</label><select id="newProductCurrency"><option>USD</option><option>EUR</option><option>CNY</option><option>XOF</option></select></div></div>
+   <div class="two"><div class="field"><label>Quantité minimum</label><input id="newProductMOQ" type="number" min="1" value="1"></div><div class="field"><label>Stock</label><input id="newProductStock" type="number" min="0" value="0"></div></div>
+   <div class="field"><label>Pays d'origine</label><input id="newProductOrigin"></div>
+   <div class="field"><label>Adresse de l'image (HTTPS)</label><input id="newProductImage" type="url" placeholder="https://..."></div>
+   <button class="btn">Envoyer le produit</button><div id="productMessage"></div>
+  </form>
+ </div>
+ <div class="box"><h3>Mes produits</h3><div id="myProducts">Connectez-vous pour voir vos produits.</div></div>
+ <div class="box" id="paymentSettings">
+  <h3>Mes moyens de paiement</h3>
+  <p class="muted">Chaque fournisseur renseigne ses propres coordonnées. Les acheteurs verront uniquement les moyens activés pour cette boutique.</p>
+  <form id="paymentForm">
+   <div class="two">
+    <div class="field"><label>Type de paiement</label><select id="payCode"><option value="mobile_money">Mobile Money</option><option value="paypal">PayPal</option><option value="bank_transfer">Virement bancaire</option></select></div>
+    <div class="field"><label>Nom du service / opérateur</label><input id="payProvider" placeholder="Orange Money, Moov Money, Wave, PayPal, Banque..." required></div>
+   </div>
+   <div class="two">
+    <div class="field"><label>Nom du titulaire</label><input id="payName"></div>
+    <div class="field"><label>Numéro / e-mail / compte / IBAN</label><input id="payReference" required></div>
+   </div>
+   <div class="two">
+    <div class="field"><label>Banque (si applicable)</label><input id="payBank"></div>
+    <div class="field"><label>Pays</label><input id="payCountry"></div>
+   </div>
+   <div class="field"><label>Devise</label><select id="payCurrency"><option>XOF</option><option>USD</option><option>EUR</option><option>CNY</option></select></div>
+   <div class="field"><label>Instructions pour l'acheteur</label><textarea id="payInstructions" placeholder="Précisez les étapes de paiement et les références à indiquer."></textarea></div>
+   <button class="btn">Enregistrer ce moyen de paiement</button><div id="paymentMessage"></div>
+  </form>
+  <div id="paymentList"></div>
+ </div>
+</section>
+
+<section class="section" id="account">
+ <div class="section-head"><div><h2>Mon espace GLOBEXA</h2><p>Connexion et création de compte</p></div></div>
+ <div class="two">
+  <form class="box" id="loginForm"><h3>Connexion</h3><div class="field"><label>Adresse e-mail</label><input id="loginEmail" type="email" required></div>
+   <div class="field"><label>Mot de passe</label><input id="loginPassword" type="password" required></div>
+   <button class="btn">Se connecter</button> <button type="button" class="btn btn-light" id="forgotButton">Mot de passe oublié</button><div id="loginMessage"></div>
+  </form>
+  <form class="box" id="signupForm"><h3>Créer un compte gratuit</h3><div class="field"><label>Adresse e-mail</label><input id="signupEmail" type="email" required></div>
+   <div class="field"><label>Mot de passe (6 caractères minimum)</label><input id="signupPassword" type="password" minlength="6" required></div>
+   <button class="btn">Créer mon compte</button><div id="signupMessage"></div>
+  </form>
+ </div>
+ <div class="box"><h3>État de mon compte</h3><p id="sessionStatus">Vérification...</p><button class="btn btn-light hidden" id="logoutButton">Se déconnecter</button></div>
+</section>
+
+<section class="section" id="favorites"><div class="section-head"><div><h2>Mes favoris</h2><p>Vos produits enregistrés</p></div></div><div class="box" id="favoriteList">Connectez-vous pour voir vos favoris.</div></section>
+<section class="section" id="orders"><div class="section-head"><div><h2>Mes commandes</h2><p>Commandes achetées et commandes reçues par votre boutique.</p></div></div><div class="box" id="orderList">Connectez-vous pour consulter vos commandes.</div></section>
+<section class="section" id="messages">
+ <div class="section-head"><div><h2>Messagerie</h2><p>Échangez avec les fournisseurs et les acheteurs.</p></div></div>
+ <div class="two"><div class="box"><h3>Conversations</h3><div id="conversationList">Connectez-vous pour voir vos conversations.</div></div>
+  <div class="box"><h3>Discussion</h3><div id="chatMessages">Sélectionnez une conversation.</div>
+   <form id="messageForm"><div class="field"><textarea id="messageText" placeholder="Votre message..." required></textarea></div><button class="btn">Envoyer</button></form>
+  </div>
+ </div>
+</section>
+</main>
+
+<footer class="footer"><div class="footer-inner">
+ <div><div class="logo" style="color:white">GLOBE<span>XA</span></div><p>La plateforme internationale qui rapproche acheteurs, fournisseurs et entreprises.</p></div>
+ <div><h3>Marketplace</h3><p><a href="#products">Produits</a><br><a href="#stores">Fournisseurs</a><br><a href="#rfq">Demandes de devis</a></p></div>
+ <div><h3>Mon compte</h3><p><a href="#account">Connexion</a><br><a href="#supplier">Vendre sur GLOBEXA</a><br><a href="#orders">Mes commandes</a></p></div>
+</div></footer>
+
+<div class="modal hidden" id="productModal"><div class="modal-card"><div class="modal-top"><b>Détails du produit</b><button class="close" onclick="closeModal()">Fermer ✕</button></div><div id="productDetail"></div></div></div>
+<div class="modal hidden" id="cartModal"><div class="modal-card">
+ <div class="modal-top"><h2>Mon panier</h2><button class="close" onclick="closeCart()">Fermer ✕</button></div>
+ <div id="cartItems"></div><div style="margin-top:16px"><b id="cartTotal"></b></div>
+ <div id="checkoutMethods"></div><button class="btn" style="margin-top:14px" onclick="checkout()">Confirmer ma commande</button>
+</div></div>
+<div class="toast hidden" id="toast"></div>
+
+<script type="module">
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL="https://xlxkiyihagoupsajwmze.supabase.co";
+const SUPABASE_KEY="sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let user=null,store=null,products=[],categories=[],cart=[],conversation=null,activeProduct=null,checkoutPayment=null;
+
+function go(id){$(id)?.scrollIntoView({behavior:"smooth"});}
+window.go=go;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function price(n,c="USD"){return Number(n||0).toFixed(2)+" "+esc(c||"USD");}
+function toast(s){$("toast").textContent=s;$("toast").classList.remove("hidden");setTimeout(()=>$("toast").classList.add("hidden"),3500);}
+function msg(id,s,ok=false){$(id).innerHTML='<div class="result '+(ok?'ok':'err')+'">'+esc(s)+'</div>';}
+function errorText(e){
+ const m=e?.message||String(e);
+ if(/row-level security|permission denied/i.test(m))return "Accès refusé par les règles de sécurité Supabase. Vérifiez les autorisations de cette table.";
+ if(/Failed to fetch/i.test(m))return "Connexion Internet impossible. Réessayez.";
+ if(/duplicate key/i.test(m))return "Cet élément existe déjà.";
+ return m;
+}
+function needLogin(){if(user)return true;toast("Connectez-vous pour continuer.");go("account");return false;}
+function slug(s){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+Math.random().toString(36).slice(2,6);}
+function safeImage(url){try{const u=new URL(url);return u.protocol==="https:"?u.href:"";}catch{return "";}}
+
+async function init(){
+ try{
+  const {data:{session},error}=await db.auth.getSession();if(error)throw error;
+  user=session?.user||null;
+  await refreshAll();
+  db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;setTimeout(()=>refreshAll(),0);});
+ }catch(e){console.error(e);toast(errorText(e));}
+}
+async function refreshAll(){
+ $("sessionStatus").textContent=user?"Connecté : "+user.email:"Vous n'êtes pas connecté.";
+ $("loginForm").classList.toggle("hidden",!!user);$("signupForm").classList.toggle("hidden",!!user);
+ $("logoutButton").classList.toggle("hidden",!user);
+ store=null;
+ if(user){
+  const s=await db.from("globexa_stores").select("*").eq("owner_id",user.id).maybeSingle();
+  if(s.error)console.error(s.error);else store=s.data;
+ }
+ await loadCategories();await loadProducts();await loadStores();await loadRFQs();
+ await loadMyProducts();await loadPaymentMethods();await loadOrders();await loadFavorites();await loadConversations();
+}
+async function loadCategories(){
+ const {data,error}=await db.from("globexa_categories").select("id,name").order("name");
+ if(error){console.error(error);$("categoryMenu").textContent=errorText(error);return;}
+ categories=data||[];
+ const opts=categories.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>').join("");
+ $("newProductCategory").innerHTML='<option value="">Sans catégorie</option>'+opts;
+ $("searchCategory").innerHTML='<option value="">Toutes catégories</option>'+opts;
+ $("filterCategory").innerHTML='<option value="">Toutes catégories</option>'+opts;
+ $("categoryMenu").innerHTML=categories.map(c=>'<div class="cat-link" data-id="'+esc(c.id)+'">'+esc(c.name)+' <span>›</span></div>').join("")||"Les catégories seront bientôt disponibles.";
+ document.querySelectorAll(".cat-link").forEach(b=>b.onclick=()=>{$("filterCategory").value=b.dataset.id;go("products");filterProducts();});
+}
+async function loadProducts(){
+ const {data,error}=await db.from("globexa_market_products").select("*").eq("status","published").order("created_at",{ascending:false});
+ if(error){$("productGrid").innerHTML='<div class="box">'+esc(errorText(error))+'</div>';return;}
+ const sr=await db.from("globexa_stores").select("id,company_name,country,owner_id").eq("status","active");
+ const map=Object.fromEntries((sr.data||[]).map(s=>[s.id,s]));
+ products=(data||[]).map(p=>({...p,store:map[p.store_id]})).filter(p=>p.store);
+ filterProducts();
+}
+function filterProducts(){
+ const q=($("filterText").value||$("searchInput").value).toLowerCase().trim();
+ const cat=$("filterCategory").value||$("searchCategory").value;
+ let arr=products.filter(p=>(!cat||p.category_id===cat)&&(!q||[p.title,p.description,p.country_of_origin,p.store?.company_name].join(" ").toLowerCase().includes(q)));
+ const sort=$("sortProducts").value;
+ if(sort==="priceAsc")arr.sort((a,b)=>Number(a.base_price)-Number(b.base_price));
+ if(sort==="priceDesc")arr.sort((a,b)=>Number(b.base_price)-Number(a.base_price));
+ $("productCount").textContent=arr.length+" produit(s) disponible(s)";
+ $("productGrid").innerHTML=arr.map(p=>{
+  const photo=safeImage(p.images?.[0]||"");
+  return '<article class="product"><div class="product-photo">'+(photo?'<img src="'+esc(photo)+'" alt="'+esc(p.title)+'" loading="lazy">':'<span class="placeholder">📦</span>')+
+  '<button class="heart" onclick="favorite(\''+p.id+'\')" title="Ajouter aux favoris">♡</button></div><div class="product-info"><h3>'+esc(p.title)+'</h3>'+
+  '<div class="product-price">'+price(p.base_price,p.currency)+'</div><p>MOQ : '+esc(p.moq||1)+' pièce(s)</p>'+
+  '<p class="country">🌍 '+esc(p.country_of_origin||p.store?.country||"International")+'</p><p>🏢 '+esc(p.store?.company_name||"Fournisseur")+'</p>'+
+  '<div class="product-actions"><button class="btn btn-light" onclick="details(\''+p.id+'\')">Détails</button><button class="btn" onclick="addCart(\''+p.id+'\')">Panier</button></div></div></article>';
+ }).join("")||'<div class="box">Aucun produit disponible pour cette recherche.</div>';
+}
+$("searchButton").onclick=()=>{go("products");filterProducts();};
+$("searchInput").addEventListener("keydown",e=>{if(e.key==="Enter"){go("products");filterProducts();}});
+$("filterText").oninput=filterProducts;$("filterCategory").onchange=filterProducts;$("sortProducts").onchange=filterProducts;
+$("searchCategory").onchange=()=>{$("filterCategory").value=$("searchCategory").value;go("products");filterProducts();};
+window.resetFilters=()=>{$("filterText").value="";$("searchInput").value="";$("filterCategory").value="";$("searchCategory").value="";filterProducts();};
+
+window.details=id=>{
+ const p=products.find(x=>x.id===id);if(!p)return;activeProduct=p;
+ const photo=safeImage(p.images?.[0]||"");
+ $("productDetail").innerHTML='<div class="detail-grid"><div>'+(photo?'<img src="'+esc(photo)+'" alt="'+esc(p.title)+'">':'<div style="height:230px;background:#eef2f6;display:grid;place-items:center;font-size:65px">📦</div>')+
+ '</div><div><h2>'+esc(p.title)+'</h2><div class="product-price">'+price(p.base_price,p.currency)+'</div><p class="muted">'+esc(p.description)+'</p><p class="muted">Quantité minimale : '+esc(p.moq||1)+'</p>'+
+ '<p class="muted">Stock : '+esc(p.stock_quantity||0)+'</p><p class="muted">Fournisseur : '+esc(p.store?.company_name||"")+'</p><p class="muted">Pays : '+esc(p.country_of_origin||p.store?.country||"")+'</p><br>'+
+ '<button class="btn" onclick="addCart(\''+p.id+'\')">Ajouter au panier</button><br><br><button class="btn btn-blue" onclick="contactSeller(\''+p.id+'\')">Contacter le fournisseur</button></div></div>';
+ $("productModal").classList.remove("hidden");
+};
+window.closeModal=()=>$("productModal").classList.add("hidden");
+
+window.addCart=id=>{
+ const p=products.find(x=>x.id===id);if(!p)return;
+ if(Number(p.stock_quantity)<=0)return toast("Ce produit est actuellement indisponible.");
+ const found=cart.find(x=>x.id===id);
+ if(found){if(found.quantity+1>Number(p.stock_quantity))return toast("Stock disponible insuffisant.");found.quantity++;}
+ else cart.push({id,quantity:Number(p.moq||1)});
+ updateCartCount();toast("Produit ajouté au panier.");
+};
+function updateCartCount(){$("cartCount").textContent=cart.reduce((a,b)=>a+b.quantity,0);}
+window.openCart=async()=>{
+ checkoutPayment=null;
+ const items=cart.map(item=>({item,p:products.find(x=>x.id===item.id)})).filter(x=>x.p);
+ $("cartItems").innerHTML=items.map(({item,p})=>'<div class="cart-line"><span>'+esc(p.title)+' × '+item.quantity+'<br><small>'+price(p.base_price,p.currency)+'</small></span><b>'+price(Number(p.base_price)*item.quantity,p.currency)+'</b><button class="btn btn-light" onclick="removeCart(\''+p.id+'\')">✕</button></div>').join("")||"Votre panier est vide.";
+ const total=items.reduce((s,{item,p})=>s+Number(p.base_price)*item.quantity,0);
+ $("cartTotal").textContent=items.length?"Total indicatif : "+total.toFixed(2)+" "+(items[0].p.currency||"USD"):"";
+ $("checkoutMethods").innerHTML="";
+ if(items.length){
+  const stores=new Set(items.map(x=>x.p.store_id));
+  if(stores.size>1)$("checkoutMethods").innerHTML='<div class="result err">Votre panier contient plusieurs fournisseurs. Retirez les produits des autres boutiques pour passer cette commande. Une commande est traitée par boutique.</div>';
+  else if(!user)$("checkoutMethods").innerHTML='<p class="muted">Connectez-vous pour voir les moyens de paiement proposés par ce fournisseur.</p>';
+  else await showCheckoutMethods(items[0].p.store_id);
+ }
+ $("cartModal").classList.remove("hidden");
+};
+window.closeCart=()=>$("cartModal").classList.add("hidden");
+window.removeCart=id=>{cart=cart.filter(x=>x.id!==id);updateCartCount();openCart();};
+async function showCheckoutMethods(storeId){
+ const {data,error}=await db.from("globexa_store_payment_methods").select("*").eq("store_id",storeId).eq("is_enabled",true);
+ if(error){$("checkoutMethods").innerHTML='<div class="result err">'+esc(errorText(error))+'</div>';return;}
+ const methods=data||[];
+ if(!methods.length){$("checkoutMethods").innerHTML='<div class="result err">Ce fournisseur n'a pas encore activé de moyen de paiement. Contactez-le avant de commander.</div>';return;}
+ $("checkoutMethods").innerHTML='<h3 style="margin-top:18px">Choisir un moyen de paiement</h3>'+methods.map(m=>
+  '<label class="payment-card" style="display:block;cursor:pointer"><input type="radio" name="checkoutPay" value="'+esc(m.id)+'"> <b>'+esc(m.provider_name)+'</b> — '+esc(m.method_code==='mobile_money'?'Mobile Money':m.method_code==='paypal'?'PayPal':'Virement bancaire')+
+  '<div class="muted">'+esc(m.account_name||"")+' · '+esc(m.account_reference)+' · '+esc(m.currency||"")+'</div><div class="muted">'+esc(m.instructions||"")+'</div></label>'
+ ).join("");
+}
+window.checkout=async()=>{
+ if(!needLogin())return;
+ if(!cart.length)return toast("Votre panier est vide.");
+ const chosen=cart.map(i=>({item:i,p:products.find(x=>x.id===i.id)})).filter(x=>x.p);
+ if(!chosen.length)return toast("Aucun produit valide dans le panier.");
+ const storeIds=new Set(chosen.map(x=>x.p.store_id));
+ if(storeIds.size!==1)return toast("Une commande doit concerner une seule boutique. Gardez les produits d'un seul fournisseur dans le panier.");
+ const seller=chosen[0].p.store?.owner_id;
+ if(!seller||seller===user.id)return toast("Vous ne pouvez pas commander vos propres produits.");
+ for(const {item,p} of chosen){
+  if(item.quantity<Number(p.moq||1))return toast("Quantité minimale non respectée pour "+p.title+".");
+  if(item.quantity>Number(p.stock_quantity||0))return toast("Stock insuffisant pour "+p.title+".");
+  if(p.currency!==chosen[0].p.currency)return toast("Les produits doivent utiliser la même devise.");
+ }
+ const selected=document.querySelector('input[name="checkoutPay"]:checked');
+ if(!selected)return toast("Choisissez un moyen de paiement proposé par le fournisseur.");
+ const {data:method,error:methodError}=await db.from("globexa_store_payment_methods").select("*").eq("id",selected.value).eq("store_id",chosen[0].p.store_id).eq("is_enabled",true).maybeSingle();
+ if(methodError||!method)return toast("Ce moyen de paiement n'est plus disponible. Rechargez le panier.");
+ try{
+  for(const {item,p} of chosen){
+   const {error}=await db.from("globexa_market_orders").insert({
+    buyer_id:user.id,supplier_id:seller,product_id:p.id,quantity:item.quantity,
+    unit_price:p.base_price,commission_rate:0.06,currency:p.currency||"USD",status:"awaiting_payment"
+   });
+   if(error)throw error;
+  }
+  const total=chosen.reduce((s,{item,p})=>s+Number(p.base_price)*item.quantity,0);
+  $("checkoutMethods").innerHTML='<div class="result ok"><b>Commande enregistrée — paiement en attente.</b><br>Total à payer au fournisseur : '+price(total,chosen[0].p.currency)+
+  '<br>Moyen choisi : '+esc(method.provider_name)+'<br>Titulaire : '+esc(method.account_name||"Non précisé")+
+  '<br>Coordonnées : <b>'+esc(method.account_reference)+'</b><br>'+esc(method.instructions||"Suivez les instructions du fournisseur.")+
+  '<br><br>Important : votre commande reste en attente. GLOBEXA ne confirme pas automatiquement la réception du paiement.</div>';
+  cart=[];updateCartCount();await loadOrders();toast("Commande créée. Suivez les instructions de paiement.");
+ }catch(e){toast(errorText(e));}
+};
+
+window.favorite=async id=>{
+ if(!needLogin())return;
+ try{
+  const {error}=await db.from("globexa_favorites").upsert({user_id:user.id,product_id:id},{onConflict:"user_id,product_id"});
+  if(error)throw error;toast("Produit ajouté aux favoris.");await loadFavorites();
+ }catch(e){toast(errorText(e));}
+};
+async function loadFavorites(){
+ if(!user){$("favoriteList").textContent="Connectez-vous pour voir vos favoris.";return;}
+ const {data,error}=await db.from("globexa_favorites").select("product_id").eq("user_id",user.id);
+ if(error){$("favoriteList").textContent=errorText(error);return;}
+ const ids=(data||[]).map(x=>x.product_id);
+ $("favoriteList").innerHTML=products.filter(p=>ids.includes(p.id)).map(p=>'<div class="list-row"><b>'+esc(p.title)+'</b><span>'+price(p.base_price,p.currency)+'</span><button class="btn btn-light" onclick="details(\''+p.id+'\')">Voir</button></div>').join("")||"Aucun favori.";
+}
+async function loadStores(){
+ const {data,error}=await db.from("globexa_stores").select("*").eq("status","active").order("created_at",{ascending:false});
+ if(error){$("storeList").textContent=errorText(error);return;}
+ $("storeList").innerHTML=(data||[]).map(s=>'<div class="list-row"><div><b>'+esc(s.company_name)+'</b><br><span class="muted">📍 '+esc(s.city||"")+' '+esc(s.country||"")+'</span><br><span class="muted">'+esc(s.description||"")+'</span></div><span class="pill pill-green">Fournisseur actif</span></div>').join("")||"Aucune boutique active pour le moment.";
+}
+$("storeForm").onsubmit=async e=>{
+ e.preventDefault();if(!needLogin())return;
+ if(store)return msg("storeMessage","Vous avez déjà une boutique enregistrée.");
+ try{
+  const {data,error}=await db.from("globexa_stores").insert({
+   owner_id:user.id,company_name:$("storeName").value.trim(),slug:slug($("storeName").value),
+   country:$("storeCountry").value.trim(),city:$("storeCity").value.trim()||null,
+   description:$("storeDescription").value.trim()||null,status:"pending",verification_status:"pending"
+  }).select().single();
+  if(error)throw error;store=data;e.target.reset();
+  msg("storeMessage","Votre demande de boutique est envoyée. Elle doit être validée par l'administration avant la vente.",true);
+  await refreshAll();
+ }catch(x){msg("storeMessage",errorText(x));}
+};
+$("productForm").onsubmit=async e=>{
+ e.preventDefault();if(!needLogin())return;
+ if(!store)return msg("productMessage","Créez d'abord votre boutique.");
+ if(store.status!=="active")return msg("productMessage","Votre boutique doit être activée par l'administration.");
+ try{
+  const image=$("newProductImage").value.trim();
+  if(image&&!safeImage(image))throw Error("L'image doit avoir une adresse HTTPS valide.");
+  const {error}=await db.from("globexa_market_products").insert({
+   store_id:store.id,title:$("newProductName").value.trim(),category_id:$("newProductCategory").value||null,
+   description:$("newProductDescription").value.trim(),base_price:Number($("newProductPrice").value),
+   currency:$("newProductCurrency").value,moq:Number($("newProductMOQ").value||1),
+   stock_quantity:Number($("newProductStock").value||0),country_of_origin:$("newProductOrigin").value.trim()||store.country,
+   images:image?[image]:[],status:"pending"
+  });
+  if(error)throw error;e.target.reset();msg("productMessage","Produit envoyé à l'administration pour validation.",true);await loadMyProducts();
+ }catch(x){msg("productMessage",errorText(x));}
+};
+async function loadMyProducts(){
+ if(!user||!store){$("myProducts").textContent="Connectez-vous et créez une boutique.";return;}
+ const {data,error}=await db.from("globexa_market_products").select("*").eq("store_id",store.id).order("created_at",{ascending:false});
+ if(error){$("myProducts").textContent=errorText(error);return;}
+ $("myProducts").innerHTML=(data||[]).map(p=>'<div class="list-row"><b>'+esc(p.title)+'</b><span>'+price(p.base_price,p.currency)+'</span><span class="pill">'+esc(p.status)+'</span></div>').join("")||"Aucun produit publié.";
+};
+
+$("paymentForm").onsubmit=async e=>{
+ e.preventDefault();if(!needLogin())return;
+ if(!store)return msg("paymentMessage","Créez d'abord votre boutique.");
+ try{
+  const code=$("payCode").value,provider=$("payProvider").value.trim(),reference=$("payReference").value.trim();
+  if(!provider||!reference)throw Error("Le service et les coordonnées de paiement sont obligatoires.");
+  const {error}=await db.from("globexa_store_payment_methods").upsert({
+   store_id:store.id,method_code:code,provider_name:provider,account_name:$("payName").value.trim()||null,
+   account_reference:reference,bank_name:$("payBank").value.trim()||null,country:$("payCountry").value.trim()||null,
+   currency:$("payCurrency").value,instructions:$("payInstructions").value.trim()||null,is_enabled:true
+  },{onConflict:"store_id,method_code,provider_name"});
+  if(error)throw error;e.target.reset();msg("paymentMessage","Moyen de paiement enregistré et activé.",true);await loadPaymentMethods();
+ }catch(x){msg("paymentMessage",errorText(x));}
+};
+async function loadPaymentMethods(){
+ if(!user||!store){$("paymentList").textContent="Connectez-vous et créez votre boutique pour gérer vos moyens de paiement.";return;}
+ const {data,error}=await db.from("globexa_store_payment_methods").select("*").eq("store_id",store.id).order("created_at",{ascending: false});
+ if(error){$("paymentList").textContent=errorText(error);return;}
+ $("paymentList").innerHTML=(data||[]).map(m=>'<div class="list-row"><div><b>'+esc(m.provider_name)+'</b><br><span class="muted">'+esc(m.method_code)+' · '+esc(m.account_reference)+'</span><br><span class="pill '+(m.is_enabled?'pill-green':'')+'">'+(m.is_enabled?'Activé':'Désactivé')+'</span></div>'+
+ '<div><button class="btn btn-light" onclick="togglePayment(\''+m.id+'\','+(!m.is_enabled)+')">'+(m.is_enabled?'Désactiver':'Activer')+'</button> <button class="btn btn-danger" onclick="deletePayment(\''+m.id+'\')">Supprimer</button></div></div>').join("")||"Aucun moyen de paiement enregistré.";
+}
+window.togglePayment=async(id,enabled)=>{
+ if(!needLogin())return;
+ const {error}=await db.from("globexa_store_payment_methods").update({is_enabled:enabled,updated_at:new Date().toISOString()}).eq("id",id).eq("store_id",store?.id);
+ if(error)return toast(errorText(error));toast(enabled?"Moyen activé.":"Moyen désactivé.");await loadPaymentMethods();
+};
+window.deletePayment=async id=>{
+ if(!needLogin()||!confirm("Supprimer ce moyen de paiement ?"))return;
+ const {error}=await db.from("globexa_store_payment_methods").delete().eq("id",id).eq("store_id",store?.id);
+ if(error)return toast(errorText(error));toast("Moyen supprimé.");await loadPaymentMethods();
+};
+
+$("rfqForm").onsubmit=async e=>{
+ e.preventDefault();if(!needLogin())return;
+ try{
+  const {error}=await db.from("globexa_rfqs").insert({
+   buyer_id:user.id,title:$("rfqTitle").value.trim(),details:$("rfqDetails").value.trim(),
+   quantity:Number($("rfqQuantity").value),target_price:$("rfqPrice").value?Number($("rfqPrice").value):null,
+   currency:$("rfqCurrency").value,destination_country:$("rfqCountry").value.trim()||null,status:"open"
+  });
+  if(error)throw error;e.target.reset();msg("rfqMessage","Votre demande a été publiée.",true);await loadRFQs();
+ }catch(x){msg("rfqMessage",errorText(x));}
+};
+async function loadRFQs(){
+ const {data,error}=await db.from("globexa_rfqs").select("*").eq("status","open").order("created_at",{ascending:false});
+ if(error){$("rfqList").textContent=errorText(error);return;}
+ $("rfqList").innerHTML=(data||[]).map(r=>'<div class="list-row"><div><b>'+esc(r.title)+'</b><br><span class="muted">'+esc(r.details)+'</span><br><span class="muted">Quantité : '+esc(r.quantity)+' · Destination : '+esc(r.destination_country||"Non précisée")+'</span></div><span class="pill">Ouverte</span></div>').join("")||"Aucune demande actuellement.";
+}
+window.contactSeller=async id=>{
+ if(!needLogin())return;
+ const p=products.find(x=>x.id===id);if(!p?.store?.owner_id)return toast("Fournisseur indisponible.");
+ if(p.store.owner_id===user.id)return toast("Vous ne pouvez pas vous contacter vous-même.");
+ try{
+  let {data,error}=await db.from("globexa_conversations").select("*").eq("buyer_id",user.id).eq("supplier_id",p.store.owner_id).eq("product_id",p.id).maybeSingle();
+  if(error)throw error;
+  if(!data){const r=await db.from("globexa_conversations").insert({buyer_id:user.id,supplier_id:p.store.owner_id,product_id:p.id}).select().single();if(r.error)throw r.error;data=r.data;}
+  conversation=data.id;closeModal();go("messages");await loadConversations();await loadMessages();
+ }catch(e){toast(errorText(e));}
+};
+async function loadConversations(){
+ if(!user){$("conversationList").textContent="Connectez-vous pour voir vos conversations.";return;}
+ const {data,error}=await db.from("globexa_conversations").select("*").or("buyer_id.eq."+user.id+",supplier_id.eq."+user.id).order("created_at",{ascending:false});
+ if(error){$("conversationList").textContent=errorText(error);return;}
+ $("conversationList").innerHTML=(data||[]).map(c=>'<div class="list-row"><span>Conversation '+esc(c.id.slice(0,8))+'</span><button class="btn btn-light" onclick="selectConversation(\''+c.id+'\')">Ouvrir</button></div>').join("")||"Aucune conversation.";
+}
+window.selectConversation=async id=>{conversation=id;await loadMessages();};
+async function loadMessages(){
+ if(!conversation)return;
+ const {data,error}=await db.from("globexa_messages").select("*").eq("conversation_id",conversation).order("created_at");
+ if(error){$("chatMessages").textContent=errorText(error);return;}
+ $("chatMessages").innerHTML=(data||[]).map(m=>'<div class="list-row"><div><b>'+(m.sender_id===user?.id?"Moi":"Contact")+'</b><br>'+esc(m.body)+'<br><small class="muted">'+new Date(m.created_at).toLocaleString("fr-FR")+'</small></div></div>').join("")||"Aucun message.";
+}
+$("messageForm").onsubmit=async e=>{
+ e.preventDefault();if(!needLogin())return;if(!conversation)return toast("Sélectionnez une conversation.");
+ const body=$("messageText").value.trim();if(!body)return;
+ try{const {error}=await db.from("globexa_messages").insert({conversation_id:conversation,sender_id:user.id,body});if(error)throw error;$("messageText").value="";await loadMessages();}
+ catch(x){toast(errorText(x));}
+};
+async function loadOrders(){
+ if(!user){$("orderList").textContent="Connectez-vous pour voir vos commandes.";return;}
+ const [buyer,seller]=await Promise.all([
+  db.from("globexa_market_orders").select("*").eq("buyer_id",user.id).order("created_at",{ascending:false}),
+  db.from("globexa_market_orders").select("*").eq("supplier_id",user.id).order("created_at",{ascending:false})
+ ]);
+ let html='<h3>Mes achats</h3>';
+ if(buyer.error)html+='<p class="result err">'+esc(errorText(buyer.error))+'</p>';
+ else html+=(buyer.data||[]).map(o=>'<div class="list-row"><div><b>Commande '+esc(o.id.slice(0,9))+'</b><br>'+price(o.subtotal,o.currency)+'<br><span class="muted">Commission GLOBEXA (6 %) : '+price(o.commission_amount,o.currency)+'</span></div><span class="pill">'+esc(o.status)+'</span></div>').join("")||'<p class="muted">Aucun achat.</p>';
+ html+='<h3 style="margin-top:18px">Commandes reçues par ma boutique</h3>';
+ if(seller.error)html+='<p class="result err">'+esc(errorText(seller.error))+'</p>';
+ else html+=(seller.data||[]).map(o=>'<div class="list-row"><div><b>Commande '+esc(o.id.slice(0,9))+'</b><br>Quantité : '+esc(o.quantity)+' · '+price(o.subtotal,o.currency)+'<br><span class="muted">Commission 6 % : '+price(o.commission_amount,o.currency)+'</span></div><span class="pill">'+esc(o.status)+'</span></div>').join("")||'<p class="muted">Aucune commande reçue.</p>';
+ $("orderList").innerHTML=html;
+}
+$("loginForm").onsubmit=async e=>{
+ e.preventDefault();
+ try{const {error}=await db.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error;msg("loginMessage","Connexion réussie.",true);await refreshAll();}
+ catch(x){msg("loginMessage",errorText(x));}
+};
+$("signupForm").onsubmit=async e=>{
+ e.preventDefault();
+ try{const {data,error}=await db.auth.signUp({email:$("signupEmail").value.trim(),password:$("signupPassword").value});if(error)throw error;
+ msg("signupMessage",data.session?"Compte créé avec succès.":"Compte créé. Consultez votre e-mail pour confirmer votre adresse.",true);await refreshAll();}
+ catch(x){msg("signupMessage",errorText(x));}
+};
+$("logoutButton").onclick=async()=>{
+ const {error}=await db.auth.signOut();if(error)return toast(errorText(error));user=null;store=null;cart=[];updateCartCount();await refreshAll();toast("Déconnexion réussie.");
+};
+$("forgotButton").onclick=async()=>{
+ const email=$("loginEmail").value.trim();if(!email)return toast("Entrez votre adresse e-mail.");
+ const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+ toast(error?errorText(error):"Lien de récupération envoyé par e-mail.");
+};
+
+init();
+</script>
+<script>if(window.lucide)lucide.createIcons();</script>
+</body>
+  </html>
