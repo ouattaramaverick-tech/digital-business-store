@@ -1061,7 +1061,7 @@ const sections=[
 {table:"globexa_sellers",target:"adminSellers"},
 {table:"globexa_products",target:"adminProducts"},
 {table:"globexa_orders",target:"adminOrders"},
-{table:"commissions",target:"adminCommissions"}
+{table:"globexa_commissions",target:"adminCommissions"}
 ];
 
 const results=await Promise.all(sections.map(async section=>{
@@ -1097,7 +1097,7 @@ results.map(item=>[item.table,item])
 const sellers=byTable.globexa_sellers.data;
 const allProducts=byTable.globexa_products.data;
 const orders=byTable.globexa_orders.data;
-const commissions=byTable.commissions.data;
+const commissions=byTable.globexa_commissions.data;
 
 $("sellerCount").textContent=
 byTable.globexa_sellers.error?"—":sellers.length;
@@ -1109,11 +1109,11 @@ $("orderCount").textContent=
 byTable.globexa_orders.error?"—":orders.length;
 
 const commissionSum=commissions.reduce(
-(total,item)=>total+Number(item.amount||0),0
+(total,item)=>total+Number(item.commission_amount||0),0
 );
 
 $("commissionTotal").textContent=
-byTable.commissions.error?"—":commissionSum.toFixed(2);
+byTable.globexa_commissions.error?"—":commissionSum.toFixed(2);
 
 /* FOURNISSEURS */
 if(byTable.globexa_sellers.error){
@@ -1202,10 +1202,10 @@ ${safe(item.payment_status||"pending")}
 }
 
 /* COMMISSIONS */
-if(byTable.commissions.error){
+if(byTable.globexa_commissions.error){
 
 $("adminCommissions").innerHTML=
-'<div class="status error">'+safe(err(byTable.commissions.error))+'</div>';
+'<div class="status error">'+safe(err(byTable.globexa_commissions.error))+'</div>';
 
 }else{
 
@@ -1214,10 +1214,10 @@ $("adminCommissions").innerHTML=commissions.map(item=>`
 <div class="row">
 <div>
 Commande : ${safe(String(item.order_id||"").slice(0,12))}<br>
-Taux : ${safe(item.rate)} %<br>
+Taux : ${safe(item.commission_rate)} %<br>
 Statut : ${safe(item.status||"pending")}
 </div>
-<b>${money(item.amount,item.currency)}</b>
+<b>${money(item.commission_amount,item.currency)}</b>
 </div>
 
 `).join("")||"Aucune commission enregistrée.";
@@ -1320,4 +1320,5 @@ start();
 </script>
 </body>
 </html>
+
 
