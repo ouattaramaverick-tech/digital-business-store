@@ -2989,3 +2989,292 @@ refreshGlobexa();
 </main>
 </body>
 </html>
+
+/* =====================================================
+   GLOBEXA - CODE 12B
+   CONNEXION REELLE DES BOUTIQUES ET PRODUITS
+   BASE DE DONNEES SUPABASE
+===================================================== */
+
+/* 1. RECUPERER LE COMPTE CONNECTE */
+
+async function globexaGetUser() {
+  if (!globexaDB) return null;
+
+  const { data, error } = await globexaDB.auth.getUser();
+
+  if (error || !data.user) {
+    globexaUser = null;
+    return null;
+  }
+
+  globexaUser = data.user;
+  return data.user;
+}
+
+/* 2. RECUPERER LES VALEURS DES FORMULAIRES */
+
+function globexaValue(id) {
+  const element = document.getElementById(id);
+  return element ? element.value.trim() : "";
+}
+
+/* 3. ACTUALISER LES AFFICHAGES */
+
+function globexaRefreshCatalogViews() {
+  if (typeof renderProducts === "function") renderProducts();
+  if (typeof renderStores === "function") renderStores();
+  if (typeof renderMyProducts === "function") renderMyProducts();
+  if (typeof renderAdmin === "function") renderAdmin();
+  if (typeof renderCart === "function") renderCart();
+}
+
+/* 4. CHARGER LES PRODUITS ET BOUTIQUES */
+
+async function loadGlobexaCatalog() {
+  if (!globexaDB) return;
+
+  const [productsResult, storesResult] = await Promise.all([
+    globexaDB
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false }),
+
+    globexaDB
+      .from("stores")
+      .select("*")
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (productsResult.error) {
+    console.error("Produits :", productsResult.error);
+    toast("Erreur de chargement des produits.");
+  } else {
+    const cloudProducts = (productsResult.data || []).map(item => ({
+      ...item,
+      name: item.name || "",
+      category: item.category || "",
+      description: item.description || "",
+      price: Number(item.price || 0),
+      currency: item.currency || "USD",
+      stock: Number(item.stock || 0),
+      origin: item.origin || "",
+      image: item.image_url || "",
+      owner_id: item.owner_id || "",
+      store_id: item.store_id || ""
+    }));
+
+    if (Array.isArray(products)) {
+      products.splice(0, products.length, ...cloudProducts);
+
+      if (typeof saveLocal === "function") {
+        saveLocal("products", products);
+      }
+    }
+  }
+
+  if (storesResult.error) {
+    console.error("Boutiques :", storesResult.error);
+    toast("Erreur de chargement des boutiques.");
+  } else {
+    const cloudStores = (storesResult.data || []).map(item => ({
+      ...item,
+      name: item.name || "",
+      country: item.country || "",
+      city: item.city || "",
+      description: item.description || "",
+      phone: item.phone || "",
+      logo: item.logo_url || "",
+      owner_id: item.owner_id || ""
+    }));
+
+    if (Array.isArray(stores)) {
+      stores.splice(0, stores.length, ...cloudStores);
+
+      if (typeof saveLocal === "function") {
+        saveLocal("stores", stores);
+      }
+    }
+  }
+
+  globexaRefreshCatalogViews();
+}
+
+/* 5. ENREGISTRER UNE BOUTIQUE */
+
+const globexaStoreForm = document.getElementById("storeForm");
+
+if (globexaStoreForm) {
+  globexaStoreForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const user = await globexaGetUser();
+
+    if (!user) {
+      toast("Connectez-vous avant de créer votre boutique.");
+
+      if (typeof showSection === "function") {
+        showSection("account");
+      }
+
+      return;
+    }
+
+    const storeData = {
+      owner_id: user.id,
+      name: globexaValue("storeName"),
+      country: globexaValue("storeCountry"),
+      city: globexaValue("storeCity"),
+      description: globexaValue("storeDescription"),
+      phone: globexaValue("storePhone"),
+      logo_url: globexaValue("storeLogo") || null
+    };
+
+    if (!storeData.name || !storeData.country) {
+      toast("Remplissez le nom et le pays de votre boutique.");
+      return;
+    }
+
+    const button = globexaStoreForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    if (button) button.disabled = true;
+
+    const { error } = await globexaDB
+      .from("stores")
+      .insert(storeData);
+
+    if (button) button.disabled = false;
+
+    if (error) {
+      console.error(error);
+      toast("Erreur boutique : " + error.message);
+      return;
+    }
+
+    globexaStoreForm.reset();
+
+    toast("Boutique enregistrée avec succès !");
+
+    await loadGlobexaCatalog();
+  }, true);
+}
+
+/* 6. PUBLIER UN PRODUIT */
+
+const globexaProductForm = document.getElementById("newProductForm");
+
+if (globexaProductForm) {
+  globexaProductForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const user = await globexaGetUser();
+
+    if (!user) {
+      toast("Connectez-vous avant de publier un produit.");
+
+      if (typeof showSection === "function") {
+        showSection("account");
+      }
+
+      return;
+    }
+
+    const { data: userStores, error: storeError } =
+      await globexaDB
+        .from("stores")
+        .select("id")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+    if (storeError) {
+      toast("Erreur boutique : " + storeError.message);
+      return;
+    }
+
+    if (!userStores || userStores.length === 0) {
+      toast("Créez d'abord votre boutique.");
+
+      if (typeof showSection === "function") {
+        showSection("suppliers");
+      }
+
+      return;
+    }
+
+    const productData = {
+      owner_id: user.id,
+      store_id: userStores[0].id,
+      name: globexaValue("newProductName"),
+      price: Number(globexaValue("newProductPrice")),
+      stock: Number(globexaValue("newProductStock") || 0),
+      category: globexaValue("newProductCategory"),
+      currency: globexaValue("newProductCurrency") || "USD",
+      origin: globexaValue("newProductOrigin"),
+      image_url: globexaValue("newProductImage") || null,
+      description: globexaValue("newProductDescription")
+    };
+
+    if (
+      !productData.name ||
+      !Number.isFinite(productData.price) ||
+      productData.price <= 0
+    ) {
+      toast("Entrez un nom et un prix valide.");
+      return;
+    }
+
+    if (!Number.isFinite(productData.stock) || productData.stock < 0) {
+      toast("Quantité de stock invalide.");
+      return;
+    }
+
+    const button = globexaProductForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    if (button) button.disabled = true;
+
+    const { error } = await globexaDB
+      .from("products")
+      .insert(productData);
+
+    if (button) button.disabled = false;
+
+    if (error) {
+      console.error(error);
+      toast("Erreur produit : " + error.message);
+      return;
+    }
+
+    globexaProductForm.reset();
+
+    toast("Produit publié avec succès !");
+
+    await loadGlobexaCatalog();
+  }, true);
+}
+
+/* 7. ACTUALISATION APRES CONNEXION */
+
+if (globexaDB) {
+  globexaDB.auth.onAuthStateChange(function(event, session) {
+    globexaUser = session ? session.user : null;
+
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      setTimeout(loadGlobexaCatalog, 300);
+    }
+
+    if (event === "SIGNED_OUT") {
+      loadGlobexaCatalog();
+    }
+  });
+
+  loadGlobexaCatalog();
+}
+
+/* FIN DU CODE 12B */
