@@ -2842,6 +2842,500 @@ loadMyQuotes();
   loadShippingOrders();
 
 })();
+
+/* =====================================================
+   CODE 16A — AVIS CLIENTS ET NOTES FOURNISSEURS
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaReviewsSection")) return;
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaReviewsSection";
+    link.textContent = "Avis clients";
+    nav.appendChild(link);
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaReviewsSection";
+
+  section.innerHTML = `
+    <h2>Avis et évaluations GLOBEXA</h2>
+
+    <p>
+      Consultez les évaluations des fournisseurs et partagez
+      votre expérience après réception de votre commande.
+    </p>
+
+    <div class="panel">
+      <h3>Évaluer mes commandes livrées</h3>
+
+      <p id="globexaReviewFormFeedback" class="auth-message">
+        Chargement...
+      </p>
+
+      <div id="globexaReviewOrders"></div>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h3>Évaluations des fournisseurs</h3>
+
+      <button type="button" id="globexaRefreshReviews">
+        Actualiser les avis
+      </button>
+
+      <p id="globexaReviewListFeedback" class="auth-message"></p>
+
+      <div id="globexaPublicReviews"></div>
+    </div>
+  `;
+
+  const main = document.querySelector("main");
+
+  if (main) {
+    main.appendChild(section);
+  } else {
+    document.body.appendChild(section);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+
+  function setFeedback(id, message, error = false) {
+    const element = $(id);
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleDateString("fr-FR");
+  }
+
+  function stars(value) {
+    const rating = Math.max(0, Math.min(5, Number(value) || 0));
+
+    return "★".repeat(rating) + "☆".repeat(5 - rating);
+  }
+
+  async function loadReviewOrders() {
+    const container = $("globexaReviewOrders");
+
+    container.innerHTML = "";
+
+    try {
+      const {
+        data: { user },
+        error: authError
+      } = await db.auth.getUser();
+
+      if (authError) throw authError;
+
+      if (!user) {
+        setFeedback(
+          "globexaReviewFormFeedback",
+          "Connectez-vous pour évaluer vos commandes.",
+          true
+        );
+        return;
+      }
+
+      const { data: orders, error: orderError } = await db
+        .from("globexa_market_orders")
+        .select(`
+          id,
+          buyer_id,
+          supplier_id,
+          product_id,
+          quantity,
+          currency,
+          subtotal,
+          status,
+          created_at,
+          product:globexa_market_products(title)
+        `)
+        .eq("buyer_id", user.id)
+        .eq("status", "delivered")
+        .order("created_at", { ascending: false });
+
+      if (orderError) throw orderError;
+
+      if (!orders || orders.length === 0) {
+        setFeedback(
+          "globexaReviewFormFeedback",
+          "Aucune commande livrée à évaluer pour le moment."
+        );
+        return;
+      }
+
+      const { data: existingReviews, error: reviewError } = await db
+        .from("globexa_reviews")
+        .select("order_id")
+        .eq("reviewer_id", user.id);
+
+      if (reviewError) throw reviewError;
+
+      const reviewedOrders = new Set(
+        (existingReviews || []).map(review => review.order_id)
+      );
+
+      orders.forEach(order => {
+        const alreadyReviewed = reviewedOrders.has(order.id);
+
+        const card = document.createElement("article");
+
+        card.className = "panel";
+        card.style.marginTop = "14px";
+        card.style.padding = "14px";
+
+        card.innerHTML = `
+          <h4>
+            ${escapeHtml(order.product?.title || "Produit indisponible")}
+          </h4>
+
+          <p>
+            <strong>Commande :</strong>
+            ${escapeHtml(order.id)}
+          </p>
+
+          <p>
+            <strong>Quantité :</strong>
+            ${escapeHtml(order.quantity)}
+          </p>
+
+          <p>
+            <strong>Livraison :</strong>
+            <span style="color:#16834a">Confirmée</span>
+          </p>
+
+          ${
+            alreadyReviewed
+              ? `
+                <p style="color:#16834a">
+                  Vous avez déjà évalué cette commande.
+                </p>
+              `
+              : `
+                <label>Votre note</label>
+
+                <select data-field="rating">
+                  <option value="5">5 étoiles — Excellent</option>
+                  <option value="4">4 étoiles — Très bien</option>
+                  <option value="3">3 étoiles — Bien</option>
+                  <option value="2">2 étoiles — Moyen</option>
+                  <option value="1">1 étoile — Mauvais</option>
+                </select>
+
+                <label>Votre commentaire</label>
+
+                <textarea
+                  data-field="comment"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Partagez votre expérience..."
+                  style="width:100%;margin-top:8px"
+                ></textarea>
+
+                <button
+                  type="button"
+                  data-action="submit-review"
+                  data-order="${escapeHtml(order.id)}"
+                  data-supplier="${escapeHtml(order.supplier_id)}"
+                  style="margin-top:10px"
+                >
+                  Publier mon avis
+                </button>
+
+                <p data-feedback></p>
+              `
+          }
+        `;
+
+        container.appendChild(card);
+      });
+
+      setFeedback(
+        "globexaReviewFormFeedback",
+        "Vos commandes livrées sont affichées ci-dessous."
+      );
+
+    } catch (error) {
+      console.error("GLOBEXA avis commandes :", error);
+
+      setFeedback(
+        "globexaReviewFormFeedback",
+        error.message || "Impossible de charger les commandes.",
+        true
+      );
+    }
+  }
+
+  async function loadPublicReviews() {
+    const container = $("globexaPublicReviews");
+
+    container.innerHTML = "";
+
+    try {
+      const { data: reviews, error } = await db
+        .from("globexa_reviews")
+        .select(`
+          id,
+          supplier_id,
+          rating,
+          comment,
+          created_at
+        `)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      if (!reviews || reviews.length === 0) {
+        setFeedback(
+          "globexaReviewListFeedback",
+          "Aucun avis publié pour le moment."
+        );
+        return;
+      }
+
+      const suppliers = {};
+
+      reviews.forEach(review => {
+        const id = review.supplier_id;
+
+        if (!suppliers[id]) {
+          suppliers[id] = {
+            total: 0,
+            count: 0,
+            reviews: []
+          };
+        }
+
+        suppliers[id].total += Number(review.rating);
+        suppliers[id].count += 1;
+        suppliers[id].reviews.push(review);
+      });
+
+      Object.entries(suppliers).forEach(([supplierId, data]) => {
+        const average = data.total / data.count;
+
+        const card = document.createElement("article");
+
+        card.className = "panel";
+        card.style.marginTop = "14px";
+        card.style.padding = "14px";
+
+        card.innerHTML = `
+          <h4>Fournisseur GLOBEXA</h4>
+
+          <p>
+            <strong>Identifiant :</strong>
+            ${escapeHtml(supplierId)}
+          </p>
+
+          <p style="color:#e59a12;font-size:20px">
+            ${stars(Math.round(average))}
+          </p>
+
+          <p>
+            <strong>Note moyenne :</strong>
+            ${average.toFixed(1)} / 5
+          </p>
+
+          <p>
+            ${data.count} avis client(s)
+          </p>
+
+          <div data-review-items></div>
+        `;
+
+        const reviewItems = card.querySelector("[data-review-items]");
+
+        data.reviews.forEach(review => {
+          const item = document.createElement("div");
+
+          item.style.borderTop = "1px solid #ddd";
+          item.style.padding = "10px 0";
+
+          item.innerHTML = `
+            <p style="color:#e59a12">
+              ${stars(review.rating)}
+            </p>
+
+            <p>${escapeHtml(review.comment || "Aucun commentaire.")}</p>
+
+            <small>${formatDate(review.created_at)}</small>
+          `;
+
+          reviewItems.appendChild(item);
+        });
+
+        container.appendChild(card);
+      });
+
+      setFeedback(
+        "globexaReviewListFeedback",
+        reviews.length + " avis affiché(s)."
+      );
+
+    } catch (error) {
+      console.error("GLOBEXA avis publics :", error);
+
+      setFeedback(
+        "globexaReviewListFeedback",
+        error.message || "Impossible de charger les avis.",
+        true
+      );
+    }
+  }
+
+  $("globexaReviewOrders").addEventListener(
+    "click",
+    async function (event) {
+      const button = event.target.closest(
+        'button[data-action="submit-review"]'
+      );
+
+      if (!button) return;
+
+      const card = button.closest(".panel");
+      const feedbackElement = card.querySelector("[data-feedback]");
+
+      button.disabled = true;
+
+      try {
+        const {
+          data: { user },
+          error: authError
+        } = await db.auth.getUser();
+
+        if (authError) throw authError;
+
+        if (!user) {
+          throw new Error("Connectez-vous pour publier un avis.");
+        }
+
+        const orderId = button.dataset.order;
+        const supplierId = button.dataset.supplier;
+
+        const rating = Number(
+          card.querySelector('[data-field="rating"]').value
+        );
+
+        const comment = card.querySelector(
+          '[data-field="comment"]'
+        ).value.trim();
+
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+          throw new Error("Choisissez une note entre 1 et 5.");
+        }
+
+        if (comment.length > 1000) {
+          throw new Error("Votre commentaire est trop long.");
+        }
+
+        const { data: order, error: orderError } = await db
+          .from("globexa_market_orders")
+          .select("id,buyer_id,supplier_id,status")
+          .eq("id", orderId)
+          .single();
+
+        if (orderError) throw orderError;
+
+        if (
+          order.buyer_id !== user.id ||
+          order.supplier_id !== supplierId ||
+          order.status !== "delivered"
+        ) {
+          throw new Error(
+            "Cette commande ne peut pas être évaluée."
+          );
+        }
+
+        const { data: existing, error: existingError } = await db
+          .from("globexa_reviews")
+          .select("id")
+          .eq("order_id", orderId)
+          .eq("reviewer_id", user.id)
+          .maybeSingle();
+
+        if (existingError) throw existingError;
+
+        if (existing) {
+          throw new Error("Vous avez déjà évalué cette commande.");
+        }
+
+        const { error: insertError } = await db
+          .from("globexa_reviews")
+          .insert({
+            order_id: orderId,
+            reviewer_id: user.id,
+            supplier_id: supplierId,
+            rating: rating,
+            comment: comment || null
+          });
+
+        if (insertError) throw insertError;
+
+        feedbackElement.textContent = "Votre avis a été publié.";
+        feedbackElement.style.color = "#16834a";
+
+        await loadReviewOrders();
+        await loadPublicReviews();
+
+      } catch (error) {
+        console.error("GLOBEXA publication avis :", error);
+
+        feedbackElement.textContent =
+          error.message || "Impossible de publier votre avis.";
+
+        feedbackElement.style.color = "#c0392b";
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+  );
+
+  $("globexaRefreshReviews").addEventListener(
+    "click",
+    async function () {
+      await loadPublicReviews();
+      await loadReviewOrders();
+    }
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(function () {
+      loadReviewOrders();
+    }, 0);
+  });
+
+  loadReviewOrders();
+  loadPublicReviews();
+
+})();
 </script>
 
 </body>
