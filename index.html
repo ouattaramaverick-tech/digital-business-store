@@ -5785,6 +5785,491 @@ loadMyQuotes();
   loadSuppliers();
 
 })();
+
+/* =====================================================
+   CODE 22A — GLOBEXA REELS
+   PUBLICATION ET FIL DE VIDEOS
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  const section = document.getElementById("videos");
+
+  if (!db || !section || document.getElementById("globexaReelsApp")) {
+    return;
+  }
+
+  section.innerHTML = `
+    <h2>GLOBEXA Reels</h2>
+
+    <div id="globexaReelsApp">
+
+      <div id="globexaReelsMessage" class="panel">
+        Chargement des vidéos...
+      </div>
+
+      <div id="globexaReelsPublisher" hidden class="panel">
+        <h3>Publier une vidéo produit</h3>
+
+        <form id="globexaReelsForm">
+
+          <label>
+            Votre vidéo (MP4, WebM ou MOV)
+            <input
+              type="file"
+              id="globexaReelsFile"
+              accept="video/mp4,video/webm,video/quicktime"
+              required
+            >
+          </label>
+
+          <label>
+            Description
+            <textarea
+              id="globexaReelsCaption"
+              maxlength="500"
+              rows="3"
+              placeholder="Présentez votre produit..."
+            ></textarea>
+          </label>
+
+          <label>
+            Associer un produit (facultatif)
+            <select id="globexaReelsProduct">
+              <option value="">Aucun produit</option>
+            </select>
+          </label>
+
+          <button type="submit" id="globexaReelsPublish">
+            Publier ma vidéo
+          </button>
+
+        </form>
+
+        <p id="globexaReelsUploadStatus"></p>
+        <p>Durée maximale : 90 secondes. Taille maximale : 100 Mo.</p>
+      </div>
+
+      <div id="globexaMyReels" class="panel" hidden>
+        <h3>Mes publications</h3>
+        <div id="globexaMyReelsList"></div>
+      </div>
+
+      <h3>Découvrir les vidéos</h3>
+      <div id="globexaReelsFeed"></div>
+
+    </div>
+  `;
+
+  const $ = id => document.getElementById(id);
+
+  function message(text) {
+    $("globexaReelsMessage").textContent = text;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function statusLabel(status) {
+    const labels = {
+      pending: "En attente de validation",
+      approved: "Publiée",
+      rejected: "Refusée",
+      hidden: "Masquée"
+    };
+
+    return labels[status] || status;
+  }
+
+  async function getCurrentUser() {
+    const { data, error } = await db.auth.getUser();
+
+    if (error) throw error;
+
+    return data.user;
+  }
+
+  async function loadPublisher(user) {
+    $("globexaReelsPublisher").hidden = true;
+    $("globexaMyReels").hidden = true;
+
+    if (!user) {
+      message("Connectez-vous pour publier une vidéo.");
+      return;
+    }
+
+    const { data: store, error } = await db
+      .from("globexa_stores")
+      .select("id,company_name")
+      .eq("owner_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!store) {
+      message(
+        "Votre boutique doit être approuvée et active pour publier des Reels."
+      );
+      return;
+    }
+
+    $("globexaReelsPublisher").hidden = false;
+    $("globexaMyReels").hidden = false;
+
+    message("Bienvenue dans GLOBEXA Reels.");
+
+    const { data: products, error: productsError } = await db
+      .from("globexa_market_products")
+      .select("id,title")
+      .eq("store_id", store.id)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
+
+    if (productsError) throw productsError;
+
+    const select = $("globexaReelsProduct");
+
+    select.replaceChildren();
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "Aucun produit";
+    select.appendChild(emptyOption);
+
+    (products || []).forEach(product => {
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent = product.title;
+      select.appendChild(option);
+    });
+
+    await loadMyReels(user);
+  }
+
+  async function loadMyReels(user) {
+    const container = $("globexaMyReelsList");
+
+    container.replaceChildren();
+
+    const { data, error } = await db
+      .from("globexa_reels")
+      .select("id,caption,status,created_at,duration_seconds")
+      .eq("supplier_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.textContent = "Vous n'avez pas encore publié de vidéo.";
+      return;
+    }
+
+    data.forEach(reel => {
+      const item = document.createElement("div");
+
+      item.style.cssText =
+        "padding:10px 0;border-bottom:1px solid #e5e7eb";
+
+      const title = document.createElement("strong");
+      title.textContent = statusLabel(reel.status);
+
+      const caption = document.createElement("p");
+      caption.textContent = reel.caption || "Vidéo sans description";
+
+      const duration = document.createElement("small");
+      duration.textContent =
+        "Durée : " + reel.duration_seconds + " secondes";
+
+      item.append(title, caption, duration);
+      container.appendChild(item);
+    });
+  }
+
+  async function loadFeed() {
+    const feed = $("globexaReelsFeed");
+
+    feed.replaceChildren();
+
+    const { data: reels, error } = await db
+      .from("globexa_reels")
+      .select(`
+        id,
+        supplier_id,
+        product_id,
+        caption,
+        video_path,
+        duration_seconds,
+        created_at,
+        product:globexa_market_products(
+          title,
+          base_price,
+          currency
+        )
+      `)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error) throw error;
+
+    if (!reels || reels.length === 0) {
+      feed.textContent =
+        "Les vidéos validées des fournisseurs apparaîtront ici.";
+      return;
+    }
+
+    const supplierIds = [
+      ...new Set(reels.map(reel => reel.supplier_id))
+    ];
+
+    const { data: stores, error: storesError } = await db
+      .from("globexa_stores")
+      .select("owner_id,company_name,country")
+      .in("owner_id", supplierIds)
+      .eq("status", "active");
+
+    if (storesError) throw storesError;
+
+    const storeMap = {};
+
+    (stores || []).forEach(store => {
+      storeMap[store.owner_id] = store;
+    });
+
+    reels.forEach(reel => {
+      const store = storeMap[reel.supplier_id];
+
+      const videoUrl = db.storage
+        .from("globexa-reels")
+        .getPublicUrl(reel.video_path).data.publicUrl;
+
+      const card = document.createElement("article");
+
+      card.style.cssText = `
+        max-width:480px;
+        margin:20px auto;
+        padding:12px;
+        border-radius:12px;
+        background:#0b2d52;
+        color:white;
+        overflow:hidden
+      `;
+
+      const video = document.createElement("video");
+
+      video.src = videoUrl;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.loop = true;
+      video.muted = true;
+
+      video.style.cssText = `
+        width:100%;
+        max-height:620px;
+        object-fit:contain;
+        background:black;
+        border-radius:8px
+      `;
+
+      const supplier = document.createElement("h4");
+      supplier.textContent =
+        store
+          ? store.company_name + " — " + (store.country || "")
+          : "Fournisseur GLOBEXA";
+
+      const caption = document.createElement("p");
+      caption.textContent = reel.caption || "Découvrez ce produit.";
+
+      card.append(video, supplier, caption);
+
+      const product = Array.isArray(reel.product)
+        ? reel.product[0]
+        : reel.product;
+
+      if (product) {
+        const productInfo = document.createElement("p");
+
+        productInfo.textContent =
+          product.title + " — " +
+          Number(product.base_price).toLocaleString("fr-FR") +
+          " " + product.currency;
+
+        card.appendChild(productInfo);
+      }
+
+      feed.appendChild(card);
+    });
+  }
+
+  async function validateVideo(file) {
+    if (!file) {
+      throw new Error("Sélectionnez une vidéo.");
+    }
+
+    const allowedTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error("Format vidéo non accepté.");
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      throw new Error("La vidéo dépasse la limite de 100 Mo.");
+    }
+
+    const temporaryUrl = URL.createObjectURL(file);
+
+    try {
+      const duration = await new Promise((resolve, reject) => {
+        const video = document.createElement("video");
+
+        video.preload = "metadata";
+
+        video.onloadedmetadata = () => resolve(video.duration);
+        video.onerror = () => reject(
+          new Error("Impossible de lire cette vidéo.")
+        );
+
+        video.src = temporaryUrl;
+      });
+
+      if (!Number.isFinite(duration) || duration < 1 || duration > 90) {
+        throw new Error(
+          "La vidéo doit durer entre 1 et 90 secondes."
+        );
+      }
+
+      return Math.ceil(duration);
+
+    } finally {
+      URL.revokeObjectURL(temporaryUrl);
+    }
+  }
+
+  $("globexaReelsForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const button = $("globexaReelsPublish");
+    const uploadStatus = $("globexaReelsUploadStatus");
+
+    button.disabled = true;
+    uploadStatus.textContent = "Préparation de la vidéo...";
+
+    let uploadedPath = null;
+
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        throw new Error("Connectez-vous avant de publier.");
+      }
+
+      const file = $("globexaReelsFile").files[0];
+      const duration = await validateVideo(file);
+
+      const extension = file.name.split(".").pop().toLowerCase();
+
+      const uniqueName = (
+        window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now() + "-" + Math.random().toString(36).slice(2)
+      );
+
+      uploadedPath =
+        user.id + "/" + uniqueName + "." + extension;
+
+      uploadStatus.textContent = "Envoi de la vidéo...";
+
+      const { error: uploadError } = await db.storage
+        .from("globexa-reels")
+        .upload(uploadedPath, file, {
+          contentType: file.type,
+          cacheControl: "3600",
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      uploadStatus.textContent =
+        "Vidéo envoyée. Enregistrement de la publication...";
+
+      const productId = $("globexaReelsProduct").value || null;
+
+      const { error: insertError } = await db
+        .from("globexa_reels")
+        .insert({
+          supplier_id: user.id,
+          product_id: productId,
+          caption: $("globexaReelsCaption").value.trim(),
+          video_path: uploadedPath,
+          duration_seconds: duration
+        });
+
+      if (insertError) {
+        await db.storage
+          .from("globexa-reels")
+          .remove([uploadedPath]);
+
+        uploadedPath = null;
+
+        throw insertError;
+      }
+
+      $("globexaReelsForm").reset();
+
+      uploadStatus.textContent =
+        "Votre vidéo est envoyée et attend la validation de GLOBEXA.";
+
+      await loadMyReels(user);
+
+    } catch (error) {
+      console.error("GLOBEXA Reels :", error);
+
+      uploadStatus.textContent =
+        error.message || "Une erreur est survenue.";
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  async function initialize() {
+    try {
+      const user = await getCurrentUser();
+
+      await loadPublisher(user);
+      await loadFeed();
+
+    } catch (error) {
+      console.error("Initialisation GLOBEXA Reels :", error);
+
+      message(
+        error.message || "Impossible de charger les vidéos."
+      );
+    }
+  }
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(initialize, 0);
+  });
+
+  initialize();
+
+})();
 </script>
 
 </body>
