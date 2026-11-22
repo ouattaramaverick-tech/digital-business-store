@@ -5031,6 +5031,387 @@ loadMyQuotes();
   start();
 
 })();
+
+/* =====================================================
+   CODE 20A — NOTIFICATIONS ACHETEUR ET FOURNISSEUR
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaNotificationsSection")) {
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaNotificationsSection";
+
+  section.innerHTML = `
+    <h2>Mes notifications</h2>
+
+    <div class="panel" style="padding:15px">
+      <p id="globexaNotificationsFeedback">Chargement...</p>
+
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        flex-wrap:wrap;
+        margin:12px 0
+      ">
+        <strong>
+          Non lues :
+          <span id="globexaUnreadCount">0</span>
+        </strong>
+
+        <button
+          type="button"
+          id="globexaMarkAllRead"
+        >
+          Tout marquer comme lu
+        </button>
+
+        <button
+          type="button"
+          id="globexaRefreshNotifications"
+        >
+          Actualiser
+        </button>
+      </div>
+
+      <div id="globexaNotificationsList">
+        Chargement...
+      </div>
+    </div>
+  `;
+
+  const previousSection =
+    document.getElementById("globexaFavoritesSection") ||
+    document.getElementById("globexaAdminModerationSection");
+
+  if (previousSection) {
+    previousSection.insertAdjacentElement("afterend", section);
+  } else {
+    const main = document.querySelector("main");
+    (main || document.body).appendChild(section);
+  }
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaNotificationsSection";
+    link.textContent = "Notifications";
+    nav.appendChild(link);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  let notificationChannel = null;
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function feedback(message, error = false) {
+    const element = $("globexaNotificationsFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  async function getUser() {
+    const {
+      data: { user },
+      error
+    } = await db.auth.getUser();
+
+    if (error) throw error;
+
+    if (!user) {
+      throw new Error(
+        "Connectez-vous pour consulter vos notifications."
+      );
+    }
+
+    return user;
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleString("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+  }
+
+  async function loadNotifications() {
+    const container = $("globexaNotificationsList");
+
+    container.textContent = "Chargement...";
+
+    try {
+      currentUser = await getUser();
+
+      const { data, error } = await db
+        .from("globexa_notifications")
+        .select(`
+          id,
+          notification_type,
+          title,
+          body,
+          order_id,
+          message_id,
+          read_at,
+          created_at
+        `)
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      const notifications = data || [];
+
+      const unread = notifications.filter(
+        item => !item.read_at
+      ).length;
+
+      $("globexaUnreadCount").textContent = unread;
+
+      if (notifications.length === 0) {
+        container.innerHTML = `
+          <p>Vous n'avez aucune notification pour le moment.</p>
+        `;
+        return;
+      }
+
+      container.innerHTML = notifications.map(item => {
+        const isRead = Boolean(item.read_at);
+
+        return `
+          <article
+            class="panel"
+            style="
+              padding:12px;
+              margin:12px 0;
+              border:1px solid #ddd;
+              border-left:4px solid ${
+                isRead ? "#aaa" : "#f39c12"
+              };
+              border-radius:7px;
+              background:${isRead ? "#f8f8f8" : "#fff"};
+            "
+          >
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              gap:8px;
+              flex-wrap:wrap
+            ">
+              <strong>
+                ${escapeHtml(item.title)}
+              </strong>
+
+              <small>
+                ${isRead ? "Lue" : "Non lue"}
+              </small>
+            </div>
+
+            <p>${escapeHtml(item.body)}</p>
+
+            <small>
+              ${escapeHtml(formatDate(item.created_at))}
+            </small>
+
+            ${
+              !isRead
+                ? `
+                  <div style="margin-top:10px">
+                    <button
+                      type="button"
+                      data-notification-read="${escapeHtml(item.id)}"
+                    >
+                      Marquer comme lu
+                    </button>
+                  </div>
+                `
+                : ""
+            }
+          </article>
+        `;
+      }).join("");
+
+    } catch (error) {
+      console.error("GLOBEXA notifications :", error);
+
+      container.textContent =
+        error.message || "Impossible de charger les notifications.";
+
+      $("globexaUnreadCount").textContent = "0";
+    }
+  }
+
+  async function markAsRead(notificationId, button) {
+    if (!currentUser) return;
+
+    button.disabled = true;
+
+    try {
+      const { error } = await db
+        .from("globexa_notifications")
+        .update({
+          read_at: new Date().toISOString()
+        })
+        .eq("id", notificationId)
+        .eq("user_id", currentUser.id)
+        .is("read_at", null);
+
+      if (error) throw error;
+
+      await loadNotifications();
+
+      feedback("Notification marquée comme lue.");
+
+    } catch (error) {
+      console.error("GLOBEXA lecture notification :", error);
+
+      feedback(
+        error.message || "Impossible de modifier la notification.",
+        true
+      );
+
+      button.disabled = false;
+    }
+  }
+
+  async function markAllAsRead() {
+    const button = $("globexaMarkAllRead");
+
+    button.disabled = true;
+
+    try {
+      currentUser = await getUser();
+
+      const { error } = await db
+        .from("globexa_notifications")
+        .update({
+          read_at: new Date().toISOString()
+        })
+        .eq("user_id", currentUser.id)
+        .is("read_at", null);
+
+      if (error) throw error;
+
+      await loadNotifications();
+
+      feedback("Toutes vos notifications sont marquées comme lues.");
+
+    } catch (error) {
+      console.error("GLOBEXA lecture globale :", error);
+
+      feedback(
+        error.message || "Impossible de marquer les notifications.",
+        true
+      );
+
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function startRealtime(userId) {
+    if (notificationChannel) {
+      db.removeChannel(notificationChannel);
+      notificationChannel = null;
+    }
+
+    notificationChannel = db
+      .channel("globexa-notifications-" + userId)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "globexa_notifications",
+          filter: "user_id=eq." + userId
+        },
+        function () {
+          loadNotifications();
+        }
+      )
+      .subscribe();
+  }
+
+  $("globexaMarkAllRead").addEventListener(
+    "click",
+    markAllAsRead
+  );
+
+  $("globexaRefreshNotifications").addEventListener(
+    "click",
+    loadNotifications
+  );
+
+  $("globexaNotificationsList").addEventListener(
+    "click",
+    function (event) {
+      const button = event.target.closest(
+        "button[data-notification-read]"
+      );
+
+      if (!button) return;
+
+      markAsRead(
+        button.dataset.notificationRead,
+        button
+      );
+    }
+  );
+
+  db.auth.onAuthStateChange(function (_event, session) {
+    setTimeout(function () {
+      if (session && session.user) {
+        currentUser = session.user;
+        startRealtime(session.user.id);
+        loadNotifications();
+      } else {
+        currentUser = null;
+
+        if (notificationChannel) {
+          db.removeChannel(notificationChannel);
+          notificationChannel = null;
+        }
+
+        $("globexaNotificationsList").textContent =
+          "Connectez-vous pour voir vos notifications.";
+
+        $("globexaUnreadCount").textContent = "0";
+      }
+    }, 0);
+  });
+
+  loadNotifications().then(function () {
+    if (currentUser) {
+      startRealtime(currentUser.id);
+    }
+  });
+
+})();
 </script>
 
 </body>
