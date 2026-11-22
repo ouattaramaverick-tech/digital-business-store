@@ -5412,6 +5412,379 @@ loadMyQuotes();
   });
 
 })();
+
+/* =====================================================
+   CODE 21A — ANNUAIRE PUBLIC DES FOURNISSEURS
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  const supplierSection = document.getElementById("fournisseurs");
+
+  if (
+    !db ||
+    !supplierSection ||
+    document.getElementById("globexaPublicSuppliers")
+  ) {
+    return;
+  }
+
+  const section = document.createElement("div");
+  section.id = "globexaPublicSuppliers";
+  section.style.marginTop = "25px";
+
+  section.innerHTML = `
+    <h3>Fournisseurs internationaux</h3>
+
+    <p id="globexaSupplierDirectoryStatus">
+      Chargement des boutiques...
+    </p>
+
+    <input
+      id="globexaSupplierDirectorySearch"
+      type="search"
+      placeholder="Rechercher une boutique, un pays ou une ville..."
+      aria-label="Rechercher un fournisseur"
+      style="
+        width:100%;
+        padding:12px;
+        border:1px solid #cbd5e1;
+        border-radius:8px;
+        margin:12px 0
+      "
+    >
+
+    <div id="globexaSupplierDirectoryList"></div>
+  `;
+
+  const ownPanel = document.getElementById("globexaSupplierPanel");
+
+  if (ownPanel) {
+    ownPanel.before(section);
+  } else {
+    supplierSection.appendChild(section);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  let supplierData = [];
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function safeImage(value) {
+    if (
+      typeof value === "string" &&
+      /^https:\/\//i.test(value)
+    ) {
+      return value;
+    }
+
+    return "";
+  }
+
+  function renderSuppliers(searchTerm = "") {
+    const container = $("globexaSupplierDirectoryList");
+
+    const term = searchTerm.trim().toLocaleLowerCase("fr");
+
+    const filtered = supplierData.filter(store => {
+      const searchable = [
+        store.company_name,
+        store.country,
+        store.city,
+        store.description
+      ].join(" ").toLocaleLowerCase("fr");
+
+      return searchable.includes(term);
+    });
+
+    container.replaceChildren();
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <p class="panel">
+          Aucune boutique ne correspond à votre recherche.
+        </p>
+      `;
+      return;
+    }
+
+    filtered.forEach(store => {
+      const card = document.createElement("article");
+
+      card.className = "panel";
+      card.style.cssText = `
+        padding:15px;
+        margin:14px 0;
+        border:1px solid #dce5ee;
+        border-radius:10px;
+        background:white
+      `;
+
+      const logo = safeImage(store.logo_url);
+
+      card.innerHTML = `
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+          flex-wrap:wrap
+        ">
+          ${
+            logo
+              ? `
+                <img
+                  src="${escapeHtml(logo)}"
+                  alt="Logo ${escapeHtml(store.company_name)}"
+                  loading="lazy"
+                  style="
+                    width:65px;
+                    height:65px;
+                    object-fit:contain;
+                    border-radius:8px
+                  "
+                >
+              `
+              : `
+                <div style="
+                  width:65px;
+                  height:65px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  background:#eaf2fa;
+                  color:#0b2d52;
+                  border-radius:8px;
+                  font-weight:bold
+                ">
+                  G
+                </div>
+              `
+          }
+
+          <div>
+            <h4 style="margin:0 0 6px">
+              ${escapeHtml(store.company_name)}
+            </h4>
+
+            <p style="margin:3px 0">
+              ${escapeHtml(store.city || "Ville non renseignée")},
+              ${escapeHtml(store.country || "")}
+            </p>
+
+            <small>
+              Boutique active
+            </small>
+          </div>
+        </div>
+
+        <p style="margin-top:12px">
+          ${escapeHtml(store.description || "Présentation non renseignée.")}
+        </p>
+
+        <p>
+          Produits publiés :
+          <strong>${store.products.length}</strong>
+        </p>
+
+        <div data-supplier-products></div>
+      `;
+
+      const productContainer = card.querySelector(
+        "[data-supplier-products]"
+      );
+
+      if (store.products.length > 0) {
+        store.products.forEach(product => {
+          const productCard = document.createElement("div");
+
+          productCard.style.cssText = `
+            display:flex;
+            gap:10px;
+            align-items:center;
+            border-top:1px solid #e5e7eb;
+            padding:10px 0;
+            margin-top:8px
+          `;
+
+          const imageUrl = Array.isArray(product.images)
+            ? safeImage(product.images[0])
+            : "";
+
+          productCard.innerHTML = `
+            ${
+              imageUrl
+                ? `
+                  <img
+                    src="${escapeHtml(imageUrl)}"
+                    alt="${escapeHtml(product.title)}"
+                    loading="lazy"
+                    style="
+                      width:65px;
+                      height:65px;
+                      object-fit:contain;
+                      border-radius:6px
+                    "
+                  >
+                `
+                : ""
+            }
+
+            <div>
+              <strong>${escapeHtml(product.title)}</strong>
+
+              <p style="margin:4px 0">
+                ${escapeHtml(
+                  Number(product.base_price).toLocaleString("fr-FR")
+                )}
+                ${escapeHtml(product.currency)}
+              </p>
+
+              <small>
+                MOQ : ${escapeHtml(product.moq)}
+                — Stock : ${escapeHtml(product.stock_quantity)}
+              </small>
+            </div>
+          `;
+
+          productContainer.appendChild(productCard);
+        });
+      } else {
+        productContainer.textContent =
+          "Aucun produit publié pour cette boutique.";
+      }
+
+      const contact = document.createElement("a");
+
+      contact.href = "#globexaMessagesSection";
+      contact.textContent = "Contacter un fournisseur";
+      contact.style.cssText = `
+        display:inline-block;
+        margin-top:12px;
+        padding:10px 14px;
+        background:#0b2d52;
+        color:white;
+        text-decoration:none;
+        border-radius:7px
+      `;
+
+      card.appendChild(contact);
+      container.appendChild(card);
+    });
+  }
+
+  async function loadSuppliers() {
+    const status = $("globexaSupplierDirectoryStatus");
+    const container = $("globexaSupplierDirectoryList");
+
+    status.textContent = "Chargement des fournisseurs...";
+    container.textContent = "";
+
+    try {
+      const { data: stores, error: storesError } = await db
+        .from("globexa_stores")
+        .select(`
+          id,
+          company_name,
+          country,
+          city,
+          description,
+          logo_url,
+          slug
+        `)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (storesError) throw storesError;
+
+      const activeStores = stores || [];
+
+      if (activeStores.length === 0) {
+        supplierData = [];
+
+        status.textContent =
+          "Aucune boutique active pour le moment.";
+
+        return;
+      }
+
+      const storeIds = activeStores.map(store => store.id);
+
+      const { data: products, error: productsError } = await db
+        .from("globexa_market_products")
+        .select(`
+          id,
+          store_id,
+          title,
+          base_price,
+          currency,
+          images,
+          moq,
+          stock_quantity
+        `)
+        .in("store_id", storeIds)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      if (productsError) throw productsError;
+
+      const productsByStore = {};
+
+      (products || []).forEach(product => {
+        if (!productsByStore[product.store_id]) {
+          productsByStore[product.store_id] = [];
+        }
+
+        productsByStore[product.store_id].push(product);
+      });
+
+      supplierData = activeStores.map(store => ({
+        ...store,
+        products: productsByStore[store.id] || []
+      }));
+
+      status.textContent =
+        supplierData.length + " boutique(s) active(s) disponible(s).";
+
+      renderSuppliers(
+        $("globexaSupplierDirectorySearch").value
+      );
+
+    } catch (error) {
+      console.error("GLOBEXA annuaire fournisseurs :", error);
+
+      status.textContent =
+        error.message || "Impossible de charger les fournisseurs.";
+    }
+  }
+
+  $("globexaSupplierDirectorySearch").addEventListener(
+    "input",
+    function () {
+      renderSuppliers(this.value);
+    }
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(loadSuppliers, 0);
+  });
+
+  loadSuppliers();
+
+})();
 </script>
 
 </body>
