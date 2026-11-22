@@ -3774,6 +3774,444 @@ loadMyQuotes();
   loadDisputes();
 
 })();
+
+/* =====================================================
+   CODE 17A — LITIGES ET ASSISTANCE
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaDisputesSection")) return;
+
+  const section = document.createElement("section");
+  section.id = "globexaDisputesSection";
+
+  section.innerHTML = `
+    <h2>Litiges et assistance GLOBEXA</h2>
+
+    <p>
+      Signalez un problème concernant une commande et suivez
+      son traitement depuis votre compte.
+    </p>
+
+    <div class="panel">
+      <h3>Mes commandes et mes litiges</h3>
+
+      <p id="globexaDisputesFeedback">Chargement...</p>
+
+      <button type="button" id="globexaRefreshDisputes">
+        Actualiser
+      </button>
+
+      <div id="globexaDisputesList"></div>
+    </div>
+  `;
+
+  const previousSection =
+    document.getElementById("globexaReviewsSection");
+
+  if (previousSection) {
+    previousSection.insertAdjacentElement("afterend", section);
+  } else {
+    const main = document.querySelector("main");
+    (main || document.body).appendChild(section);
+  }
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaDisputesSection";
+    link.textContent = "Litiges";
+    nav.appendChild(link);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+
+  const statusLabels = {
+    open: "Ouvert",
+    under_review: "En cours d'examen",
+    resolved: "Résolu",
+    rejected: "Rejeté"
+  };
+
+  const reasonLabels = {
+    product: "Problème avec le produit",
+    delivery: "Problème de livraison",
+    payment: "Problème de paiement",
+    supplier: "Problème avec le fournisseur",
+    other: "Autre problème"
+  };
+
+  function feedback(message, error = false) {
+    const element = $("globexaDisputesFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  function formatDate(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleDateString("fr-FR");
+  }
+
+  async function loadDisputes() {
+    const container = $("globexaDisputesList");
+    container.innerHTML = "";
+
+    try {
+      const {
+        data: { user },
+        error: authError
+      } = await db.auth.getUser();
+
+      if (authError) throw authError;
+
+      if (!user) {
+        feedback("Connectez-vous pour accéder à vos litiges.", true);
+        return;
+      }
+
+      const { data: orders, error: ordersError } = await db
+        .from("globexa_market_orders")
+        .select(`
+          id,
+          buyer_id,
+          supplier_id,
+          product_id,
+          quantity,
+          currency,
+          subtotal,
+          status,
+          created_at,
+          product:globexa_market_products(title)
+        `)
+        .or(
+          "buyer_id.eq." + user.id +
+          ",supplier_id.eq." + user.id
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (ordersError) throw ordersError;
+
+      if (!orders || orders.length === 0) {
+        feedback("Aucune commande trouvée.");
+        return;
+      }
+
+      const orderIds = orders.map(order => order.id);
+
+      const { data: disputes, error: disputesError } = await db
+        .from("globexa_disputes")
+        .select(`
+          id,
+          order_id,
+          opened_by,
+          reason,
+          description,
+          status,
+          resolution,
+          created_at,
+          updated_at
+        `)
+        .in("order_id", orderIds)
+        .order("created_at", { ascending: false });
+
+      if (disputesError) throw disputesError;
+
+      const disputesByOrder = {};
+
+      (disputes || []).forEach(dispute => {
+        if (!disputesByOrder[dispute.order_id]) {
+          disputesByOrder[dispute.order_id] = [];
+        }
+
+        disputesByOrder[dispute.order_id].push(dispute);
+      });
+
+      orders.forEach(order => {
+        const orderDisputes = disputesByOrder[order.id] || [];
+
+        const activeDispute = orderDisputes.find(dispute =>
+          dispute.status === "open" ||
+          dispute.status === "under_review"
+        );
+
+        const isBuyer = order.buyer_id === user.id;
+        const role = isBuyer ? "Acheteur" : "Fournisseur";
+
+        const card = document.createElement("article");
+        card.className = "panel";
+        card.style.marginTop = "14px";
+        card.style.padding = "14px";
+
+        const disputeHistory = orderDisputes.length
+          ? orderDisputes.map(dispute => `
+              <div style="
+                border-top:1px solid #ddd;
+                padding:10px 0;
+                margin-top:10px
+              ">
+                <strong>
+                  ${escapeHtml(reasonLabels[dispute.reason] || dispute.reason)}
+                </strong>
+
+                <p>
+                  Statut :
+                  ${escapeHtml(statusLabels[dispute.status] || dispute.status)}
+                </p>
+
+                <p>${escapeHtml(dispute.description)}</p>
+
+                <small>
+                  Ouvert le ${formatDate(dispute.created_at)}
+                </small>
+
+                ${
+                  dispute.resolution
+                    ? `
+                      <p>
+                        <strong>Décision de l'administrateur :</strong>
+                        ${escapeHtml(dispute.resolution)}
+                      </p>
+                    `
+                    : ""
+                }
+              </div>
+            `).join("")
+          : "<p>Aucun litige pour cette commande.</p>";
+
+        card.innerHTML = `
+          <h4>
+            ${escapeHtml(order.product?.title || "Produit indisponible")}
+          </h4>
+
+          <p>
+            <strong>Commande :</strong>
+            ${escapeHtml(order.id)}
+          </p>
+
+          <p>
+            <strong>Votre rôle :</strong>
+            ${role}
+          </p>
+
+          <p>
+            <strong>Statut de commande :</strong>
+            ${escapeHtml(order.status)}
+          </p>
+
+          <h4>Historique des litiges</h4>
+
+          <div data-dispute-history>
+            ${disputeHistory}
+          </div>
+
+          ${
+            activeDispute
+              ? `
+                <p style="color:#b7791f">
+                  Un litige est déjà en cours pour cette commande.
+                </p>
+              `
+              : `
+                <div style="
+                  border-top:1px solid #ddd;
+                  margin-top:12px;
+                  padding-top:12px
+                ">
+                  <h4>Signaler un problème</h4>
+
+                  <label>Motif du litige</label>
+
+                  <select data-field="reason">
+                    <option value="product">Problème avec le produit</option>
+                    <option value="delivery">Problème de livraison</option>
+                    <option value="payment">Problème de paiement</option>
+                    <option value="supplier">Problème avec le fournisseur</option>
+                    <option value="other">Autre problème</option>
+                  </select>
+
+                  <label style="display:block;margin-top:10px">
+                    Expliquez le problème
+                  </label>
+
+                  <textarea
+                    data-field="description"
+                    rows="4"
+                    maxlength="3000"
+                    placeholder="Décrivez clairement votre problème..."
+                    style="width:100%;margin-top:8px"
+                  ></textarea>
+
+                  <button
+                    type="button"
+                    data-action="open-dispute"
+                    data-order="${escapeHtml(order.id)}"
+                    style="margin-top:10px"
+                  >
+                    Envoyer le litige
+                  </button>
+
+                  <p data-dispute-feedback></p>
+                </div>
+              `
+          }
+        `;
+
+        container.appendChild(card);
+      });
+
+      feedback("Vos commandes et litiges sont chargés.");
+
+    } catch (error) {
+      console.error("GLOBEXA chargement litiges :", error);
+
+      feedback(
+        error.message || "Impossible de charger les litiges.",
+        true
+      );
+    }
+  }
+
+  $("globexaDisputesList").addEventListener(
+    "click",
+    async function (event) {
+      const button = event.target.closest(
+        'button[data-action="open-dispute"]'
+      );
+
+      if (!button) return;
+
+      const card = button.closest(".panel");
+      const message = card.querySelector("[data-dispute-feedback]");
+
+      button.disabled = true;
+
+      try {
+        const {
+          data: { user },
+          error: authError
+        } = await db.auth.getUser();
+
+        if (authError) throw authError;
+
+        if (!user) {
+          throw new Error("Connectez-vous pour ouvrir un litige.");
+        }
+
+        const orderId = button.dataset.order;
+
+        const reason = card.querySelector(
+          '[data-field="reason"]'
+        ).value;
+
+        const description = card.querySelector(
+          '[data-field="description"]'
+        ).value.trim();
+
+        if (!description || description.length < 10) {
+          throw new Error(
+            "Décrivez le problème avec au moins 10 caractères."
+          );
+        }
+
+        if (description.length > 3000) {
+          throw new Error("Votre description est trop longue.");
+        }
+
+        const { data: order, error: orderError } = await db
+          .from("globexa_market_orders")
+          .select("id,buyer_id,supplier_id")
+          .eq("id", orderId)
+          .single();
+
+        if (orderError) throw orderError;
+
+        if (
+          order.buyer_id !== user.id &&
+          order.supplier_id !== user.id
+        ) {
+          throw new Error(
+            "Vous ne participez pas à cette commande."
+          );
+        }
+
+        const { data: existing, error: existingError } = await db
+          .from("globexa_disputes")
+          .select("id,status")
+          .eq("order_id", orderId)
+          .in("status", ["open", "under_review"]);
+
+        if (existingError) throw existingError;
+
+        if (existing && existing.length > 0) {
+          throw new Error(
+            "Un litige est déjà en cours pour cette commande."
+          );
+        }
+
+        const { error: insertError } = await db
+          .from("globexa_disputes")
+          .insert({
+            order_id: orderId,
+            opened_by: user.id,
+            reason: reason,
+            description: description,
+            status: "open"
+          });
+
+        if (insertError) throw insertError;
+
+        message.textContent = "Votre litige a été envoyé.";
+        message.style.color = "#16834a";
+
+        await loadDisputes();
+
+      } catch (error) {
+        console.error("GLOBEXA ouverture litige :", error);
+
+        message.textContent =
+          error.message || "Impossible d'envoyer le litige.";
+
+        message.style.color = "#c0392b";
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+  );
+
+  $("globexaRefreshDisputes").addEventListener(
+    "click",
+    loadDisputes
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(loadDisputes, 0);
+  });
+
+  loadDisputes();
+
+})();
 </script>
 
 </body>
