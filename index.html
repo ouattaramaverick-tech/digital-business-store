@@ -2280,6 +2280,568 @@ loadMyQuotes();
   loadConversations();
 
 })();
+
+/* =====================================================
+   CODE 15A — SUIVI DES COMMANDES ET LIVRAISON
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaShippingSection")) return;
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaShippingSection";
+    link.textContent = "Commandes / Livraison";
+    nav.appendChild(link);
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaShippingSection";
+
+  section.innerHTML = `
+    <h2>Commandes et livraison internationale</h2>
+
+    <p>
+      Consultez vos commandes, les informations de transport
+      et les étapes de livraison de vos colis.
+    </p>
+
+    <div class="panel">
+      <button type="button" id="globexaRefreshShipping">
+        Actualiser mes commandes
+      </button>
+
+      <p id="globexaShippingFeedback" class="auth-message">
+        Chargement des commandes...
+      </p>
+
+      <div id="globexaShippingOrders"></div>
+    </div>
+  `;
+
+  const main = document.querySelector("main");
+
+  if (main) {
+    main.appendChild(section);
+  } else {
+    document.body.appendChild(section);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+
+  const shipmentLabels = {
+    preparing: "En préparation",
+    in_transit: "En transit",
+    customs: "En douane",
+    delivered: "Livré",
+    exception: "Incident de livraison"
+  };
+
+  function feedback(message, error = false) {
+    const element = $("globexaShippingFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  function formatDate(value) {
+    if (!value) return "Non renseignée";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "Non renseignée";
+
+    return date.toLocaleDateString("fr-FR");
+  }
+
+  async function loadShippingOrders() {
+    const container = $("globexaShippingOrders");
+
+    container.innerHTML = "";
+
+    try {
+      const {
+        data: { user },
+        error: authError
+      } = await db.auth.getUser();
+
+      if (authError) throw authError;
+
+      if (!user) {
+        feedback("Connectez-vous pour consulter vos commandes.", true);
+        return;
+      }
+
+      const { data: orders, error: ordersError } = await db
+        .from("globexa_market_orders")
+        .select(`
+          id,
+          buyer_id,
+          supplier_id,
+          product_id,
+          quantity,
+          unit_price,
+          subtotal,
+          currency,
+          status,
+          payment_status,
+          created_at,
+          product:globexa_market_products(title)
+        `)
+        .or(
+          "buyer_id.eq." + user.id +
+          ",supplier_id.eq." + user.id
+        )
+        .order("created_at", { ascending: false });
+
+      if (ordersError) throw ordersError;
+
+      if (!orders || orders.length === 0) {
+        feedback("Aucune commande pour le moment.");
+        return;
+      }
+
+      const orderIds = orders.map(order => order.id);
+
+      const { data: shipments, error: shipmentError } = await db
+        .from("globexa_shipments")
+        .select("*")
+        .in("order_id", orderIds);
+
+      if (shipmentError) throw shipmentError;
+
+      const shipmentList = shipments || [];
+
+      const shipmentIds = shipmentList.map(item => item.id);
+
+      let events = [];
+
+      if (shipmentIds.length > 0) {
+        const { data: eventData, error: eventError } = await db
+          .from("globexa_tracking_events")
+          .select("*")
+          .in("shipment_id", shipmentIds)
+          .order("occurred_at", { ascending: false });
+
+        if (eventError) throw eventError;
+
+        events = eventData || [];
+      }
+
+      orders.forEach(order => {
+        const shipment = shipmentList.find(
+          item => item.order_id === order.id
+        );
+
+        const orderEvents = shipment
+          ? events.filter(event => event.shipment_id === shipment.id)
+          : [];
+
+        const isSupplier = order.supplier_id === user.id;
+
+        const canShip =
+          isSupplier &&
+          (
+            order.payment_status === "paid" ||
+            ["paid", "processing", "shipped"].includes(order.status)
+          );
+
+        const card = document.createElement("article");
+
+        card.className = "panel";
+        card.style.marginTop = "16px";
+        card.style.padding = "16px";
+
+        const productName =
+          order.product?.title || "Produit indisponible";
+
+        const shipmentStatus = shipment
+          ? shipmentLabels[shipment.status] || shipment.status
+          : "Pas encore expédié";
+
+        card.innerHTML = `
+          <h3>${escapeHtml(productName)}</h3>
+
+          <p>
+            <strong>Commande :</strong>
+            ${escapeHtml(order.id)}
+          </p>
+
+          <p>
+            <strong>Quantité :</strong>
+            ${escapeHtml(order.quantity)}
+          </p>
+
+          <p>
+            <strong>Montant :</strong>
+            ${escapeHtml(order.subtotal ?? order.unit_price)}
+            ${escapeHtml(order.currency)}
+          </p>
+
+          <p>
+            <strong>Statut de commande :</strong>
+            ${escapeHtml(order.status)}
+          </p>
+
+          <p>
+            <strong>Statut du paiement :</strong>
+            ${escapeHtml(order.payment_status)}
+          </p>
+
+          <hr>
+
+          <h4>Suivi de livraison</h4>
+
+          <p>
+            <strong>État :</strong>
+            ${escapeHtml(shipmentStatus)}
+          </p>
+
+          ${
+            shipment
+              ? `
+                <p>
+                  <strong>Transporteur :</strong>
+                  ${escapeHtml(shipment.carrier || "Non renseigné")}
+                </p>
+
+                <p>
+                  <strong>Numéro de suivi :</strong>
+                  ${escapeHtml(shipment.tracking_number || "Non renseigné")}
+                </p>
+
+                <p>
+                  <strong>Origine :</strong>
+                  ${escapeHtml(shipment.origin || "Non renseignée")}
+                </p>
+
+                <p>
+                  <strong>Destination :</strong>
+                  ${escapeHtml(shipment.destination || "Non renseignée")}
+                </p>
+
+                <p>
+                  <strong>Livraison estimée :</strong>
+                  ${formatDate(shipment.estimated_delivery)}
+                </p>
+              `
+              : "<p>L'expédition n'a pas encore été créée.</p>"
+          }
+
+          <div class="globexaTrackingHistory">
+            <h4>Historique du colis</h4>
+
+            ${
+              orderEvents.length
+                ? orderEvents.map(event => `
+                    <div style="border-left:3px solid #f28c28;padding:8px 12px;margin:10px 0">
+                      <strong>${escapeHtml(event.event_status)}</strong>
+                      <p>${escapeHtml(event.location || "")}</p>
+                      <p>${escapeHtml(event.details || "")}</p>
+                      <small>${formatDate(event.occurred_at)}</small>
+                    </div>
+                  `).join("")
+                : "<p>Aucune étape de suivi enregistrée.</p>"
+            }
+          </div>
+
+          ${
+            !shipment && canShip
+              ? `
+                <div style="margin-top:16px">
+                  <h4>Créer une expédition</h4>
+
+                  <label>Transporteur</label>
+                  <input
+                    type="text"
+                    data-field="carrier"
+                    placeholder="Nom du transporteur"
+                  >
+
+                  <label>Numéro de suivi</label>
+                  <input
+                    type="text"
+                    data-field="tracking"
+                    placeholder="Numéro de suivi"
+                  >
+
+                  <label>Lieu de départ</label>
+                  <input
+                    type="text"
+                    data-field="origin"
+                    placeholder="Ville ou pays de départ"
+                  >
+
+                  <label>Destination</label>
+                  <input
+                    type="text"
+                    data-field="destination"
+                    placeholder="Ville ou pays de destination"
+                  >
+
+                  <label>Date estimée de livraison</label>
+                  <input
+                    type="date"
+                    data-field="delivery"
+                  >
+
+                  <button
+                    type="button"
+                    data-action="create-shipment"
+                    data-order="${escapeHtml(order.id)}"
+                  >
+                    Créer l'expédition
+                  </button>
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            shipment && isSupplier
+              ? `
+                <div style="margin-top:16px">
+                  <h4>Mettre à jour le suivi</h4>
+
+                  <label>État de livraison</label>
+
+                  <select data-field="status">
+                    <option value="preparing">En préparation</option>
+                    <option value="in_transit">En transit</option>
+                    <option value="customs">En douane</option>
+                    <option value="delivered">Livré</option>
+                    <option value="exception">Incident de livraison</option>
+                  </select>
+
+                  <label>Lieu actuel</label>
+                  <input
+                    type="text"
+                    data-field="event-location"
+                    placeholder="Ville, pays ou centre de transit"
+                  >
+
+                  <label>Détails de l'étape</label>
+                  <input
+                    type="text"
+                    data-field="event-details"
+                    placeholder="Informations sur le colis"
+                  >
+
+                  <button
+                    type="button"
+                    data-action="add-event"
+                    data-shipment="${escapeHtml(shipment.id)}"
+                  >
+                    Enregistrer le suivi
+                  </button>
+                </div>
+              `
+              : ""
+          }
+        `;
+
+        if (shipment && isSupplier) {
+          const statusSelect = card.querySelector(
+            '[data-field="status"]'
+          );
+
+          statusSelect.value = shipment.status;
+        }
+
+        container.appendChild(card);
+      });
+
+      feedback("Commandes et informations de livraison actualisées.");
+
+    } catch (error) {
+      console.error("GLOBEXA suivi livraison :", error);
+
+      feedback(
+        error.message || "Impossible de charger les commandes.",
+        true
+      );
+    }
+  }
+
+  $("globexaShippingOrders").addEventListener(
+    "click",
+    async function (event) {
+      const button = event.target.closest("button[data-action]");
+
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const card = button.closest(".panel");
+
+      button.disabled = true;
+
+      try {
+        const {
+          data: { user },
+          error: authError
+        } = await db.auth.getUser();
+
+        if (authError) throw authError;
+        if (!user) throw new Error("Connectez-vous d'abord.");
+
+        if (action === "create-shipment") {
+          const orderId = button.dataset.order;
+
+          const getValue = field =>
+            card.querySelector(`[data-field="${field}"]`).value.trim();
+
+          const carrier = getValue("carrier");
+          const tracking = getValue("tracking");
+          const origin = getValue("origin");
+          const destination = getValue("destination");
+          const delivery = getValue("delivery");
+
+          if (!carrier || !origin || !destination) {
+            throw new Error(
+              "Renseignez le transporteur, le départ et la destination."
+            );
+          }
+
+          const { data: order, error: orderError } = await db
+            .from("globexa_market_orders")
+            .select("id,supplier_id,payment_status,status")
+            .eq("id", orderId)
+            .single();
+
+          if (orderError) throw orderError;
+
+          if (order.supplier_id !== user.id) {
+            throw new Error("Seul le fournisseur peut créer cette expédition.");
+          }
+
+          if (
+            order.payment_status !== "paid" &&
+            !["paid", "processing", "shipped"].includes(order.status)
+          ) {
+            throw new Error("Cette commande n'est pas encore payée.");
+          }
+
+          const { data: existing } = await db
+            .from("globexa_shipments")
+            .select("id")
+            .eq("order_id", orderId)
+            .maybeSingle();
+
+          if (existing) {
+            throw new Error("Une expédition existe déjà pour cette commande.");
+          }
+
+          const { data: shipment, error: insertError } = await db
+            .from("globexa_shipments")
+            .insert({
+              order_id: orderId,
+              carrier: carrier,
+              tracking_number: tracking || null,
+              origin: origin,
+              destination: destination,
+              estimated_delivery: delivery || null,
+              status: "preparing"
+            })
+            .select("id")
+            .single();
+
+          if (insertError) throw insertError;
+
+          const { error: eventError } = await db
+            .from("globexa_tracking_events")
+            .insert({
+              shipment_id: shipment.id,
+              event_status: "Colis préparé",
+              location: origin,
+              details: "Création de l'expédition sur GLOBEXA."
+            });
+
+          if (eventError) throw eventError;
+
+          feedback("Expédition créée avec succès.");
+
+          await loadShippingOrders();
+        }
+
+        if (action === "add-event") {
+          const shipmentId = button.dataset.shipment;
+
+          const status = card.querySelector(
+            '[data-field="status"]'
+          ).value;
+
+          const location = card.querySelector(
+            '[data-field="event-location"]'
+          ).value.trim();
+
+          const details = card.querySelector(
+            '[data-field="event-details"]'
+          ).value.trim();
+
+          const { error: updateError } = await db
+            .from("globexa_shipments")
+            .update({ status: status })
+            .eq("id", shipmentId);
+
+          if (updateError) throw updateError;
+
+          const { error: eventError } = await db
+            .from("globexa_tracking_events")
+            .insert({
+              shipment_id: shipmentId,
+              event_status: shipmentLabels[status],
+              location: location || null,
+              details: details || null
+            });
+
+          if (eventError) throw eventError;
+
+          feedback("Nouvelle étape de livraison enregistrée.");
+
+          await loadShippingOrders();
+        }
+
+      } catch (error) {
+        console.error("GLOBEXA suivi action :", error);
+
+        feedback(
+          error.message || "Une erreur est survenue.",
+          true
+        );
+
+      } finally {
+        button.disabled = false;
+      }
+    }
+  );
+
+  $("globexaRefreshShipping").addEventListener(
+    "click",
+    loadShippingOrders
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(loadShippingOrders, 0);
+  });
+
+  loadShippingOrders();
+
+})();
 </script>
 
 </body>
