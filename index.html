@@ -3596,4 +3596,175 @@ async function globexaRefreshOrders() {
 
 /* FIN DU CODE 12D */
 
+
+/* =====================================================
+   GLOBEXA - CODE 12E
+   VALIDATION DU PANIER ET COMMANDE SUPABASE
+===================================================== */
+
+let globexaCheckoutBusy = false;
+
+window.checkout = async function() {
+  if (globexaCheckoutBusy) return;
+
+  if (!Array.isArray(cart) || cart.length === 0) {
+    toast("Votre panier est vide.");
+    return;
+  }
+
+  if (!globexaDB) {
+    toast("Connexion à la base de données indisponible.");
+    return;
+  }
+
+  globexaCheckoutBusy = true;
+
+  try {
+    const { data: authData, error: authError } =
+      await globexaDB.auth.getUser();
+
+    if (authError || !authData.user) {
+      toast("Connectez-vous avant de commander.");
+
+      if (typeof showSection === "function") {
+        showSection("account");
+      }
+
+      return;
+    }
+
+    globexaUser = authData.user;
+
+    const groups = new Map();
+
+    for (const cartItem of cart) {
+      const product = products.find(
+        item => String(item.id) === String(cartItem.id)
+      );
+
+      if (!product) {
+        toast("Un produit de votre panier est introuvable.");
+        return;
+      }
+
+      const quantity = Number(cartItem.quantity);
+      const price = Number(product.price);
+      const sellerId = product.owner_id;
+      const currency = product.currency || "USD";
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(price) ||
+        price <= 0 ||
+        !sellerId
+      ) {
+        toast("Vérifiez le produit, son prix et son vendeur.");
+        return;
+      }
+
+      if (
+        product.stock !== undefined &&
+        Number(product.stock) < quantity
+      ) {
+        toast("Stock insuffisant pour : " + product.name);
+        return;
+      }
+
+      const groupKey = String(sellerId) + "::" + currency;
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, {
+          seller_id: sellerId,
+          currency: currency,
+          total: 0,
+          items: [],
+          productIds: []
+        });
+      }
+
+      const group = groups.get(groupKey);
+
+      group.total += price * quantity;
+
+      group.items.push({
+        id: product.id,
+        name: product.name || "",
+        price: price,
+        quantity: quantity
+      });
+
+      group.productIds.push(String(product.id));
+    }
+
+    const successfulProductIds = new Set();
+
+    for (const group of groups.values()) {
+      const savedOrder = await globexaCreateCloudOrder({
+        seller_id: group.seller_id,
+        currency: group.currency,
+        total: group.total,
+        items: group.items
+      });
+
+      if (!savedOrder) {
+        cart.splice(
+          0,
+          cart.length,
+          ...cart.filter(
+            item => !successfulProductIds.has(String(item.id))
+          )
+        );
+
+        saveLocal("cart", cart);
+        renderCart();
+        await globexaRefreshOrders();
+
+        toast("Certaines commandes n'ont pas pu être enregistrées.");
+        return;
+      }
+
+      group.productIds.forEach(id => {
+        successfulProductIds.add(id);
+      });
+    }
+
+    cart.splice(
+      0,
+      cart.length,
+      ...cart.filter(
+        item => !successfulProductIds.has(String(item.id))
+      )
+    );
+
+    saveLocal("cart", cart);
+
+    if (typeof renderCart === "function") {
+      renderCart();
+    }
+
+    await globexaRefreshOrders();
+
+    toast("Votre commande a été enregistrée.");
+
+    if (typeof showSection === "function") {
+      showSection("orders");
+    }
+
+  } catch (error) {
+    console.error("Erreur commande GLOBEXA :", error);
+    toast("Une erreur est survenue pendant la commande.");
+  } finally {
+    globexaCheckoutBusy = false;
+  }
+};
+
+/* FIN DU CODE 12E */
+
+/* FERMETURE DU DOCUMENT GLOBEXA */
+</script>
+<!-- FIN DU DOCUMENT GLOBEXA -->
+</main>
+</body>
+</html>
  
