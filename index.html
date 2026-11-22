@@ -211,3 +211,40 @@
 </body>
 </html>
 
+/* GLOBEXA — CODE GITHUB 02
+   Configuration officielle du client Supabase
+*/
+
+(function () {
+  "use strict";
+
+  const SUPABASE_URL =
+    "https://xlxkiyihagoupsajwmze.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("GLOBEXA : bibliothèque Supabase introuvable.");
+    return;
+  }
+
+  if (window.globexaSupabase) {
+    console.warn("GLOBEXA : Supabase est déjà initialisé.");
+    return;
+  }
+
+  window.globexaSupabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+
+  console.info("GLOBEXA : client Supabase initialisé.");
+})();
