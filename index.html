@@ -3278,3 +3278,484 @@ if (globexaDB) {
 }
 
 /* FIN DU CODE 12B */
+
+/* =====================================================
+   GLOBEXA - CODE 12C
+   CONNEXION DES DEMANDES DE DEVIS A SUPABASE
+===================================================== */
+
+function globexaReadRFQField(form, candidates) {
+  for (const candidate of candidates) {
+    const element =
+      form.querySelector("#" + candidate) ||
+      form.querySelector('[name="' + candidate + '"]');
+
+    if (element && element.value !== undefined) {
+      return element.value.trim();
+    }
+  }
+
+  return "";
+}
+
+/* RECHERCHER LE FORMULAIRE DE DEMANDE DE DEVIS */
+
+const globexaRFQForm =
+  document.getElementById("rfqForm") ||
+  document.getElementById("requestForm") ||
+  document.querySelector('form[data-type="rfq"]');
+
+/* ENREGISTRER UNE DEMANDE DANS SUPABASE */
+
+if (globexaRFQForm) {
+  globexaRFQForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if (!globexaDB) {
+      toast("Connexion à la base de données indisponible.");
+      return;
+    }
+
+    const { data: authData, error: authError } =
+      await globexaDB.auth.getUser();
+
+    if (authError || !authData.user) {
+      toast("Connectez-vous pour envoyer une demande de devis.");
+
+      if (typeof showSection === "function") {
+        showSection("account");
+      }
+
+      return;
+    }
+
+    const user = authData.user;
+    globexaUser = user;
+
+    const rfqData = {
+      buyer_id: user.id,
+
+      title: globexaReadRFQField(globexaRFQForm, [
+        "rfqTitle",
+        "requestTitle",
+        "title"
+      ]),
+
+      category: globexaReadRFQField(globexaRFQForm, [
+        "rfqCategory",
+        "requestCategory",
+        "category"
+      ]),
+
+      quantity: globexaReadRFQField(globexaRFQForm, [
+        "rfqQuantity",
+        "requestQuantity",
+        "quantity"
+      ]),
+
+      budget: globexaReadRFQField(globexaRFQForm, [
+        "rfqBudget",
+        "requestBudget",
+        "budget"
+      ]),
+
+      country: globexaReadRFQField(globexaRFQForm, [
+        "rfqCountry",
+        "requestCountry",
+        "country"
+      ]),
+
+      description: globexaReadRFQField(globexaRFQForm, [
+        "rfqDescription",
+        "requestDescription",
+        "description"
+      ])
+    };
+
+    if (!rfqData.title) {
+      toast("Indiquez le titre de votre demande.");
+      return;
+    }
+
+    if (!rfqData.quantity) {
+      toast("Indiquez la quantité souhaitée.");
+      return;
+    }
+
+    if (!rfqData.country) {
+      toast("Indiquez votre pays.");
+      return;
+    }
+
+    const button = globexaRFQForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    if (button) button.disabled = true;
+
+    const { error } = await globexaDB
+      .from("rfqs")
+      .insert(rfqData);
+
+    if (button) button.disabled = false;
+
+    if (error) {
+      console.error("Erreur RFQ :", error);
+      toast("Impossible d'envoyer la demande : " + error.message);
+      return;
+    }
+
+    globexaRFQForm.reset();
+
+    toast("Votre demande de devis a été envoyée avec succès !");
+
+  }, true);
+}
+
+/* FIN DU CODE 12C */
+
+/* =====================================================
+   GLOBEXA - CODE 12D
+   GESTION DES COMMANDES AVEC SUPABASE
+===================================================== */
+
+/* 1. RECUPERER LES COMMANDES DE L'ACHETEUR */
+
+async function globexaLoadBuyerOrders() {
+  if (!globexaDB) return [];
+
+  const { data: authData, error: authError } =
+    await globexaDB.auth.getUser();
+
+  if (authError || !authData.user) {
+    toast("Connectez-vous pour voir vos commandes.");
+    return [];
+  }
+
+  globexaUser = authData.user;
+
+  const { data, error } = await globexaDB
+    .from("orders")
+    .select("*")
+    .eq("buyer_id", globexaUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erreur commandes acheteur :", error);
+    toast("Impossible de charger vos commandes.");
+    return [];
+  }
+
+  return data || [];
+}
+
+/* 2. RECUPERER LES COMMANDES DU VENDEUR */
+
+async function globexaLoadSellerOrders() {
+  if (!globexaDB) return [];
+
+  const { data: authData, error: authError } =
+    await globexaDB.auth.getUser();
+
+  if (authError || !authData.user) {
+    toast("Connectez-vous pour voir les commandes reçues.");
+    return [];
+  }
+
+  globexaUser = authData.user;
+
+  const { data, error } = await globexaDB
+    .from("orders")
+    .select("*")
+    .eq("seller_id", globexaUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erreur commandes vendeur :", error);
+    toast("Impossible de charger les commandes reçues.");
+    return [];
+  }
+
+  return data || [];
+}
+
+/* 3. CREER UNE COMMANDE DANS SUPABASE */
+
+async function globexaCreateCloudOrder(orderData) {
+  if (!globexaDB) {
+    toast("Base de données indisponible.");
+    return null;
+  }
+
+  const { data: authData, error: authError } =
+    await globexaDB.auth.getUser();
+
+  if (authError || !authData.user) {
+    toast("Connectez-vous avant de commander.");
+    return null;
+  }
+
+  if (!orderData || !Array.isArray(orderData.items) ||
+      orderData.items.length === 0) {
+    toast("Votre commande ne contient aucun produit.");
+    return null;
+  }
+
+  const total = Number(orderData.total);
+
+  if (!Number.isFinite(total) || total <= 0) {
+    toast("Le montant de la commande est invalide.");
+    return null;
+  }
+
+  const sellerId = orderData.seller_id || null;
+
+  const newOrder = {
+    buyer_id: authData.user.id,
+    seller_id: sellerId,
+    total: total,
+    currency: orderData.currency || "USD",
+    status: "pending",
+    items: orderData.items,
+    shipping_address: orderData.shipping_address || {}
+  };
+
+  const { data, error } = await globexaDB
+    .from("orders")
+    .insert(newOrder)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erreur création commande :", error);
+    toast("Erreur commande : " + error.message);
+    return null;
+  }
+
+  toast("Commande enregistrée avec succès !");
+
+  return data;
+}
+
+/* 4. AFFICHER LES COMMANDES DE L'ACHETEUR */
+
+async function globexaRenderBuyerOrders() {
+  const list = document.getElementById("orderList");
+  if (!list) return;
+
+  list.innerHTML = "<p>Chargement des commandes...</p>";
+
+  const orderData = await globexaLoadBuyerOrders();
+
+  if (!orderData.length) {
+    list.innerHTML = "<p>Aucune commande enregistrée.</p>";
+    return;
+  }
+
+  list.innerHTML = orderData.map(order => `
+    <div class="list-row">
+      <strong>Commande #${escapeHTML(String(order.id).slice(0, 8))}</strong>
+      <p>Montant : ${money(order.total, order.currency)}</p>
+      <p>Statut : ${escapeHTML(order.status || "pending")}</p>
+      <small>${new Date(order.created_at).toLocaleString("fr-FR")}</small>
+    </div>
+  `).join("");
+}
+
+/* 5. AFFICHER LES COMMANDES DU VENDEUR */
+
+async function globexaRenderSellerOrders() {
+  const list = document.getElementById("receivedOrders");
+  if (!list) return;
+
+  list.innerHTML = "<p>Chargement des commandes reçues...</p>";
+
+  const orderData = await globexaLoadSellerOrders();
+
+  if (!orderData.length) {
+    list.innerHTML = "<p>Aucune commande reçue.</p>";
+    return;
+  }
+
+  list.innerHTML = orderData.map(order => `
+    <div class="list-row">
+      <strong>Commande #${escapeHTML(String(order.id).slice(0, 8))}</strong>
+      <p>Montant : ${money(order.total, order.currency)}</p>
+      <p>Statut : ${escapeHTML(order.status || "pending")}</p>
+      <small>${new Date(order.created_at).toLocaleString("fr-FR")}</small>
+    </div>
+  `).join("");
+}
+
+/* 6. ACTUALISER LES COMMANDES */
+
+async function globexaRefreshOrders() {
+  await Promise.all([
+    globexaRenderBuyerOrders(),
+    globexaRenderSellerOrders()
+  ]);
+}
+
+/* FIN DU CODE 12D */
+
+<!-- ============================= -->
+<!-- GLOBEXA - CODE 12E -->
+<!-- VALIDATION DES COMMANDES -->
+<!-- ============================= -->
+<script>
+(function () {
+  "use strict";
+
+  window.globexaSubmitCloudOrder = async function () {
+    try {
+      if (!window.globexaDB) {
+        throw new Error("Connexion Supabase indisponible.");
+      }
+
+      const { data: sessionData, error: sessionError } =
+        await window.globexaDB.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const user = sessionData.session?.user;
+
+      if (!user) {
+        if (typeof toast === "function") {
+          toast("Connecte-toi pour commander.");
+        } else {
+          alert("Connecte-toi pour commander.");
+        }
+        if (typeof showSection === "function") showSection("account");
+        return;
+      }
+
+      if (!Array.isArray(window.cart) || window.cart.length === 0) {
+        alert("Ton panier est vide.");
+        return;
+      }
+
+      const items = window.cart.map(item => {
+        const productId = item.product_id || item.productId || item.id;
+        const product = Array.isArray(window.products)
+          ? window.products.find(p => String(p.id) === String(productId))
+          : null;
+
+        const quantity = Number(
+          item.quantity || item.qty || 1
+        );
+
+        const price = Number(
+          item.price ?? product?.price ?? 0
+        );
+
+        if (!product && !item.name) {
+          throw new Error("Un produit du panier est introuvable.");
+        }
+
+        if (!Number.isFinite(quantity) || quantity < 1 ||
+            !Number.isFinite(price) || price < 0) {
+          throw new Error("Un article du panier contient des données invalides.");
+        }
+
+        return {
+          product_id: productId,
+          name: product?.name || item.name,
+          quantity,
+          unit_price: price,
+          currency: product?.currency || item.currency || "USD",
+          image: product?.image || item.image || ""
+        };
+      });
+
+      const total = items.reduce(
+        (sum, item) => sum + item.unit_price * item.quantity,
+        0
+      );
+
+      const currency = items[0]?.currency || "USD";
+
+      if (items.some(item => item.currency !== currency)) {
+        throw new Error(
+          "Sépare les produits de devises différentes avant de commander."
+        );
+      }
+
+      const sellerIds = [
+        ...new Set(
+          items.map(item => {
+            const product = window.products?.find(
+              p => String(p.id) === String(item.product_id)
+            );
+            const store = window.stores?.find(
+              s => String(s.id) === String(product?.store_id)
+            );
+            return product?.owner_id || store?.owner_id || null;
+          }).filter(Boolean)
+        )
+      ];
+
+      if (sellerIds.length > 1) {
+        throw new Error(
+          "Pour le moment, commande les produits d'un seul vendeur à la fois."
+        );
+      }
+
+      const orderData = {
+        buyer_id: user.id,
+        seller_id: sellerIds[0] || null,
+        total: total,
+        currency: currency,
+        status: "pending",
+        items: items,
+        shipping_address: {}
+      };
+
+      let result;
+
+      if (typeof window.globexaCreateCloudOrder === "function") {
+        result = await window.globexaCreateCloudOrder(orderData);
+      } else {
+        result = await window.globexaDB
+          .from("orders")
+          .insert(orderData)
+          .select()
+          .single();
+      }
+
+      if (result?.error) throw result.error;
+
+      window.cart = [];
+
+      if (typeof saveLocal === "function") {
+        saveLocal("globexa_cart", window.cart);
+      }
+
+      if (typeof renderCart === "function") {
+        renderCart();
+      }
+
+      if (typeof globexaRefreshOrders === "function") {
+        await globexaRefreshOrders();
+      }
+
+      alert(
+        "Commande enregistrée avec succès ! " +
+        "Le paiement reste à effectuer."
+      );
+
+      if (typeof showSection === "function") {
+        showSection("orders");
+      }
+
+    } catch (error) {
+      console.error("GLOBEXA CODE 12E:", error);
+      alert("Erreur de commande : " + (error.message || error));
+    }
+  };
+
+  window.checkout = window.globexaSubmitCloudOrder;
+
+})();
+</script>
+<!-- FIN CODE 12E -->
