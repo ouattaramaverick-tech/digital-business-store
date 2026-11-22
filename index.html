@@ -4212,6 +4212,425 @@ loadMyQuotes();
   loadDisputes();
 
 })();
+
+/* =====================================================
+   CODE 18A — MODÉRATION ADMINISTRATEUR
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaAdminModerationSection")) {
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaAdminModerationSection";
+
+  section.innerHTML = `
+    <h2>Administration GLOBEXA</h2>
+    <p>Validation des boutiques, contrôle des produits et traitement des litiges.</p>
+
+    <div class="panel" style="padding:15px">
+      <p id="globexaAdminFeedback">Vérification des accès...</p>
+
+      <button type="button" id="globexaAdminRefresh">
+        Actualiser les demandes
+      </button>
+
+      <h3>Boutiques en attente</h3>
+      <div id="globexaAdminStores">Chargement...</div>
+
+      <h3 style="margin-top:25px">Produits en attente</h3>
+      <div id="globexaAdminProducts">Chargement...</div>
+
+      <h3 style="margin-top:25px">Litiges à traiter</h3>
+      <div id="globexaAdminDisputes">Chargement...</div>
+    </div>
+  `;
+
+  const disputesSection =
+    document.getElementById("globexaDisputesSection");
+
+  if (disputesSection) {
+    disputesSection.insertAdjacentElement("afterend", section);
+  } else {
+    const main = document.querySelector("main");
+    (main || document.body).appendChild(section);
+  }
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaAdminModerationSection";
+    link.textContent = "Administration";
+    nav.appendChild(link);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+
+  function feedback(message, error = false) {
+    const element = $("globexaAdminFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  function emptyMessage(message) {
+    return `<p>${escapeHtml(message)}</p>`;
+  }
+
+  function adminButton(label, action, id, color) {
+    return `
+      <button
+        type="button"
+        data-admin-action="${action}"
+        data-record-id="${escapeHtml(id)}"
+        style="margin:5px;padding:9px;background:${color};color:white;border:0;border-radius:5px"
+      >
+        ${escapeHtml(label)}
+      </button>
+    `;
+  }
+
+  async function verifyAdmin() {
+    const {
+      data: { user },
+      error: authError
+    } = await db.auth.getUser();
+
+    if (authError) throw authError;
+
+    if (!user) {
+      throw new Error("Connectez-vous avec votre compte administrateur.");
+    }
+
+    const { data, error } = await db.rpc("is_globexa_admin");
+
+    if (error) throw error;
+
+    if (data !== true) {
+      throw new Error("Accès réservé à l'administrateur GLOBEXA.");
+    }
+
+    return user;
+  }
+
+  async function loadStores() {
+    const container = $("globexaAdminStores");
+    container.innerHTML = "Chargement...";
+
+    const { data, error } = await db
+      .from("globexa_stores")
+      .select(`
+        id,
+        company_name,
+        country,
+        city,
+        description,
+        verification_status,
+        status,
+        created_at
+      `)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = emptyMessage("Aucune boutique en attente.");
+      return;
+    }
+
+    container.innerHTML = data.map(store => `
+      <article class="panel" style="padding:12px;margin:12px 0">
+        <h4>${escapeHtml(store.company_name)}</h4>
+
+        <p>
+          ${escapeHtml(store.city || "")}
+          ${escapeHtml(store.country || "")}
+        </p>
+
+        <p>${escapeHtml(store.description || "Aucune description.")}</p>
+
+        <p>Statut : ${escapeHtml(store.status)}</p>
+
+        ${adminButton("Valider la boutique", "approve-store", store.id, "#16834a")}
+        ${adminButton("Refuser la boutique", "reject-store", store.id, "#c0392b")}
+      </article>
+    `).join("");
+  }
+
+  async function loadProducts() {
+    const container = $("globexaAdminProducts");
+    container.innerHTML = "Chargement...";
+
+    const { data, error } = await db
+      .from("globexa_market_products")
+      .select(`
+        id,
+        title,
+        description,
+        base_price,
+        currency,
+        moq,
+        stock_quantity,
+        country_of_origin,
+        created_at
+      `)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = emptyMessage("Aucun produit en attente.");
+      return;
+    }
+
+    container.innerHTML = data.map(product => `
+      <article class="panel" style="padding:12px;margin:12px 0">
+        <h4>${escapeHtml(product.title)}</h4>
+
+        <p>${escapeHtml(product.description || "")}</p>
+
+        <p>
+          Prix : ${escapeHtml(product.base_price)}
+          ${escapeHtml(product.currency)}
+        </p>
+
+        <p>
+          Quantité minimale : ${escapeHtml(product.moq)}
+          — Stock : ${escapeHtml(product.stock_quantity)}
+        </p>
+
+        <p>Pays : ${escapeHtml(product.country_of_origin || "Non précisé")}</p>
+
+        ${adminButton("Publier le produit", "approve-product", product.id, "#16834a")}
+        ${adminButton("Refuser le produit", "reject-product", product.id, "#c0392b")}
+      </article>
+    `).join("");
+  }
+
+  async function loadDisputes() {
+    const container = $("globexaAdminDisputes");
+    container.innerHTML = "Chargement...";
+
+    const { data, error } = await db
+      .from("globexa_disputes")
+      .select(`
+        id,
+        order_id,
+        opened_by,
+        reason,
+        description,
+        status,
+        resolution,
+        created_at
+      `)
+      .in("status", ["open", "under_review"])
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = emptyMessage("Aucun litige à traiter.");
+      return;
+    }
+
+    container.innerHTML = data.map(dispute => `
+      <article class="panel" style="padding:12px;margin:12px 0">
+        <h4>Litige : ${escapeHtml(dispute.id)}</h4>
+
+        <p>Commande : ${escapeHtml(dispute.order_id)}</p>
+
+        <p>Motif : ${escapeHtml(dispute.reason)}</p>
+
+        <p>${escapeHtml(dispute.description)}</p>
+
+        <p>Statut : ${escapeHtml(dispute.status)}</p>
+
+        <label>
+          Décision et explication de l'administrateur
+        </label>
+
+        <textarea
+          data-resolution="${escapeHtml(dispute.id)}"
+          rows="3"
+          maxlength="3000"
+          placeholder="Expliquez la décision..."
+          style="width:100%;margin-top:8px"
+        ></textarea>
+
+        ${adminButton("Mettre en examen", "review-dispute", dispute.id, "#2874a6")}
+        ${adminButton("Résoudre le litige", "resolve-dispute", dispute.id, "#16834a")}
+        ${adminButton("Rejeter le litige", "reject-dispute", dispute.id, "#c0392b")}
+      </article>
+    `).join("");
+  }
+
+  async function loadAll() {
+    try {
+      await verifyAdmin();
+
+      feedback("Accès administrateur confirmé. Chargement des demandes...");
+
+      await Promise.all([
+        loadStores(),
+        loadProducts(),
+        loadDisputes()
+      ]);
+
+      feedback("Modération chargée avec succès.");
+
+    } catch (error) {
+      console.error("GLOBEXA administration :", error);
+
+      feedback(
+        error.message || "Impossible de charger la modération.",
+        true
+      );
+
+      $("globexaAdminStores").textContent = "Accès non disponible.";
+      $("globexaAdminProducts").textContent = "Accès non disponible.";
+      $("globexaAdminDisputes").textContent = "Accès non disponible.";
+    }
+  }
+
+  async function updateRecord(table, id, values) {
+    const { data, error } = await db
+      .from(table)
+      .update(values)
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error(
+        "Aucune modification effectuée. Vérifiez les permissions administrateur."
+      );
+    }
+  }
+
+  section.addEventListener("click", async function (event) {
+    const button = event.target.closest("button[data-admin-action]");
+
+    if (!button || button.disabled) return;
+
+    const action = button.dataset.adminAction;
+    const id = button.dataset.recordId;
+
+    button.disabled = true;
+
+    try {
+      await verifyAdmin();
+
+      if (action === "approve-store") {
+        await updateRecord("globexa_stores", id, {
+          status: "active",
+          verification_status: "verified"
+        });
+
+        feedback("Boutique validée.");
+
+      } else if (action === "reject-store") {
+        await updateRecord("globexa_stores", id, {
+          status: "suspended",
+          verification_status: "rejected"
+        });
+
+        feedback("Boutique refusée.");
+
+      } else if (action === "approve-product") {
+        await updateRecord("globexa_market_products", id, {
+          status: "published"
+        });
+
+        feedback("Produit publié.");
+
+      } else if (action === "reject-product") {
+        await updateRecord("globexa_market_products", id, {
+          status: "rejected"
+        });
+
+        feedback("Produit refusé.");
+
+      } else if (action === "review-dispute") {
+        await updateRecord("globexa_disputes", id, {
+          status: "under_review"
+        });
+
+        feedback("Litige placé en examen.");
+
+      } else if (
+        action === "resolve-dispute" ||
+        action === "reject-dispute"
+      ) {
+        const field = section.querySelector(
+          `[data-resolution="${id}"]`
+        );
+
+        const resolution = field ? field.value.trim() : "";
+
+        if (resolution.length < 10) {
+          throw new Error(
+            "Écrivez une décision d'au moins 10 caractères."
+          );
+        }
+
+        await updateRecord("globexa_disputes", id, {
+          status: action === "resolve-dispute" ? "resolved" : "rejected",
+          resolution: resolution
+        });
+
+        feedback(
+          action === "resolve-dispute"
+            ? "Litige résolu."
+            : "Litige rejeté."
+        );
+      }
+
+      await loadAll();
+
+    } catch (error) {
+      console.error("GLOBEXA action administrateur :", error);
+
+      feedback(
+        error.message || "Cette opération a échoué.",
+        true
+      );
+
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("globexaAdminRefresh").addEventListener("click", loadAll);
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(loadAll, 0);
+  });
+
+  loadAll();
+
+})();
 </script>
 
 </body>
