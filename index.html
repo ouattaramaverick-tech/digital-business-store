@@ -514,3 +514,601 @@ startApp();
 </body>
 </html>
 
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b55">
+<title>GLOBEXA - Marketplace internationale</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#102b55;--orange:#ff8a24;--bg:#f4f7fb;--text:#17243a;--muted:#718096;--line:#e5eaf1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}
+header{background:var(--blue);color:white;padding:15px 5%;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:900;letter-spacing:1px}.logo span{color:var(--orange)}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+button{border:0;border-radius:8px;padding:11px 14px;background:var(--orange);color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#eaf0f8;color:var(--blue)}
+button.danger{background:#c83b3b}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;margin:6px 0 12px;font:inherit;background:white}
+textarea{min-height:85px}
+main{max-width:1200px;margin:22px auto;padding:0 15px}
+.hero{background:linear-gradient(115deg,#102b55,#1c4d82);color:white;padding:30px;border-radius:15px;margin-bottom:20px}
+.hero h1{font-size:30px;margin:0 0 10px}.hero p{line-height:1.6;color:#e5edf8}
+.panel{background:white;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.panel h2,.panel h3{margin-top:0;color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
+.product{background:white;border:1px solid var(--line);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:8px}
+.product h3{margin:4px 0;color:var(--blue)}
+.price{font-size:21px;font-weight:bold;color:var(--orange)}
+.muted{color:var(--muted);font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.hidden{display:none!important}
+.notice{padding:12px;border-radius:8px;background:#fff5e9;color:#8b4b08;margin:10px 0}
+.success{background:#e9f8ef;color:#146b40}.error{background:#fff0f0;color:#a32626}
+.item{padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}
+footer{text-align:center;color:var(--muted);padding:30px}
+@media(max-width:600px){.hero h1{font-size:23px}header{padding:14px}.logo{font-size:21px}nav button{padding:9px;font-size:12px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GLOBEX<span>A</span></div>
+  <nav>
+    <button class="secondary" onclick="showSection('catalogue')">Catalogue</button>
+    <button class="secondary" onclick="showSection('cart')">Panier (<span id="cartCount">0</span>)</button>
+    <button class="secondary" onclick="showSection('account')">Mon compte</button>
+    <button class="secondary" onclick="showSection('orders')">Commandes</button>
+    <button class="secondary hidden" id="adminNav" onclick="showSection('admin')">Administration</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Le commerce sans frontières.</h1>
+    <p>Découvrez des produits, trouvez des fournisseurs et développez votre activité avec GLOBEXA.</p>
+    <button onclick="showSection('catalogue')">Explorer les produits</button>
+  </section>
+
+  <div id="message" class="hidden"></div>
+
+  <section id="catalogue">
+    <div class="panel">
+      <h2>Catalogue international</h2>
+      <div class="row">
+        <input id="search" placeholder="Rechercher un produit..." oninput="renderProducts()">
+        <select id="categoryFilter" onchange="renderProducts()">
+          <option value="">Toutes les catégories</option>
+        </select>
+      </div>
+      <div id="products" class="grid"></div>
+    </div>
+  </section>
+
+  <section id="cart" class="hidden">
+    <div class="panel">
+      <h2>Mon panier GLOBEXA</h2>
+      <p class="muted">Vérifiez vos produits et quantités avant de commander.</p>
+      <div id="cartItems">Votre panier est vide.</div>
+      <div class="item">
+        <h3>Total estimé</h3>
+        <div id="cartTotal" class="price">0</div>
+        <p class="muted">Les devises différentes sont calculées séparément.</p>
+      </div>
+      <div class="row">
+        <button class="secondary" onclick="showSection('catalogue')">Continuer mes achats</button>
+        <button class="danger" onclick="clearCart()">Vider le panier</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="account" class="hidden">
+    <div class="panel" id="authPanel">
+      <h2>Connexion / Inscription</h2>
+      <div class="row">
+        <button onclick="setAuthMode('login')">Connexion</button>
+        <button class="secondary" onclick="setAuthMode('signup')">Créer un compte</button>
+      </div>
+      <form id="authForm">
+        <div id="nameField" class="hidden">
+          <label>Nom complet</label>
+          <input id="fullName" autocomplete="name">
+          <label>Pays</label>
+          <input id="country" placeholder="Exemple : Burkina Faso">
+          <label>Téléphone</label>
+          <input id="phone" placeholder="Téléphone avec indicatif">
+        </div>
+        <label>Adresse e-mail</label>
+        <input id="email" type="email" required autocomplete="email">
+        <label>Mot de passe</label>
+        <input id="password" type="password" required minlength="6">
+        <button id="authButton" type="submit">Se connecter</button>
+      </form>
+    </div>
+
+    <div class="panel hidden" id="userPanel">
+      <h2>Mon espace GLOBEXA</h2>
+      <p id="userEmail"></p>
+      <button class="secondary" onclick="loadMyStore()">Ma boutique fournisseur</button>
+      <button class="secondary" onclick="showSection('orders')">Mes commandes</button>
+      <button class="danger" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <div class="panel hidden" id="storePanel">
+      <h2>Créer ma boutique</h2>
+      <p class="muted">Votre boutique doit être approuvée par l'administration avant son activation.</p>
+      <form id="storeForm">
+        <label>Nom de l'entreprise ou boutique</label>
+        <input id="storeName" required>
+        <label>Pays</label>
+        <input id="storeCountry" required>
+        <label>Ville</label>
+        <input id="storeCity">
+        <label>Description</label>
+        <textarea id="storeDescription"></textarea>
+        <button type="submit">Créer ma boutique</button>
+      </form>
+    </div>
+
+    <div class="panel hidden" id="myStorePanel">
+      <h2>Ma boutique fournisseur</h2>
+      <div id="storeInfo"></div>
+      <div id="productFormArea" class="hidden">
+        <h3>Ajouter un produit</h3>
+        <form id="productForm">
+          <label>Nom du produit</label>
+          <input id="productTitle" required>
+          <label>Catégorie</label>
+          <select id="productCategory" required></select>
+          <label>Description</label>
+          <textarea id="productDescription"></textarea>
+          <div class="row">
+            <div><label>Prix unitaire</label><input id="productPrice" type="number" min="0.01" step="0.01" required></div>
+            <div><label>Devise (ex. USD)</label><input id="productCurrency" value="USD" maxlength="3" required></div>
+          </div>
+          <div class="row">
+            <div><label>Commande minimum</label><input id="productMoq" type="number" min="1" value="1" required></div>
+            <div><label>Stock disponible</label><input id="productStock" type="number" min="0" value="1" required></div>
+          </div>
+          <label>Pays d'origine</label>
+          <input id="productOrigin">
+          <button type="submit">Envoyer le produit pour vérification</button>
+        </form>
+      </div>
+      <div id="myProducts"></div>
+    </div>
+  </section>
+
+  <section id="orders" class="hidden">
+    <div class="panel">
+      <h2>Mes commandes</h2>
+      <div id="ordersList">Connectez-vous pour consulter vos commandes.</div>
+    </div>
+  </section>
+
+  <section id="admin" class="hidden">
+    <div class="panel"><h2>Administration GLOBEXA</h2><div id="adminStats"></div></div>
+    <div class="panel"><h3>Boutiques à vérifier</h3><div id="adminStores"></div></div>
+    <div class="panel"><h3>Produits à vérifier</h3><div id="adminProducts"></div></div>
+    <div class="panel"><h3>Commandes</h3><div id="adminOrders"></div></div>
+    <div class="panel"><h3>Commissions GLOBEXA</h3><div id="adminCommissions"></div></div>
+  </section>
+</main>
+
+<footer>© GLOBEXA — Marketplace internationale</footer>
+
+<script>
+"use strict";
+
+// CONFIGURATION SUPABASE
+const SUPABASE_URL = "https://xlxkiyihagoupsajwmze.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser = null;
+let isAdmin = false;
+let authMode = "login";
+let productsCache = [];
+let categoriesCache = [];
+let myStore = null;
+let globexaCart = [];
+
+// OUTILS
+function message(text,type="notice"){
+  const el=document.getElementById("message");
+  el.textContent=text;
+  el.className="notice "+type;
+  el.classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function clearMessage(){
+  document.getElementById("message").classList.add("hidden");
+}
+function money(value,currency){
+  return Number(value||0).toLocaleString("fr-FR",{maximumFractionDigits:2})+" "+(currency||"");
+}
+function slugify(value){
+  return value.toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
+function showSection(id){
+  ["catalogue","cart","account","orders","admin"].forEach(section=>{
+    document.getElementById(section).classList.toggle("hidden",section!==id);
+  });
+  if(id==="orders") loadOrders();
+  if(id==="admin"&&isAdmin) loadAdmin();
+  if(id==="account"&&currentUser) loadMyStore();
+  if(id==="cart") renderCart();
+}
+function setAuthMode(mode){
+  authMode=mode;
+  document.getElementById("nameField").classList.toggle("hidden",mode!=="signup");
+  document.getElementById("authButton").textContent=mode==="signup"?"Créer mon compte":"Se connecter";
+  document.getElementById("password").autocomplete=mode==="signup"?"new-password":"current-password";
+}
+
+// CATEGORIES
+async function loadCategories(){
+  const {data,error}=await db.from("globexa_categories").select("id,name").order("name");
+  if(error){message("Erreur catégories : "+error.message,"error");return;}
+  categoriesCache=data||[];
+  const filter=document.getElementById("categoryFilter");
+  const select=document.getElementById("productCategory");
+  filter.innerHTML='<option value="">Toutes les catégories</option>';
+  select.innerHTML="";
+  categoriesCache.forEach(c=>{
+    filter.add(new Option(c.name,c.id));
+    select.add(new Option(c.name,c.id));
+  });
+}
+
+// CATALOGUE
+async function loadProducts(){
+  const {data,error}=await db.from("globexa_market_products")
+    .select("id,title,description,base_price,currency,moq,stock_quantity,store_id,category_id,country_of_origin,status")
+    .eq("status","published").order("created_at",{ascending:false});
+  if(error){message("Erreur catalogue : "+error.message,"error");return;}
+  productsCache=data||[];
+  renderProducts();
+}
+function renderProducts(){
+  const search=(document.getElementById("search").value||"").toLowerCase();
+  const category=document.getElementById("categoryFilter").value;
+  const list=productsCache.filter(p=>
+    (!category||p.category_id===category)&&
+    (!search||(p.title||"").toLowerCase().includes(search)||(p.description||"").toLowerCase().includes(search))
+  );
+  const root=document.getElementById("products");
+  root.innerHTML="";
+  if(!list.length){root.textContent="Aucun produit publié pour le moment.";return;}
+  list.forEach(p=>{
+    const card=document.createElement("article");
+    card.className="product";
+    const title=document.createElement("h3");title.textContent=p.title;
+    const desc=document.createElement("p");desc.className="muted";desc.textContent=p.description||"Produit proposé sur GLOBEXA.";
+    const price=document.createElement("div");price.className="price";price.textContent=money(p.base_price,p.currency);
+    const info=document.createElement("small");info.textContent="Minimum : "+p.moq+" | Stock : "+p.stock_quantity;
+    const cat=document.createElement("small");
+    const found=categoriesCache.find(c=>c.id===p.category_id);cat.textContent=found?found.name:"";
+    const btn=document.createElement("button");btn.textContent="Ajouter au panier";
+    btn.disabled=Number(p.stock_quantity)<Number(p.moq);
+    btn.onclick=()=>addToCart(p);
+    card.append(title,desc,price,info,cat,btn);
+    root.appendChild(card);
+  });
+}
+
+// PANIER
+function addToCart(product){
+  if(!currentUser){
+    message("Connectez-vous avant d'ajouter un produit au panier.");
+    showSection("account");return;
+  }
+  const existing=globexaCart.find(p=>p.id===product.id);
+  const minimum=Math.max(1,Number(product.moq)||1);
+  if(existing){
+    if(existing.quantity+1>Number(product.stock_quantity)){message("Stock insuffisant.","error");return;}
+    existing.quantity++;
+  }else{
+    if(minimum>Number(product.stock_quantity)){message("Stock inférieur à la commande minimum.","error");return;}
+    globexaCart.push({...product,quantity:minimum});
+  }
+  renderCart();message("Produit ajouté au panier.","success");
+}
+function renderCart(){
+  const root=document.getElementById("cartItems");
+  const total=document.getElementById("cartTotal");
+  document.getElementById("cartCount").textContent=globexaCart.reduce((s,p)=>s+p.quantity,0);
+  root.innerHTML="";
+  if(!globexaCart.length){root.textContent="Votre panier est vide.";total.textContent="0";return;}
+  const totals={};
+  globexaCart.forEach(p=>{
+    const currency=p.currency||"";
+    totals[currency]=(totals[currency]||0)+Number(p.base_price)*p.quantity;
+  });
+  total.textContent=Object.entries(totals).map(([c,v])=>money(v,c)).join(" + ");
+  globexaCart.forEach(p=>{
+    const div=document.createElement("div");div.className="item";
+    const title=document.createElement("h3");title.textContent=p.title;
+    const price=document.createElement("p");price.textContent="Prix unitaire : "+money(p.base_price,p.currency);
+    const qty=document.createElement("p");qty.textContent="Quantité : "+p.quantity+" | Minimum : "+p.moq+" | Stock : "+p.stock_quantity;
+    const controls=document.createElement("div");controls.className="row";
+    const minus=document.createElement("button");minus.className="secondary";minus.textContent="−";minus.onclick=()=>changeCartQuantity(p.id,-1);
+    const plus=document.createElement("button");plus.className="secondary";plus.textContent="+";plus.onclick=()=>changeCartQuantity(p.id,1);
+    const remove=document.createElement("button");remove.className="danger";remove.textContent="Retirer";remove.onclick=()=>removeFromCart(p.id);
+    const order=document.createElement("button");order.textContent="Commander ce produit";order.onclick=()=>createCartOrder(p.id);
+    controls.append(minus,plus,remove);
+    div.append(title,price,qty,controls,order);
+    root.appendChild(div);
+  });
+}
+function changeCartQuantity(id,change){
+  const p=globexaCart.find(x=>x.id===id);if(!p)return;
+  const quantity=p.quantity+change;
+  if(quantity<Math.max(1,Number(p.moq)||1)){message("Quantité minimum : "+p.moq,"error");return;}
+  if(quantity>Number(p.stock_quantity)){message("Stock insuffisant.","error");return;}
+  p.quantity=quantity;renderCart();
+}
+function removeFromCart(id){
+  globexaCart=globexaCart.filter(p=>p.id!==id);renderCart();
+}
+function clearCart(){
+  if(!globexaCart.length)return;
+  if(!confirm("Voulez-vous vider le panier ?"))return;
+  globexaCart=[];renderCart();message("Panier vidé.","success");
+}
+async function createCartOrder(id){
+  if(!currentUser){message("Connectez-vous avant de commander.","error");showSection("account");return;}
+  const p=globexaCart.find(x=>x.id===id);if(!p)return;
+  if(!confirm("Confirmer "+p.quantity+" unité(s) de "+p.title+" ? Le paiement n'est pas encore encaissé."))return;
+  const {data,error}=await db.rpc("globexa_create_market_order",{p_product_id:p.id,p_quantity:p.quantity});
+  if(error){message("Commande non créée : "+error.message,"error");return;}
+  globexaCart=globexaCart.filter(x=>x.id!==id);
+  renderCart();
+  message("Commande créée. Référence : "+data+". Aucun paiement n'a encore été encaissé.","success");
+  await loadProducts();await loadOrders();
+}
+
+// CONNEXION / INSCRIPTION
+document.getElementById("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();clearMessage();
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  let result;
+  if(authMode==="signup"){
+    const full_name=document.getElementById("fullName").value.trim();
+    const country=document.getElementById("country").value.trim();
+    const phone=document.getElementById("phone").value.trim();
+    if(!full_name){message("Entrez votre nom.","error");return;}
+    result=await db.auth.signUp({email,password,options:{data:{full_name,country,phone}}});
+  }else{
+    result=await db.auth.signInWithPassword({email,password});
+  }
+  if(result.error){message(result.error.message,"error");return;}
+  if(authMode==="signup"&&!result.data.session){
+    message("Compte créé. Vérifiez votre e-mail pour confirmer votre inscription.","success");return;
+  }
+  currentUser=result.data.user;
+  await syncUser();
+  message("Connexion réussie.","success");
+});
+async function syncUser(){
+  const {data}=await db.auth.getUser();
+  currentUser=data.user||null;
+  document.getElementById("authPanel").classList.toggle("hidden",!!currentUser);
+  document.getElementById("userPanel").classList.toggle("hidden",!currentUser);
+  document.getElementById("userEmail").textContent=currentUser?currentUser.email:"";
+  isAdmin=false;
+  document.getElementById("adminNav").classList.add("hidden");
+  if(currentUser){
+    const result=await db.rpc("is_globexa_admin");
+    isAdmin=!result.error&&result.data===true;
+    if(isAdmin)document.getElementById("adminNav").classList.remove("hidden");
+  }
+}
+async function logout(){
+  const {error}=await db.auth.signOut();
+  if(error){message(error.message,"error");return;}
+  currentUser=null;isAdmin=false;myStore=null;globexaCart=[];
+  document.getElementById("userPanel").classList.add("hidden");
+  document.getElementById("authPanel").classList.remove("hidden");
+  document.getElementById("storePanel").classList.add("hidden");
+  document.getElementById("myStorePanel").classList.add("hidden");
+  document.getElementById("adminNav").classList.add("hidden");
+  renderCart();showSection("catalogue");message("Vous êtes déconnecté.","success");
+}
+
+// BOUTIQUE FOURNISSEUR
+async function loadMyStore(){
+  if(!currentUser)return;
+  document.getElementById("storePanel").classList.add("hidden");
+  document.getElementById("myStorePanel").classList.add("hidden");
+  const {data,error}=await db.from("globexa_stores").select("*").eq("owner_id",currentUser.id).maybeSingle();
+  if(error){message("Erreur boutique : "+error.message,"error");return;}
+  myStore=data;
+  if(!myStore){document.getElementById("storePanel").classList.remove("hidden");return;}
+  document.getElementById("myStorePanel").classList.remove("hidden");
+  document.getElementById("storeInfo").textContent=
+    myStore.company_name+" — Statut : "+myStore.status+" — Vérification : "+(myStore.verification_status||"en attente");
+  const active=myStore.status==="active";
+  document.getElementById("productFormArea").classList.toggle("hidden",!active);
+  if(!active)message("Votre boutique attend l'approbation de l'administration.");
+  await loadMyProducts();
+}
+document.getElementById("storeForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!currentUser){message("Connectez-vous d'abord.","error");return;}
+  const name=document.getElementById("storeName").value.trim();
+  const country=document.getElementById("storeCountry").value.trim();
+  const city=document.getElementById("storeCity").value.trim();
+  const description=document.getElementById("storeDescription").value.trim();
+  const slug=slugify(name)+"-"+currentUser.id.slice(0,8);
+  const {error}=await db.from("globexa_stores").insert({
+    owner_id:currentUser.id,company_name:name,slug,country,city,description,status:"pending"
+  });
+  if(error){message("Création impossible : "+error.message,"error");return;}
+  message("Boutique créée. Elle doit être approuvée par GLOBEXA.","success");
+  await loadMyStore();
+});
+document.getElementById("productForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!currentUser||!myStore||myStore.status!=="active"){
+    message("Votre boutique doit être activée avant l'ajout de produits.","error");return;
+  }
+  const title=document.getElementById("productTitle").value.trim();
+  const price=Number(document.getElementById("productPrice").value);
+  const moq=Number(document.getElementById("productMoq").value);
+  const stock=Number(document.getElementById("productStock").value);
+  const currency=document.getElementById("productCurrency").value.trim().toUpperCase();
+  if(!title||!Number.isFinite(price)||price<=0||!Number.isInteger(moq)||moq<1||
+    !Number.isInteger(stock)||stock<0||!/^[A-Z]{3}$/.test(currency)){
+    message("Vérifiez le nom, le prix, la devise, le minimum et le stock.","error");return;
+  }
+  const {error}=await db.from("globexa_market_products").insert({
+    store_id:myStore.id,
+    category_id:document.getElementById("productCategory").value||null,
+    title,
+    description:document.getElementById("productDescription").value.trim(),
+    country_of_origin:document.getElementById("productOrigin").value.trim(),
+    currency,base_price:price,moq,stock_quantity:stock,status:"pending"
+  });
+  if(error){message("Ajout impossible : "+error.message,"error");return;}
+  message("Produit envoyé pour vérification.","success");
+  e.target.reset();document.getElementById("productCurrency").value="USD";
+  await loadMyProducts();
+});
+async function loadMyProducts(){
+  if(!myStore)return;
+  const {data,error}=await db.from("globexa_market_products")
+    .select("id,title,status,base_price,currency")
+    .eq("store_id",myStore.id).order("created_at",{ascending:false});
+  const root=document.getElementById("myProducts");
+  if(error){root.textContent=error.message;return;}
+  root.innerHTML="<h3>Mes produits</h3>";
+  if(!data||!data.length){root.append("Aucun produit pour le moment.");return;}
+  data.forEach(p=>{
+    const div=document.createElement("div");div.className="item";
+    div.textContent=p.title+" — "+money(p.base_price,p.currency)+" — "+p.status;
+    root.appendChild(div);
+  });
+}
+
+// COMMANDES
+async function loadOrders(){
+  const root=document.getElementById("ordersList");
+  if(!currentUser){root.textContent="Connectez-vous pour voir vos commandes.";return;}
+  const {data,error}=await db.from("globexa_market_orders")
+    .select("id,product_id,quantity,subtotal,currency,status,payment_status,created_at")
+    .order("created_at",{ascending:false});
+  if(error){root.textContent="Impossible de charger les commandes : "+error.message;return;}
+  root.innerHTML="";
+  if(!data||!data.length){root.textContent="Aucune commande pour le moment.";return;}
+  data.forEach(o=>{
+    const div=document.createElement("div");div.className="item";
+    div.textContent="Commande "+o.id+" — Quantité : "+o.quantity+
+      " — Total : "+money(o.subtotal,o.currency)+" — Statut : "+o.status+
+      " — Paiement : "+o.payment_status;
+    root.appendChild(div);
+  });
+}
+
+// ADMINISTRATION
+async function loadAdmin(){
+  if(!isAdmin){message("Accès administrateur refusé.","error");return;}
+  const [stores,products,orders,commissions]=await Promise.all([
+    db.from("globexa_stores").select("id,company_name,country,status,verification_status").order("created_at",{ascending:false}),
+    db.from("globexa_market_products").select("id,title,status,base_price,currency").order("created_at",{ascending:false}),
+    db.from("globexa_market_orders").select("id,subtotal,currency,status,payment_status").order("created_at",{ascending:false}),
+    db.from("globexa_market_commissions").select("id,order_id,total_amount,commission_amount,supplier_amount,currency,status").order("created_at",{ascending:false})
+  ]);
+  if(stores.error||products.error||orders.error||commissions.error){
+    message("Certaines données administrateur n'ont pas pu être chargées.","error");return;
+  }
+  document.getElementById("adminStats").textContent=
+    "Boutiques : "+stores.data.length+" | Produits : "+products.data.length+
+    " | Commandes : "+orders.data.length+" | Commissions : "+commissions.data.length;
+
+  const storeRoot=document.getElementById("adminStores");storeRoot.innerHTML="";
+  stores.data.forEach(s=>{
+    const div=document.createElement("div");div.className="item";
+    const label=document.createElement("span");
+    label.textContent=s.company_name+" — "+s.country+" — "+s.status;
+    div.appendChild(label);
+    if(s.status!=="active"){
+      const btn=document.createElement("button");btn.textContent="Activer la boutique";
+      btn.onclick=()=>approveStore(s.id);div.appendChild(btn);
+    }
+    storeRoot.appendChild(div);
+  });
+
+  const productRoot=document.getElementById("adminProducts");productRoot.innerHTML="";
+  products.data.forEach(p=>{
+    const div=document.createElement("div");div.className="item";
+    const label=document.createElement("span");
+    label.textContent=p.title+" — "+money(p.base_price,p.currency)+" — "+p.status;
+    div.appendChild(label);
+    if(p.status!=="published"){
+      const btn=document.createElement("button");btn.textContent="Publier";
+      btn.onclick=()=>approveProduct(p.id);div.appendChild(btn);
+    }
+    productRoot.appendChild(div);
+  });
+
+  const orderRoot=document.getElementById("adminOrders");orderRoot.innerHTML="";
+  orders.data.forEach(o=>{
+    const div=document.createElement("div");div.className="item";
+    div.textContent="Commande "+o.id+" — "+money(o.subtotal,o.currency)+
+      " — "+o.status+" — Paiement : "+o.payment_status;
+    orderRoot.appendChild(div);
+  });
+
+  const commissionRoot=document.getElementById("adminCommissions");commissionRoot.innerHTML="";
+  if(!commissions.data.length)commissionRoot.textContent="Aucune commission enregistrée.";
+  commissions.data.forEach(c=>{
+    const div=document.createElement("div");div.className="item";
+    div.textContent="Commande "+c.order_id+
+      " — Total : "+money(c.total_amount,c.currency)+
+      " — Commission : "+money(c.commission_amount,c.currency)+
+      " — Fournisseur : "+money(c.supplier_amount,c.currency)+
+      " — "+c.status;
+    commissionRoot.appendChild(div);
+  });
+}
+async function approveStore(id){
+  if(!isAdmin)return;
+  const {error}=await db.from("globexa_stores").update({status:"active"}).eq("id",id);
+  if(error){message("Activation impossible : "+error.message,"error");return;}
+  message("Boutique activée.","success");await loadAdmin();
+}
+async function approveProduct(id){
+  if(!isAdmin)return;
+  const {error}=await db.from("globexa_market_products").update({status:"published"}).eq("id",id);
+  if(error){message("Publication impossible : "+error.message,"error");return;}
+  message("Produit publié.","success");await loadAdmin();await loadProducts();
+}
+
+// DEMARRAGE
+async function startApp(){
+  await loadCategories();
+  await loadProducts();
+  const {data,error}=await db.auth.getSession();
+  if(error)message("Erreur de session : "+error.message,"error");
+  currentUser=data.session?data.session.user:null;
+  await syncUser();
+  db.auth.onAuthStateChange((_event,session)=>{
+    setTimeout(async()=>{
+      currentUser=session?session.user:null;
+      await syncUser();
+    },0);
+  });
+}
+startApp();
+</script>
+</body>
+</html>
