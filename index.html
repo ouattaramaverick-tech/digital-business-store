@@ -1752,6 +1752,534 @@ loadRFQs();
 loadMyQuotes();
 
 })();
+
+/* =====================================================
+   CODE 14A — MESSAGERIE ACHETEUR / FOURNISSEUR
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaMessagesSection")) return;
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaMessagesSection";
+    link.textContent = "Messagerie";
+    nav.appendChild(link);
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaMessagesSection";
+
+  section.innerHTML = `
+    <h2>Messagerie GLOBEXA</h2>
+
+    <div class="panel">
+      <h3>Contacter un fournisseur</h3>
+      <p>Choisissez un produit pour démarrer une conversation.</p>
+
+      <select id="globexaContactProduct">
+        <option value="">Chargement des produits...</option>
+      </select>
+
+      <button type="button" id="globexaStartConversation">
+        Contacter le fournisseur
+      </button>
+
+      <p id="globexaContactFeedback" class="auth-message" hidden></p>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <h3>Mes conversations</h3>
+
+      <button type="button" id="globexaRefreshConversations">
+        Actualiser
+      </button>
+
+      <p id="globexaConversationStatus">
+        Chargement des conversations...
+      </p>
+
+      <div id="globexaConversationList"></div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <h3 id="globexaActiveConversationTitle">
+        Ouvrez une conversation
+      </h3>
+
+      <div id="globexaMessageList"
+        style="max-height:350px;overflow-y:auto"></div>
+
+      <form id="globexaMessageForm" hidden>
+        <label for="globexaMessageInput">Votre message</label>
+
+        <textarea
+          id="globexaMessageInput"
+          maxlength="4000"
+          required
+          placeholder="Écrivez votre message..."
+        ></textarea>
+
+        <button type="submit" id="globexaSendMessage">
+          Envoyer
+        </button>
+
+        <p id="globexaMessageFeedback" hidden></p>
+      </form>
+    </div>
+  `;
+
+  const supplierSection = document.getElementById("fournisseurs");
+
+  if (supplierSection) {
+    supplierSection.after(section);
+  } else {
+    document.querySelector("main")?.appendChild(section);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  let activeConversationId = null;
+  let productsById = new Map();
+
+  function feedback(id, message, isError) {
+    const box = $(id);
+    box.textContent = message;
+    box.hidden = false;
+    box.className = "auth-message" + (isError ? " error" : " success");
+  }
+
+  function clearFeedback(id) {
+    $(id).textContent = "";
+    $(id).hidden = true;
+  }
+
+  function safeText(value) {
+    return String(value ?? "");
+  }
+
+  async function getCurrentUser() {
+    const result = await db.auth.getUser();
+
+    if (result.error) throw result.error;
+
+    currentUser = result.data.user || null;
+    return currentUser;
+  }
+
+  /* Charger les produits et leurs fournisseurs */
+
+  async function loadContactProducts() {
+    const select = $("globexaContactProduct");
+
+    select.replaceChildren();
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "Choisir un produit";
+    select.appendChild(first);
+
+    productsById.clear();
+
+    const result = await db
+      .from("globexa_market_products")
+      .select(
+        "id,title,store:globexa_stores!inner(id,owner_id,company_name,status)"
+      )
+      .eq("status", "published")
+      .eq("store.status", "active")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (result.error) {
+      console.error("GLOBEXA produits messagerie:", result.error);
+      first.textContent = "Impossible de charger les produits";
+      return;
+    }
+
+    (result.data || []).forEach(product => {
+      const store = Array.isArray(product.store)
+        ? product.store[0]
+        : product.store;
+
+      if (!store || !store.owner_id) return;
+
+      productsById.set(product.id, {
+        id: product.id,
+        title: product.title,
+        supplierId: store.owner_id,
+        storeName: store.company_name || "Fournisseur GLOBEXA"
+      });
+
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent =
+        safeText(product.title) + " — " + safeText(store.company_name);
+
+      select.appendChild(option);
+    });
+
+    if (!productsById.size) {
+      first.textContent = "Aucun produit fournisseur disponible";
+    }
+  }
+
+  /* Charger les conversations de l'utilisateur */
+
+  async function loadConversations() {
+    const container = $("globexaConversationList");
+
+    container.replaceChildren();
+
+    $("globexaConversationStatus").textContent =
+      "Chargement des conversations...";
+
+    try {
+      const user = await getCurrentUser();
+
+      if (!user) {
+        $("globexaConversationStatus").textContent =
+          "Connectez-vous pour utiliser la messagerie.";
+        return;
+      }
+
+      const result = await db
+        .from("globexa_conversations")
+        .select(
+          "id,buyer_id,supplier_id,product_id,created_at,product:globexa_market_products(title)"
+        )
+        .or(
+          "buyer_id.eq." + user.id +
+          ",supplier_id.eq." + user.id
+        )
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (result.error) throw result.error;
+
+      const conversations = result.data || [];
+
+      if (!conversations.length) {
+        $("globexaConversationStatus").textContent =
+          "Vous n'avez pas encore de conversation.";
+        return;
+      }
+
+      $("globexaConversationStatus").textContent =
+        conversations.length + " conversation(s).";
+
+      conversations.forEach(conversation => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.style.display = "block";
+        button.style.width = "100%";
+        button.style.marginTop = "10px";
+        button.style.textAlign = "left";
+
+        const product = Array.isArray(conversation.product)
+          ? conversation.product[0]
+          : conversation.product;
+
+        const role = conversation.buyer_id === user.id
+          ? "Acheteur"
+          : "Fournisseur";
+
+        button.textContent =
+          safeText(product?.title || "Conversation") +
+          " — " + role;
+
+        button.addEventListener("click", function () {
+          openConversation(conversation);
+        });
+
+        container.appendChild(button);
+      });
+
+    } catch (error) {
+      console.error("GLOBEXA conversations:", error);
+
+      $("globexaConversationStatus").textContent =
+        "Impossible de charger les conversations.";
+    }
+  }
+
+  /* Ouvrir une conversation */
+
+  async function openConversation(conversation) {
+    activeConversationId = conversation.id;
+
+    const product = Array.isArray(conversation.product)
+      ? conversation.product[0]
+      : conversation.product;
+
+    $("globexaActiveConversationTitle").textContent =
+      product?.title || "Conversation GLOBEXA";
+
+    $("globexaMessageForm").hidden = false;
+
+    await loadMessages();
+  }
+
+  /* Charger les messages */
+
+  async function loadMessages() {
+    if (!activeConversationId) return;
+
+    const container = $("globexaMessageList");
+    container.replaceChildren();
+
+    const result = await db
+      .from("globexa_messages")
+      .select("id,sender_id,body,created_at")
+      .eq("conversation_id", activeConversationId)
+      .order("created_at", { ascending: true })
+      .limit(200);
+
+    if (result.error) {
+      console.error("GLOBEXA messages:", result.error);
+
+      container.textContent =
+        "Impossible de charger les messages.";
+
+      return;
+    }
+
+    const messages = result.data || [];
+
+    if (!messages.length) {
+      container.textContent = "Aucun message pour le moment.";
+      return;
+    }
+
+    messages.forEach(message => {
+      const item = document.createElement("div");
+
+      item.style.padding = "10px";
+      item.style.margin = "8px 0";
+      item.style.borderRadius = "9px";
+      item.style.background =
+        message.sender_id === currentUser?.id
+          ? "#e7f1ff"
+          : "#f1f5f9";
+
+      const sender = document.createElement("strong");
+
+      sender.textContent =
+        message.sender_id === currentUser?.id
+          ? "Vous"
+          : "Votre correspondant";
+
+      const body = document.createElement("p");
+      body.style.whiteSpace = "pre-wrap";
+      body.textContent = safeText(message.body);
+
+      const date = document.createElement("small");
+      date.textContent = message.created_at
+        ? new Date(message.created_at).toLocaleString("fr-FR")
+        : "";
+
+      item.appendChild(sender);
+      item.appendChild(body);
+      item.appendChild(date);
+
+      container.appendChild(item);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  /* Démarrer ou retrouver une conversation */
+
+  $("globexaStartConversation").addEventListener(
+    "click",
+    async function () {
+      const button = this;
+      button.disabled = true;
+
+      clearFeedback("globexaContactFeedback");
+
+      try {
+        const user = await getCurrentUser();
+
+        if (!user) {
+          throw new Error(
+            "Connectez-vous avant de contacter un fournisseur."
+          );
+        }
+
+        const productId = $("globexaContactProduct").value;
+        const product = productsById.get(productId);
+
+        if (!product) {
+          throw new Error("Choisissez un produit valide.");
+        }
+
+        if (product.supplierId === user.id) {
+          throw new Error(
+            "Vous ne pouvez pas contacter votre propre boutique."
+          );
+        }
+
+        const existing = await db
+          .from("globexa_conversations")
+          .select("id,buyer_id,supplier_id,product_id,created_at,product:globexa_market_products(title)")
+          .eq("buyer_id", user.id)
+          .eq("supplier_id", product.supplierId)
+          .eq("product_id", product.id)
+          .limit(1);
+
+        if (existing.error) throw existing.error;
+
+        let conversation = existing.data?.[0];
+
+        if (!conversation) {
+          const created = await db
+            .from("globexa_conversations")
+            .insert({
+              buyer_id: user.id,
+              supplier_id: product.supplierId,
+              product_id: product.id
+            })
+            .select(
+              "id,buyer_id,supplier_id,product_id,created_at,product:globexa_market_products(title)"
+            )
+            .single();
+
+          if (created.error) throw created.error;
+
+          conversation = created.data;
+        }
+
+        feedback(
+          "globexaContactFeedback",
+          "Conversation ouverte avec " + product.storeName + ".",
+          false
+        );
+
+        await loadConversations();
+        await openConversation(conversation);
+
+      } catch (error) {
+        console.error("GLOBEXA démarrage conversation:", error);
+
+        feedback(
+          "globexaContactFeedback",
+          error.message || "Impossible de démarrer la conversation.",
+          true
+        );
+      } finally {
+        button.disabled = false;
+      }
+    }
+  );
+
+  /* Envoyer un message */
+
+  $("globexaMessageForm").addEventListener(
+    "submit",
+    async function (event) {
+      event.preventDefault();
+
+      const button = $("globexaSendMessage");
+      const input = $("globexaMessageInput");
+      const body = input.value.trim();
+
+      clearFeedback("globexaMessageFeedback");
+
+      if (!activeConversationId) {
+        feedback(
+          "globexaMessageFeedback",
+          "Ouvrez d'abord une conversation.",
+          true
+        );
+        return;
+      }
+
+      if (!body || body.length > 4000) {
+        feedback(
+          "globexaMessageFeedback",
+          "Votre message doit contenir entre 1 et 4000 caractères.",
+          true
+        );
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Envoi...";
+
+      try {
+        const user = await getCurrentUser();
+
+        if (!user) {
+          throw new Error("Votre session a expiré. Reconnectez-vous.");
+        }
+
+        const result = await db
+          .from("globexa_messages")
+          .insert({
+            conversation_id: activeConversationId,
+            sender_id: user.id,
+            body: body
+          });
+
+        if (result.error) throw result.error;
+
+        input.value = "";
+
+        await loadMessages();
+
+        feedback(
+          "globexaMessageFeedback",
+          "Message envoyé.",
+          false
+        );
+
+      } catch (error) {
+        console.error("GLOBEXA envoi message:", error);
+
+        feedback(
+          "globexaMessageFeedback",
+          error.message || "Impossible d'envoyer le message.",
+          true
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Envoyer";
+      }
+    }
+  );
+
+  $("globexaRefreshConversations").addEventListener(
+    "click",
+    async function () {
+      await loadConversations();
+
+      if (activeConversationId) {
+        await loadMessages();
+      }
+    }
+  );
+
+  /* Actualisation après connexion */
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(function () {
+      loadConversations();
+    }, 0);
+  });
+
+  loadContactProducts();
+  loadConversations();
+
+})();
 </script>
 
 </body>
