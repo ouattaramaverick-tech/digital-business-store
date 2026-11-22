@@ -4631,6 +4631,406 @@ loadMyQuotes();
   loadAll();
 
 })();
+
+/* =====================================================
+   CODE 19A — FAVORIS ACHETEUR
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexaFavoritesSection")) {
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaFavoritesSection";
+
+  section.innerHTML = `
+    <h2>Mes produits favoris</h2>
+
+    <div class="panel" style="padding:15px">
+      <p id="globexaFavoritesFeedback">Chargement...</p>
+
+      <h3>Ajouter un produit aux favoris</h3>
+
+      <select
+        id="globexaFavoriteProductSelect"
+        style="width:100%;padding:10px;margin:8px 0"
+      >
+        <option value="">Chargement des produits...</option>
+      </select>
+
+      <button type="button" id="globexaAddFavorite">
+        Ajouter aux favoris
+      </button>
+
+      <h3 style="margin-top:25px">Ma liste de favoris</h3>
+
+      <button type="button" id="globexaRefreshFavorites">
+        Actualiser mes favoris
+      </button>
+
+      <div id="globexaFavoritesList" style="margin-top:15px">
+        Chargement...
+      </div>
+    </div>
+  `;
+
+  const previousSection =
+    document.getElementById("globexaAdminModerationSection") ||
+    document.getElementById("globexaDisputesSection");
+
+  if (previousSection) {
+    previousSection.insertAdjacentElement("afterend", section);
+  } else {
+    const main = document.querySelector("main");
+    (main || document.body).appendChild(section);
+  }
+
+  const nav = document.querySelector("nav");
+
+  if (nav) {
+    const link = document.createElement("a");
+    link.href = "#globexaFavoritesSection";
+    link.textContent = "Mes favoris";
+    nav.appendChild(link);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+
+  function feedback(message, error = false) {
+    const element = $("globexaFavoritesFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  async function getUser() {
+    const {
+      data: { user },
+      error
+    } = await db.auth.getUser();
+
+    if (error) throw error;
+
+    if (!user) {
+      throw new Error("Connectez-vous pour utiliser vos favoris.");
+    }
+
+    return user;
+  }
+
+  async function loadAvailableProducts() {
+    const select = $("globexaFavoriteProductSelect");
+
+    const { data, error } = await db
+      .from("globexa_market_products")
+      .select("id,title")
+      .eq("status", "published")
+      .order("title", { ascending: true })
+      .limit(200);
+
+    if (error) throw error;
+
+    select.innerHTML = `
+      <option value="">Choisir un produit</option>
+    `;
+
+    (data || []).forEach(product => {
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent = product.title;
+      select.appendChild(option);
+    });
+
+    if (!data || data.length === 0) {
+      select.innerHTML = `
+        <option value="">Aucun produit disponible</option>
+      `;
+    }
+  }
+
+  async function loadFavorites() {
+    const container = $("globexaFavoritesList");
+    container.innerHTML = "Chargement...";
+
+    try {
+      const user = await getUser();
+
+      const { data: favorites, error: favoritesError } = await db
+        .from("globexa_favorites")
+        .select("product_id,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (favoritesError) throw favoritesError;
+
+      if (!favorites || favorites.length === 0) {
+        container.innerHTML = `
+          <p>Vous n'avez pas encore de produit favori.</p>
+        `;
+        return;
+      }
+
+      const productIds = favorites.map(item => item.product_id);
+
+      const { data: products, error: productsError } = await db
+        .from("globexa_market_products")
+        .select(`
+          id,
+          title,
+          description,
+          base_price,
+          currency,
+          images,
+          moq,
+          stock_quantity
+        `)
+        .in("id", productIds)
+        .eq("status", "published");
+
+      if (productsError) throw productsError;
+
+      const productMap = {};
+
+      (products || []).forEach(product => {
+        productMap[product.id] = product;
+      });
+
+      const cards = favorites.map(favorite => {
+        const product = productMap[favorite.product_id];
+
+        if (!product) return "";
+
+        const image = Array.isArray(product.images)
+          ? product.images[0]
+          : "";
+
+        return `
+          <article class="panel" style="
+            padding:12px;
+            margin:12px 0;
+            border:1px solid #ddd;
+            border-radius:8px
+          ">
+            ${
+              image
+                ? `
+                  <img
+                    src="${escapeHtml(image)}"
+                    alt="${escapeHtml(product.title)}"
+                    loading="lazy"
+                    style="
+                      width:100%;
+                      max-height:190px;
+                      object-fit:contain;
+                      border-radius:6px
+                    "
+                  >
+                `
+                : ""
+            }
+
+            <h4>${escapeHtml(product.title)}</h4>
+
+            <p>${escapeHtml(product.description || "")}</p>
+
+            <p>
+              Prix : ${escapeHtml(product.base_price)}
+              ${escapeHtml(product.currency)}
+            </p>
+
+            <p>
+              Quantité minimale : ${escapeHtml(product.moq)}
+            </p>
+
+            <p>
+              Stock disponible : ${escapeHtml(product.stock_quantity)}
+            </p>
+
+            <button
+              type="button"
+              data-favorite-remove="${escapeHtml(product.id)}"
+              style="
+                background:#c0392b;
+                color:white;
+                border:0;
+                padding:9px 13px;
+                border-radius:5px
+              "
+            >
+              Retirer des favoris
+            </button>
+          </article>
+        `;
+      }).filter(Boolean);
+
+      container.innerHTML = cards.length
+        ? cards.join("")
+        : "<p>Vos produits favoris ne sont plus disponibles.</p>";
+
+    } catch (error) {
+      console.error("GLOBEXA favoris :", error);
+
+      container.textContent =
+        error.message || "Impossible de charger vos favoris.";
+    }
+  }
+
+  async function addFavorite() {
+    const button = $("globexaAddFavorite");
+    const productId = $("globexaFavoriteProductSelect").value;
+
+    if (!productId) {
+      feedback("Choisissez d'abord un produit.", true);
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+      const user = await getUser();
+
+      const { error } = await db
+        .from("globexa_favorites")
+        .insert({
+          user_id: user.id,
+          product_id: productId
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error("Ce produit est déjà dans vos favoris.");
+        }
+
+        throw error;
+      }
+
+      feedback("Produit ajouté à vos favoris.");
+
+      await loadFavorites();
+
+    } catch (error) {
+      console.error("GLOBEXA ajout favori :", error);
+
+      feedback(
+        error.message || "Impossible d'ajouter ce produit.",
+        true
+      );
+
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function removeFavorite(productId, button) {
+    button.disabled = true;
+
+    try {
+      const user = await getUser();
+
+      const { data, error } = await db
+        .from("globexa_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .select("product_id");
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error("Le favori n'a pas pu être retiré.");
+      }
+
+      feedback("Produit retiré de vos favoris.");
+
+      await loadFavorites();
+
+    } catch (error) {
+      console.error("GLOBEXA retrait favori :", error);
+
+      feedback(
+        error.message || "Impossible de retirer ce favori.",
+        true
+      );
+
+      button.disabled = false;
+    }
+  }
+
+  $("globexaAddFavorite").addEventListener(
+    "click",
+    addFavorite
+  );
+
+  $("globexaRefreshFavorites").addEventListener(
+    "click",
+    async function () {
+      try {
+        await loadAvailableProducts();
+        await loadFavorites();
+        feedback("Vos favoris ont été actualisés.");
+      } catch (error) {
+        feedback(error.message, true);
+      }
+    }
+  );
+
+  $("globexaFavoritesList").addEventListener(
+    "click",
+    function (event) {
+      const button = event.target.closest(
+        "button[data-favorite-remove]"
+      );
+
+      if (!button) return;
+
+      removeFavorite(
+        button.dataset.favoriteRemove,
+        button
+      );
+    }
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(async function () {
+      try {
+        await loadAvailableProducts();
+        await loadFavorites();
+      } catch (error) {
+        feedback(error.message, true);
+      }
+    }, 0);
+  });
+
+  async function start() {
+    try {
+      await getUser();
+      await loadAvailableProducts();
+      await loadFavorites();
+      feedback("Vos favoris sont prêts.");
+    } catch (error) {
+      feedback(error.message, true);
+      $("globexaFavoritesList").textContent =
+        "Connectez-vous pour consulter vos favoris.";
+    }
+  }
+
+  start();
+
+})();
 </script>
 
 </body>
