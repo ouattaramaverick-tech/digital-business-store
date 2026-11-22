@@ -770,6 +770,344 @@ button.textContent="Se déconnecter";
 }
 });
 
+
+/* CODE 12B — BOUTIQUES FOURNISSEURS ET SOUMISSION DE PRODUITS */
+
+(function(){
+
+const supplierSection = document.getElementById("fournisseurs");
+if (!supplierSection || document.getElementById("globexaSupplierPanel")) return;
+
+const style = document.createElement("style");
+style.textContent = `
+#globexaSupplierPanel{margin-top:18px}
+#globexaSupplierPanel .supplier-box{background:#fff;border:1px solid #dce5ee;border-radius:13px;padding:18px;margin-top:14px}
+#globexaSupplierPanel .supplier-form{display:grid;gap:12px}
+#globexaSupplierPanel label{font-weight:bold;font-size:14px;color:#0b2d52}
+#globexaSupplierPanel input,#globexaSupplierPanel textarea,#globexaSupplierPanel select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:8px;margin-top:5px;font:inherit}
+#globexaSupplierPanel textarea{min-height:90px;resize:vertical}
+#globexaSupplierPanel .supplier-note{padding:12px;background:#eef4fa;border-radius:8px;line-height:1.5;margin:12px 0}
+#globexaSupplierPanel .supplier-status{font-weight:bold;color:#0b2d52}
+#globexaSupplierPanel button{width:100%}
+`;
+document.head.appendChild(style);
+
+const panel = document.createElement("div");
+panel.id = "globexaSupplierPanel";
+panel.className = "supplier-box";
+supplierSection.appendChild(panel);
+
+function make(tag, text, cls){
+  const node = document.createElement(tag);
+  if(text !== undefined) node.textContent = text;
+  if(cls) node.className = cls;
+  return node;
+}
+
+function field(labelText, type, placeholder, required=true){
+  const label = make("label", labelText);
+  const input = document.createElement(type === "textarea" ? "textarea" : "input");
+  if(type !== "textarea") input.type = type;
+  input.placeholder = placeholder || "";
+  input.required = required;
+  label.appendChild(input);
+  return {label,input};
+}
+
+function message(text, error=false){
+  const box = panel.querySelector(".supplier-note");
+  if(box){
+    box.textContent = text;
+    box.style.background = error ? "#fff0f0" : "#eef4fa";
+  }
+}
+
+let myStore = null;
+
+async function refreshSupplierPanel(){
+  panel.replaceChildren();
+
+  if(!currentUser){
+    panel.appendChild(make("h3","Espace fournisseur"));
+    panel.appendChild(make("p","Connectez-vous pour créer votre boutique et proposer vos produits."));
+    return;
+  }
+
+  panel.appendChild(make("h3","Mon espace fournisseur"));
+  const loading = make("p","Vérification de votre boutique...");
+  panel.appendChild(loading);
+
+  const {data,error} = await db
+    .from("globexa_stores")
+    .select("id,company_name,country,city,status,verification_status")
+    .eq("owner_id",currentUser.id)
+    .limit(1)
+    .maybeSingle();
+
+  if(error){
+    console.error("GLOBEXA boutique:",error);
+    loading.textContent = "Impossible de vérifier votre boutique. Réessayez.";
+    return;
+  }
+
+  myStore = data || null;
+  panel.replaceChildren();
+  panel.appendChild(make("h3","Mon espace fournisseur"));
+
+  if(!myStore){
+    showStoreForm();
+    return;
+  }
+
+  panel.appendChild(make("p","Boutique : " + myStore.company_name));
+  panel.appendChild(make("p","Pays : " + myStore.country));
+  panel.appendChild(make("p","Ville : " + (myStore.city || "Non renseignée")));
+
+  const statusText = make(
+    "p",
+    "État de la boutique : " + myStore.status +
+    " — Vérification : " + myStore.verification_status,
+    "supplier-status"
+  );
+  panel.appendChild(statusText);
+
+  if(myStore.status !== "active"){
+    panel.appendChild(make(
+      "p",
+      "Votre boutique attend l'approbation de l'administrateur. Vous pourrez soumettre vos produits après son activation.",
+      "supplier-note"
+    ));
+    return;
+  }
+
+  panel.appendChild(make(
+    "p",
+    "Votre boutique est active. Vous pouvez maintenant soumettre des produits à validation."
+  ));
+
+  showProductForm();
+}
+
+function showStoreForm(){
+  panel.appendChild(make("h4","Créer ma boutique"));
+
+  const form = document.createElement("form");
+  form.className = "supplier-form";
+
+  const company = field("Nom de l'entreprise","text","Exemple : Globexa Trading");
+  const country = field("Pays","text","Votre pays");
+  const city = field("Ville","text","Votre ville",false);
+  const description = field("Description de la boutique","textarea","Présentez votre entreprise...",false);
+
+  [company,country,city,description].forEach(item=>form.appendChild(item.label));
+
+  const note = make(
+    "p",
+    "Après l'envoi, votre boutique restera en attente de vérification par l'administrateur.",
+    "supplier-note"
+  );
+  form.appendChild(note);
+
+  const submit = make("button","Envoyer ma demande");
+  submit.type = "submit";
+  form.appendChild(submit);
+
+  form.addEventListener("submit",async function(event){
+    event.preventDefault();
+
+    if(!currentUser){
+      message("Connectez-vous avant de créer votre boutique.",true);
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Enregistrement...";
+
+    try{
+      const slugBase = company.input.value
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^a-z0-9]+/g,"-")
+        .replace(/^-|-$/g,"");
+
+      const slug = (slugBase || "boutique") + "-" + currentUser.id.slice(0,8);
+
+      const {data,error} = await db
+        .from("globexa_stores")
+        .insert({
+          owner_id: currentUser.id,
+          company_name: company.input.value.trim(),
+          slug: slug,
+          country: country.input.value.trim(),
+          city: city.input.value.trim() || null,
+          description: description.input.value.trim() || null,
+          status: "pending",
+          verification_status: "pending"
+        })
+        .select("id,company_name,country,city,status,verification_status")
+        .single();
+
+      if(error) throw error;
+
+      myStore = data;
+      await refreshSupplierPanel();
+
+    }catch(error){
+      console.error("GLOBEXA création boutique:",error);
+      message(error.message || "La création de la boutique a échoué.",true);
+      submit.disabled = false;
+      submit.textContent = "Envoyer ma demande";
+    }
+  });
+
+  panel.appendChild(form);
+}
+
+function showProductForm(){
+  panel.appendChild(make("h4","Soumettre un nouveau produit"));
+
+  const form = document.createElement("form");
+  form.className = "supplier-form";
+
+  const title = field("Nom du produit","text","Nom du produit");
+  const description = field("Description","textarea","Décrivez le produit...");
+  const price = field("Prix unitaire","number","Exemple : 25");
+  const currency = document.createElement("select");
+
+  ["USD","EUR","XOF","CNY"].forEach(code=>{
+    const option = document.createElement("option");
+    option.value = code;
+    option.textContent = code;
+    currency.appendChild(option);
+  });
+
+  const currencyLabel = make("label","Devise");
+  currencyLabel.appendChild(currency);
+
+  const moq = field("Quantité minimum (MOQ)","number","Exemple : 1");
+  moq.input.value = "1";
+  moq.input.min = "1";
+  moq.input.step = "1";
+
+  const stock = field("Stock disponible","number","Exemple : 100");
+  stock.input.min = "0";
+  stock.input.step = "1";
+
+  const origin = field("Pays d'origine","text","Pays de fabrication",false);
+  const images = field(
+    "Liens des images HTTPS",
+    "textarea",
+    "Collez un lien d'image par ligne. Vous pouvez en ajouter plusieurs.",
+    false
+  );
+
+  price.input.min = "0.01";
+  price.input.step = "0.01";
+
+  [
+    title,
+    description,
+    price,
+    {label:currencyLabel},
+    moq,
+    stock,
+    origin,
+    images
+  ].forEach(item=>form.appendChild(item.label));
+
+  const note = make(
+    "p",
+    "Les produits envoyés seront en attente de validation par l'administrateur. Ils ne seront pas publiés automatiquement.",
+    "supplier-note"
+  );
+  form.appendChild(note);
+
+  const submit = make("button","Soumettre le produit");
+  submit.type = "submit";
+  form.appendChild(submit);
+
+  form.addEventListener("submit",async function(event){
+    event.preventDefault();
+
+    if(!currentUser || !myStore || myStore.status !== "active"){
+      message("Votre boutique doit être active pour soumettre un produit.",true);
+      return;
+    }
+
+    const unitPrice = Number(price.input.value);
+    const minimum = Number(moq.input.value);
+    const quantity = Number(stock.input.value);
+
+    if(!Number.isFinite(unitPrice) || unitPrice <= 0 ||
+       !Number.isInteger(minimum) || minimum < 1 ||
+       !Number.isInteger(quantity) || quantity < minimum){
+      message("Vérifiez le prix, la quantité minimum et le stock.",true);
+      return;
+    }
+
+    const imageUrls = images.input.value
+      .split(/[\n,]+/)
+      .map(value=>value.trim())
+      .filter(Boolean);
+
+    if(imageUrls.some(url=>{
+      try{return new URL(url).protocol !== "https:";}
+      catch{return true;}
+    })){
+      message("Les images doivent utiliser des liens HTTPS valides.",true);
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Envoi en cours...";
+
+    try{
+      const {error} = await db
+        .from("globexa_market_products")
+        .insert({
+          store_id: myStore.id,
+          title: title.input.value.trim(),
+          description: description.input.value.trim() || null,
+          country_of_origin: origin.input.value.trim() || null,
+          currency: currency.value,
+          base_price: unitPrice,
+          moq: minimum,
+          stock_quantity: quantity,
+          images: imageUrls,
+          status: "pending"
+        });
+
+      if(error) throw error;
+
+      form.reset();
+      moq.input.value = "1";
+      message("Produit envoyé. Il attend maintenant la validation de l'administrateur.");
+      submit.disabled = false;
+      submit.textContent = "Soumettre le produit";
+
+    }catch(error){
+      console.error("GLOBEXA soumission produit:",error);
+      message(error.message || "Impossible d'envoyer le produit.",true);
+      submit.disabled = false;
+      submit.textContent = "Soumettre le produit";
+    }
+  });
+
+  panel.appendChild(form);
+}
+
+/* Actualiser l'espace fournisseur après connexion ou déconnexion */
+db.auth.onAuthStateChange(function(){
+  setTimeout(function(){
+    refreshSupplierPanel();
+  },0);
+});
+
+refreshSupplierPanel();
+
+})();
 /* CODE 08A.13 — Restauration de la session */
 
 db.auth.onAuthStateChange(function(event,session){
