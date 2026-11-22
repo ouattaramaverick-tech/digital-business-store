@@ -6649,6 +6649,233 @@ loadMyQuotes();
   refresh();
 
 })();
+
+/* =====================================================
+   CODE 24A — LIKES ET COMPTEUR DE VUES DES REELS
+   GLOBEXA
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  const feed = document.getElementById("globexaReelsFeed");
+
+  if (!db || !feed || window.globexaReelsEngagementReady) return;
+  window.globexaReelsEngagementReady = true;
+
+  let currentUser = null;
+  let reelsByUrl = {};
+  let viewerKey;
+
+  try {
+    viewerKey = localStorage.getItem("globexa_reel_viewer_key");
+
+    if (!viewerKey) {
+      viewerKey = crypto.randomUUID();
+      localStorage.setItem("globexa_reel_viewer_key", viewerKey);
+    }
+  } catch (_) {
+    viewerKey = crypto.randomUUID();
+  }
+
+  function showError(message) {
+    console.error("GLOBEXA Reels :", message);
+  }
+
+  async function getStats(reelId) {
+    const { data, error } = await db.rpc(
+      "globexa_reel_get_stats",
+      { p_reel_id: reelId }
+    );
+
+    if (error) throw error;
+
+    return Array.isArray(data) ? data[0] : data;
+  }
+
+  async function updateStats(card, reelId) {
+    const stats = await getStats(reelId);
+    if (!stats) return;
+
+    const likes = card.querySelector("[data-globexa-likes]");
+    const views = card.querySelector("[data-globexa-views]");
+    const likeButton = card.querySelector("[data-globexa-like]");
+
+    if (likes) likes.textContent = stats.likes_count || 0;
+    if (views) views.textContent = stats.views_count || 0;
+
+    if (likeButton) {
+      likeButton.textContent =
+        (stats.liked_by_me ? "♥" : "♡") +
+        " J'aime (" + (stats.likes_count || 0) + ")";
+
+      likeButton.style.color =
+        stats.liked_by_me ? "#ff6b35" : "#ffffff";
+
+      likeButton.dataset.liked =
+        stats.liked_by_me ? "true" : "false";
+    }
+  }
+
+  function decorateCard(card, reel) {
+    if (card.dataset.globexaEngagementReady === "true") return;
+
+    card.dataset.globexaEngagementReady = "true";
+
+    const controls = document.createElement("div");
+
+    controls.style.cssText =
+      "display:flex;gap:18px;align-items:center;" +
+      "flex-wrap:wrap;padding:12px 4px;color:white";
+
+    const likeButton = document.createElement("button");
+    likeButton.type = "button";
+    likeButton.dataset.globexaLike = "true";
+    likeButton.textContent = "♡ J'aime";
+    likeButton.style.cssText =
+      "padding:9px 13px;border:0;border-radius:7px;" +
+      "background:#173f67;color:white;cursor:pointer";
+
+    const views = document.createElement("span");
+    views.innerHTML = "Vues : <strong data-globexa-views>0</strong>";
+
+    const likes = document.createElement("span");
+    likes.innerHTML = "Likes : <strong data-globexa-likes>0</strong>";
+
+    controls.append(likeButton, views, likes);
+    card.appendChild(controls);
+
+    const video = card.querySelector("video");
+
+    if (video) {
+      let counted = false;
+
+      video.addEventListener("play", async function () {
+        if (counted) return;
+        counted = true;
+
+        try {
+          const { error } = await db.rpc(
+            "globexa_reel_register_view",
+            {
+              p_reel_id: reel.id,
+              p_viewer_key: viewerKey
+            }
+          );
+
+          if (error) throw error;
+
+          await updateStats(card, reel.id);
+        } catch (error) {
+          showError(error.message);
+        }
+      });
+    }
+
+    updateStats(card, reel.id).catch(error => {
+      showError(error.message);
+    });
+  }
+
+  async function prepareReels() {
+    try {
+      const { data: userData, error: authError } =
+        await db.auth.getUser();
+
+      if (authError) throw authError;
+
+      currentUser = userData.user;
+
+      const { data: reels, error } = await db
+        .from("globexa_reels")
+        .select("id,video_path")
+        .eq("status", "approved")
+        .limit(100);
+
+      if (error) throw error;
+
+      reelsByUrl = {};
+
+      (reels || []).forEach(reel => {
+        const url = db.storage
+          .from("globexa-reels")
+          .getPublicUrl(reel.video_path).data.publicUrl;
+
+        reelsByUrl[url] = reel;
+      });
+
+      decorateFeed();
+
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+  function decorateFeed() {
+    feed.querySelectorAll("article").forEach(card => {
+      const video = card.querySelector("video");
+      if (!video) return;
+
+      const reel = reelsByUrl[video.src];
+
+      if (reel) decorateCard(card, reel);
+    });
+  }
+
+  feed.addEventListener("click", async function (event) {
+    const button = event.target.closest("[data-globexa-like]");
+    if (!button) return;
+
+    if (!currentUser) {
+      alert("Connectez-vous pour aimer cette vidéo.");
+      return;
+    }
+
+    const card = button.closest("article");
+    const video = card && card.querySelector("video");
+    const reel = video && reelsByUrl[video.src];
+
+    if (!reel || button.disabled) return;
+
+    button.disabled = true;
+
+    try {
+      const liked = button.dataset.liked !== "true";
+
+      const { error } = await db.rpc(
+        "globexa_reel_set_like",
+        {
+          p_reel_id: reel.id,
+          p_liked: liked
+        }
+      );
+
+      if (error) throw error;
+
+      await updateStats(card, reel.id);
+
+    } catch (error) {
+      alert(error.message || "Impossible de modifier le like.");
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  const observer = new MutationObserver(decorateFeed);
+
+  observer.observe(feed, {
+    childList: true,
+    subtree: true
+  });
+
+  db.auth.onAuthStateChange(function () {
+    prepareReels();
+  });
+
+  prepareReels();
+
+})();
 </script>
 
 </body>
