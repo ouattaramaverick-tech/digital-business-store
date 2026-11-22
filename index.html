@@ -180,3 +180,242 @@
   </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b2d52">
+<title>GLOBEXA — Marketplace internationale</title>
+<style>
+:root{--blue:#0b2d52;--dark:#08213d;--orange:#f47721;--bg:#f4f7fb;--line:#dce5ee}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#172b40;font-family:Arial,sans-serif}
+a{text-decoration:none;color:inherit}
+.top{background:var(--dark);color:white;padding:10px 4%;font-size:13px}
+header{background:white;padding:17px 4%;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.logo{font-size:27px;font-weight:900;color:var(--blue)}
+.logo span{color:var(--orange)}
+.search{display:flex;flex:1;min-width:220px}
+.search input{flex:1;min-width:0;padding:13px;border:2px solid var(--blue);border-radius:9px 0 0 9px}
+button{background:var(--orange);color:white;border:0;padding:13px 18px;font-weight:bold;cursor:pointer;border-radius:0 9px 9px 0}
+nav{background:var(--blue);padding:15px 4%;display:flex;gap:24px;overflow-x:auto;color:white;white-space:nowrap}
+main{max-width:1200px;width:92%;margin:25px auto}
+.hero{background:linear-gradient(120deg,var(--dark),#145080);color:white;padding:45px 30px;border-radius:18px}
+.hero h1{font-size:clamp(28px,5vw,48px);margin:10px 0}
+.hero p{line-height:1.7;max-width:650px}
+.cta{display:inline-block;background:var(--orange);padding:13px 20px;border-radius:8px;margin-top:12px;font-weight:bold}
+section{margin-top:35px}
+h2{color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.card,.panel{background:white;border:1px solid var(--line);border-radius:13px;padding:18px}
+.card{font-weight:bold;color:var(--blue)}
+.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.product{background:white;border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.product img{width:100%;height:190px;object-fit:cover;background:#eaf2fa}
+.product-info{padding:15px}
+.product h3{margin:5px 0;color:var(--blue);font-size:17px}
+.price{font-size:19px;font-weight:bold;color:var(--orange);margin:9px 0}
+.store-name{font-size:12px;color:#64748b}
+.empty{text-align:center;padding:30px;color:#64748b}
+.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.reel{min-height:150px;border-radius:13px;background:linear-gradient(140deg,#dce9f5,#f9c69f);display:grid;place-items:center;font-weight:bold;color:var(--blue)}
+footer{background:var(--dark);color:white;padding:30px 4%;margin-top:50px}
+@media(max-width:700px){
+.grid,.reels{grid-template-columns:repeat(2,1fr)}
+.product-grid{grid-template-columns:repeat(2,1fr)}
+header{align-items:stretch}.search{flex-basis:100%}
+}
+@media(max-width:420px){.product-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">Marketplace internationale — Achetez, vendez et expédiez dans le monde entier.</div>
+
+<header>
+<a class="logo" href="#accueil">GLOB<span>EXA</span></a>
+<form class="search" id="searchForm">
+<input id="searchInput" type="search" placeholder="Rechercher un produit ou fournisseur">
+<button type="submit">Rechercher</button>
+</form>
+<a href="#compte">Mon compte</a>
+<a href="#panier">Panier</a>
+</header>
+
+<nav>
+<a href="#accueil">Accueil</a>
+<a href="#categories">Catégories</a>
+<a href="#produits">Produits</a>
+<a href="#videos">Vidéos</a>
+<a href="#fournisseurs">Fournisseurs</a>
+<a href="#compte">Compte</a>
+</nav>
+
+<main id="accueil">
+<div class="hero">
+<h1>Découvrez le commerce mondial avec GLOBEXA.</h1>
+<p>Une marketplace internationale pour découvrir des produits, rencontrer des fournisseurs et préparer vos achats.</p>
+<a class="cta" href="#produits">Découvrir les produits</a>
+</div>
+
+<section id="categories">
+<h2>Explorer les catégories</h2>
+<div class="grid">
+<div class="card">📱 Électronique</div>
+<div class="card">👕 Mode et vêtements</div>
+<div class="card">🏠 Maison et décoration</div>
+<div class="card">⚙️ Industrie et équipement</div>
+</div>
+</section>
+
+<section id="produits">
+<h2>Produits à découvrir</h2>
+<p id="productStatus" class="panel empty">Chargement du catalogue GLOBEXA...</p>
+<div id="productList" class="product-grid"></div>
+</section>
+
+<section id="videos">
+<h2>Vidéos et découvertes</h2>
+<div class="reels">
+<div class="reel">Vidéo produit 01</div>
+<div class="reel">Vidéo produit 02</div>
+<div class="reel">Vidéo produit 03</div>
+<div class="reel">Vidéo produit 04</div>
+</div>
+</section>
+
+<section id="fournisseurs">
+<h2>Nos fournisseurs</h2>
+<div class="panel empty">Les boutiques professionnelles seront présentées ici.</div>
+</section>
+
+<section id="compte">
+<h2>Mon compte GLOBEXA</h2>
+<div class="panel empty" id="accountStatus">Connexion Supabase en cours...</div>
+</section>
+
+<section id="panier">
+<h2>Mon panier</h2>
+<div class="panel empty">Votre panier sera disponible dans une prochaine étape.</div>
+</section>
+</main>
+
+<footer>
+<strong>GLOBEXA</strong><br>
+Marketplace internationale — Acheter. Vendre. Expédier.<br>
+© 2026 GLOBEXA
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+"use strict";
+
+const SUPABASE_URL="https://xlxkiyihagoupsajwmze.supabase.co";
+const SUPABASE_KEY="sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+
+const status=document.getElementById("productStatus");
+const list=document.getElementById("productList");
+const account=document.getElementById("accountStatus");
+
+if(!window.supabase||!window.supabase.createClient){
+account.textContent="Impossible de charger la bibliothèque Supabase.";
+status.textContent="Connexion indisponible.";
+return;
+}
+
+window.globexaSupabase=window.supabase.createClient(
+SUPABASE_URL,SUPABASE_KEY,
+{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}}
+);
+
+account.textContent="Client Supabase initialisé.";
+
+function element(tag,cls,text){
+const node=document.createElement(tag);
+if(cls)node.className=cls;
+if(text!==undefined)node.textContent=text;
+return node;
+}
+
+let allProducts=[];
+
+function renderProducts(products){
+list.replaceChildren();
+
+if(!products.length){
+status.textContent="Aucun produit publié pour le moment.";
+return;
+}
+
+status.textContent=products.length+" produit(s) affiché(s).";
+
+products.forEach(product=>{
+const card=element("article","product");
+const image=element("img");
+image.alt=product.title||"Produit GLOBEXA";
+image.loading="lazy";
+const imageUrl=Array.isArray(product.images)?product.images[0]:null;
+if(typeof imageUrl==="string"&&/^https:\/\//i.test(imageUrl)){
+image.src=imageUrl;
+}else{
+image.src="data:image/svg+xml,"+encodeURIComponent(
+'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="100%" height="100%" fill="#eaf2fa"/><text x="50%" y="50%" text-anchor="middle" fill="#0b2d52" font-size="20">GLOBEXA</text></svg>'
+);
+}
+
+const info=element("div","product-info");
+info.appendChild(element("h3","",product.title||"Produit sans nom"));
+info.appendChild(element("div","price",
+Number(product.base_price).toLocaleString("fr-FR")+" "+product.currency));
+info.appendChild(element("p","","Quantité minimum : "+product.moq));
+info.appendChild(element("p","","Stock disponible : "+product.stock_quantity));
+
+const store=Array.isArray(product.store)?product.store[0]:product.store;
+if(store){
+info.appendChild(element("div","store-name",
+"Vendeur : "+(store.company_name||"Boutique GLOBEXA")+" — "+(store.country||"")));
+}
+
+card.appendChild(image);
+card.appendChild(info);
+list.appendChild(card);
+});
+}
+
+async function loadProducts(){
+status.textContent="Chargement des produits...";
+const {data,error}=await window.globexaSupabase
+.from("globexa_market_products")
+.select("id,title,description,currency,base_price,moq,stock_quantity,images,created_at,store:globexa_stores(company_name,country)")
+.eq("status","published")
+.order("created_at",{ascending:false})
+.limit(60);
+
+if(error){
+console.error("GLOBEXA catalogue:",error);
+status.textContent="Le catalogue n'a pas pu être chargé. Vérification de la connexion nécessaire.";
+return;
+}
+
+allProducts=data||[];
+renderProducts(allProducts);
+}
+
+document.getElementById("searchForm").addEventListener("submit",function(event){
+event.preventDefault();
+const term=document.getElementById("searchInput").value.trim().toLocaleLowerCase("fr");
+if(!term){renderProducts(allProducts);return;}
+const filtered=allProducts.filter(p=>
+(p.title||"").toLocaleLowerCase("fr").includes(term)||
+(p.description||"").toLocaleLowerCase("fr").includes(term)
+);
+renderProducts(filtered);
+});
+
+loadProducts();
+})();
+</script>
+</body>
+</html>
