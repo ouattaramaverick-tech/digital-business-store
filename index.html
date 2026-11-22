@@ -1127,6 +1127,631 @@ renderSession(result.data.session);
 loadProducts();
 
 })();
+
+/* CODE 13A — DEMANDES DE PRIX ET OFFRES FOURNISSEURS */
+
+(function () {
+"use strict";
+
+const db = window.globexaSupabase;
+if (!db || document.getElementById("globexaRFQSection")) return;
+
+const nav = document.querySelector("nav");
+if (nav) {
+  const link = document.createElement("a");
+  link.href = "#demandes-prix";
+  link.textContent = "Demandes de prix";
+  nav.appendChild(link);
+}
+
+const section = document.createElement("section");
+section.id = "globexaRFQSection";
+section.innerHTML = `
+  <h2 id="demandes-prix">Demandes de prix internationales</h2>
+
+  <div class="panel" id="rfqCreatePanel">
+    <h3>Publier une demande de prix</h3>
+    <p>Décrivez le produit recherché pour recevoir des offres de fournisseurs.</p>
+
+    <form id="rfqCreateForm" class="auth-form">
+      <label>Nom du produit
+        <input id="rfqTitle" required maxlength="160"
+          placeholder="Exemple : Téléphones Android">
+      </label>
+
+      <label>Description et caractéristiques
+        <textarea id="rfqDetails" required maxlength="4000"
+          placeholder="Décrivez précisément le produit souhaité"></textarea>
+      </label>
+
+      <label>Quantité recherchée
+        <input id="rfqQuantity" type="number" min="1" required value="100">
+      </label>
+
+      <label>Prix cible par unité (facultatif)
+        <input id="rfqPrice" type="number" min="0" step="0.01"
+          placeholder="Votre budget par unité">
+      </label>
+
+      <label>Devise
+        <select id="rfqCurrency">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="XOF">XOF</option>
+          <option value="CNY">CNY</option>
+        </select>
+      </label>
+
+      <label>Pays de livraison souhaité
+        <input id="rfqDestination" maxlength="100"
+          placeholder="Exemple : Burkina Faso">
+      </label>
+
+      <label>Date limite (facultatif)
+        <input id="rfqDeadline" type="date">
+      </label>
+
+      <button id="rfqSubmitButton" type="submit">
+        Publier ma demande
+      </button>
+    </form>
+
+    <p id="rfqCreateMessage" class="auth-message" hidden></p>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h3>Demandes ouvertes</h3>
+    <p id="rfqListMessage">Chargement des demandes...</p>
+    <div id="rfqList"></div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h3>Les offres reçues sur mes demandes</h3>
+    <p id="rfqMyQuotesMessage">Chargement des offres...</p>
+    <div id="rfqMyQuotes"></div>
+  </div>
+`;
+
+const supplierSection = document.getElementById("fournisseurs");
+if (supplierSection) {
+  supplierSection.after(section);
+} else {
+  document.querySelector("main")?.appendChild(section);
+}
+
+const style = document.createElement("style");
+style.textContent = `
+#globexaRFQSection .rfq-card {
+  background:#fff;
+  border:1px solid #dce5ee;
+  border-radius:12px;
+  padding:16px;
+  margin:12px 0;
+}
+#globexaRFQSection .rfq-card h4 {
+  color:#0b2d52;
+  margin:0 0 10px;
+}
+#globexaRFQSection .rfq-meta {
+  color:#64748b;
+  font-size:13px;
+  line-height:1.7;
+}
+#globexaRFQSection .rfq-quote-form {
+  display:grid;
+  gap:10px;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid #dce5ee;
+}
+#globexaRFQSection input,
+#globexaRFQSection textarea,
+#globexaRFQSection select {
+  width:100%;
+  padding:11px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font:inherit;
+  margin-top:5px;
+}
+#globexaRFQSection textarea {
+  min-height:90px;
+}
+#globexaRFQSection label {
+  display:block;
+  font-weight:bold;
+  font-size:14px;
+  color:#0b2d52;
+}
+#globexaRFQSection .rfq-quote-list {
+  background:#f4f7fb;
+  border-radius:9px;
+  padding:12px;
+  margin-top:12px;
+}
+`;
+document.head.appendChild(style);
+
+const $ = id => document.getElementById(id);
+
+function rfqMessage(id, text, error) {
+  const box = $(id);
+  box.textContent = text;
+  box.hidden = false;
+  box.className = "auth-message" + (error ? " error" : " success");
+}
+
+function safeText(value) {
+  return String(value ?? "");
+}
+
+function formatPrice(value, currency) {
+  if (value === null || value === undefined) return "Non précisé";
+  return Number(value).toLocaleString("fr-FR") + " " + currency;
+}
+
+async function getUser() {
+  const result = await db.auth.getUser();
+  if (result.error) throw result.error;
+  return result.data.user || null;
+}
+
+async function getActiveSupplierStore(userId) {
+  const result = await db
+    .from("globexa_stores")
+    .select("id,company_name,status")
+    .eq("owner_id", userId)
+    .eq("status", "active")
+    .limit(1);
+
+  if (result.error) throw result.error;
+  return result.data?.[0] || null;
+}
+
+/* Publication d'une demande */
+
+$("rfqCreateForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  const button = $("rfqSubmitButton");
+  button.disabled = true;
+  button.textContent = "Publication en cours...";
+
+  try {
+    const user = await getUser();
+
+    if (!user) {
+      throw new Error("Connectez-vous pour publier une demande.");
+    }
+
+    const title = $("rfqTitle").value.trim();
+    const details = $("rfqDetails").value.trim();
+    const quantity = Number($("rfqQuantity").value);
+    const priceValue = $("rfqPrice").value.trim();
+    const deadlineValue = $("rfqDeadline").value;
+
+    if (title.length < 2 || details.length < 5) {
+      throw new Error("Veuillez compléter le nom et la description.");
+    }
+
+    if (!Number.isSafeInteger(quantity) || quantity < 1) {
+      throw new Error("La quantité doit être supérieure à zéro.");
+    }
+
+    const payload = {
+      buyer_id: user.id,
+      title,
+      details,
+      quantity,
+      currency: $("rfqCurrency").value,
+      destination_country: $("rfqDestination").value.trim() || null,
+      target_price: priceValue === "" ? null : Number(priceValue),
+      deadline: deadlineValue
+        ? new Date(deadlineValue + "T23:59:59").toISOString()
+        : null,
+      status: "open"
+    };
+
+    if (
+      payload.target_price !== null &&
+      (!Number.isFinite(payload.target_price) || payload.target_price < 0)
+    ) {
+      throw new Error("Le prix cible n'est pas valide.");
+    }
+
+    const result = await db
+      .from("globexa_rfqs")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (result.error) throw result.error;
+
+    $("rfqCreateForm").reset();
+    $("rfqQuantity").value = "100";
+
+    rfqMessage(
+      "rfqCreateMessage",
+      "Votre demande a été publiée. Les fournisseurs peuvent maintenant répondre.",
+      false
+    );
+
+    await loadRFQs();
+    await loadMyQuotes();
+
+  } catch (error) {
+    console.error("GLOBEXA RFQ:", error);
+    rfqMessage(
+      "rfqCreateMessage",
+      error.message || "Impossible de publier la demande.",
+      true
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = "Publier ma demande";
+  }
+});
+
+/* Liste des demandes ouvertes */
+
+async function loadRFQs() {
+  const list = $("rfqList");
+  list.replaceChildren();
+  $("rfqListMessage").textContent = "Chargement des demandes...";
+
+  try {
+    const user = await getUser();
+
+    const result = await db
+      .from("globexa_rfqs")
+      .select(
+        "id,buyer_id,title,details,quantity,target_price,currency,destination_country,deadline,created_at,status"
+      )
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(40);
+
+    if (result.error) throw result.error;
+
+    const requests = result.data || [];
+
+    if (!requests.length) {
+      $("rfqListMessage").textContent =
+        "Aucune demande ouverte pour le moment.";
+      return;
+    }
+
+    $("rfqListMessage").textContent =
+      requests.length + " demande(s) disponible(s).";
+
+    let supplierStore = null;
+
+    if (user) {
+      try {
+        supplierStore = await getActiveSupplierStore(user.id);
+      } catch (error) {
+        console.warn("Vérification boutique:", error);
+      }
+    }
+
+    requests.forEach(request => {
+      const card = document.createElement("article");
+      card.className = "rfq-card";
+
+      const title = document.createElement("h4");
+      title.textContent = request.title;
+      card.appendChild(title);
+
+      const details = document.createElement("p");
+      details.textContent = request.details;
+      card.appendChild(details);
+
+      const meta = document.createElement("div");
+      meta.className = "rfq-meta";
+      meta.textContent =
+        "Quantité : " + request.quantity +
+        " | Prix cible : " +
+        formatPrice(request.target_price, request.currency) +
+        " | Destination : " +
+        (request.destination_country || "Non précisée");
+
+      card.appendChild(meta);
+
+      if (request.deadline) {
+        const deadline = document.createElement("p");
+        deadline.className = "rfq-meta";
+        deadline.textContent =
+          "Date limite : " +
+          new Date(request.deadline).toLocaleDateString("fr-FR");
+        card.appendChild(deadline);
+      }
+
+      if (user && request.buyer_id === user.id) {
+        const own = document.createElement("p");
+        own.textContent = "Votre demande";
+        own.className = "rfq-meta";
+        card.appendChild(own);
+      } else if (supplierStore) {
+        const form = document.createElement("form");
+        form.className = "rfq-quote-form";
+
+        const heading = document.createElement("strong");
+        heading.textContent = "Envoyer une offre";
+        form.appendChild(heading);
+
+        const priceLabel = document.createElement("label");
+        priceLabel.textContent = "Prix par unité";
+
+        const price = document.createElement("input");
+        price.type = "number";
+        price.min = "0.01";
+        price.step = "0.01";
+        price.required = true;
+        price.placeholder = "Prix proposé";
+        priceLabel.appendChild(price);
+        form.appendChild(priceLabel);
+
+        const quantityLabel = document.createElement("label");
+        quantityLabel.textContent = "Quantité proposée";
+
+        const quantity = document.createElement("input");
+        quantity.type = "number";
+        quantity.min = "1";
+        quantity.step = "1";
+        quantity.required = true;
+        quantity.value = String(request.quantity);
+        quantityLabel.appendChild(quantity);
+        form.appendChild(quantityLabel);
+
+        const daysLabel = document.createElement("label");
+        daysLabel.textContent = "Délai de livraison en jours";
+
+        const days = document.createElement("input");
+        days.type = "number";
+        days.min = "1";
+        days.step = "1";
+        days.placeholder = "Exemple : 20";
+        daysLabel.appendChild(days);
+        form.appendChild(daysLabel);
+
+        const termsLabel = document.createElement("label");
+        termsLabel.textContent = "Conditions d'expédition";
+
+        const terms = document.createElement("input");
+        terms.type = "text";
+        terms.maxLength = 300;
+        terms.placeholder = "Exemple : transport maritime";
+        termsLabel.appendChild(terms);
+        form.appendChild(termsLabel);
+
+        const messageLabel = document.createElement("label");
+        messageLabel.textContent = "Message au client";
+
+        const message = document.createElement("textarea");
+        message.maxLength = 1500;
+        message.placeholder = "Présentez votre offre...";
+        messageLabel.appendChild(message);
+        form.appendChild(messageLabel);
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.textContent = "Envoyer mon offre";
+        form.appendChild(submit);
+
+        const feedback = document.createElement("p");
+        feedback.className = "rfq-meta";
+        form.appendChild(feedback);
+
+        form.addEventListener("submit", async function(event) {
+          event.preventDefault();
+          submit.disabled = true;
+          submit.textContent = "Envoi...";
+
+          try {
+            const freshUser = await getUser();
+            if (!freshUser || freshUser.id !== user.id) {
+              throw new Error("Votre session a changé. Reconnectez-vous.");
+            }
+
+            const proposedPrice = Number(price.value);
+            const proposedQuantity = Number(quantity.value);
+            const leadDays = days.value === "" ? null : Number(days.value);
+
+            if (!Number.isFinite(proposedPrice) || proposedPrice <= 0) {
+              throw new Error("Saisissez un prix valide.");
+            }
+
+            if (
+              !Number.isSafeInteger(proposedQuantity) ||
+              proposedQuantity < request.quantity
+            ) {
+              throw new Error(
+                "La quantité proposée doit couvrir la quantité demandée."
+              );
+            }
+
+            if (
+              leadDays !== null &&
+              (!Number.isSafeInteger(leadDays) || leadDays < 1)
+            ) {
+              throw new Error("Le délai de livraison n'est pas valide.");
+            }
+
+            const response = await db
+              .from("globexa_quotes")
+              .insert({
+                rfq_id: request.id,
+                supplier_id: freshUser.id,
+                unit_price: proposedPrice,
+                currency: request.currency,
+                quantity: proposedQuantity,
+                lead_time_days: leadDays,
+                shipping_terms: terms.value.trim() || null,
+                message: message.value.trim() || null,
+                status: "sent"
+              });
+
+            if (response.error) throw response.error;
+
+            feedback.textContent = "Votre offre a été envoyée.";
+            submit.textContent = "Offre envoyée";
+            submit.disabled = true;
+
+            await loadMyQuotes();
+
+          } catch (error) {
+            console.error("GLOBEXA offre:", error);
+            feedback.textContent =
+              error.message || "Impossible d'envoyer cette offre.";
+            submit.disabled = false;
+            submit.textContent = "Envoyer mon offre";
+          }
+        });
+
+        card.appendChild(form);
+
+      } else if (!user) {
+        const note = document.createElement("p");
+        note.className = "rfq-meta";
+        note.textContent =
+          "Connectez-vous avec un compte fournisseur pour répondre.";
+        card.appendChild(note);
+      }
+
+      list.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error("GLOBEXA demandes:", error);
+    $("rfqListMessage").textContent =
+      "Impossible de charger les demandes. Réessayez.";
+  }
+}
+
+/* Offres reçues par l'acheteur */
+
+async function loadMyQuotes() {
+  const container = $("rfqMyQuotes");
+  container.replaceChildren();
+  $("rfqMyQuotesMessage").textContent = "Chargement des offres...";
+
+  try {
+    const user = await getUser();
+
+    if (!user) {
+      $("rfqMyQuotesMessage").textContent =
+        "Connectez-vous pour consulter vos offres.";
+      return;
+    }
+
+    const requestsResult = await db
+      .from("globexa_rfqs")
+      .select("id,title")
+      .eq("buyer_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(40);
+
+    if (requestsResult.error) throw requestsResult.error;
+
+    const requests = requestsResult.data || [];
+
+    if (!requests.length) {
+      $("rfqMyQuotesMessage").textContent =
+        "Vous n'avez pas encore publié de demande.";
+      return;
+    }
+
+    const ids = requests.map(item => item.id);
+
+    const quoteResult = await db
+      .from("globexa_quotes")
+      .select(
+        "id,rfq_id,unit_price,currency,quantity,lead_time_days,shipping_terms,message,status,created_at"
+      )
+      .in("rfq_id", ids)
+      .order("created_at", { ascending: false });
+
+    if (quoteResult.error) throw quoteResult.error;
+
+    const quotes = quoteResult.data || [];
+
+    if (!quotes.length) {
+      $("rfqMyQuotesMessage").textContent =
+        "Aucune offre reçue pour le moment.";
+      return;
+    }
+
+    $("rfqMyQuotesMessage").textContent =
+      quotes.length + " offre(s) reçue(s).";
+
+    quotes.forEach(quote => {
+      const request = requests.find(item => item.id === quote.rfq_id);
+      const card = document.createElement("article");
+      card.className = "rfq-card";
+
+      const heading = document.createElement("h4");
+      heading.textContent = request
+        ? request.title
+        : "Demande de prix";
+      card.appendChild(heading);
+
+      const price = document.createElement("p");
+      price.textContent =
+        "Prix proposé : " +
+        formatPrice(quote.unit_price, quote.currency);
+      card.appendChild(price);
+
+      const quantity = document.createElement("p");
+      quantity.textContent =
+        "Quantité proposée : " + quote.quantity;
+      card.appendChild(quantity);
+
+      const delay = document.createElement("p");
+      delay.textContent =
+        "Délai : " +
+        (quote.lead_time_days
+          ? quote.lead_time_days + " jour(s)"
+          : "Non précisé");
+      card.appendChild(delay);
+
+      const terms = document.createElement("p");
+      terms.textContent =
+        "Expédition : " + (quote.shipping_terms || "Non précisée");
+      card.appendChild(terms);
+
+      const message = document.createElement("p");
+      message.textContent =
+        "Message : " + (quote.message || "Aucun message");
+      card.appendChild(message);
+
+      const status = document.createElement("p");
+      status.className = "rfq-meta";
+      status.textContent = "Statut : " + quote.status;
+      card.appendChild(status);
+
+      container.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error("GLOBEXA offres reçues:", error);
+    $("rfqMyQuotesMessage").textContent =
+      "Impossible de charger vos offres.";
+  }
+}
+
+/* Actualisation de la session */
+
+db.auth.onAuthStateChange(function() {
+  setTimeout(function() {
+    loadRFQs();
+    loadMyQuotes();
+  }, 0);
+});
+
+loadRFQs();
+loadMyQuotes();
+
+})();
 </script>
 
 </body>
