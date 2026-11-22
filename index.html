@@ -1,0 +1,576 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b2d52">
+<meta name="description" content="GLOBEXA Marketplace internationale">
+<title>GLOBEXA — Marketplace internationale</title>
+
+<style>
+:root {
+  --blue:#0b2d52;
+  --dark:#08213d;
+  --orange:#f47721;
+  --light:#f4f7fb;
+  --line:#dce5ee;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--light);color:#172b40;font-family:Arial,sans-serif}
+a{text-decoration:none;color:inherit}
+.top{background:var(--dark);color:white;padding:10px 4%;font-size:13px}
+header{background:white;padding:18px 4%;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.logo{font-size:27px;font-weight:900;color:var(--blue)}
+.logo span{color:var(--orange)}
+.search{display:flex;flex:1;min-width:220px}
+.search input{flex:1;min-width:0;padding:13px;border:2px solid var(--blue);border-radius:9px 0 0 9px}
+button{background:var(--orange);color:white;border:0;padding:13px 18px;font-weight:bold;cursor:pointer;border-radius:8px}
+.search button{border-radius:0 9px 9px 0}
+nav{background:var(--blue);padding:15px 4%;display:flex;gap:24px;overflow-x:auto;color:white;white-space:nowrap}
+main{max-width:1200px;width:92%;margin:25px auto}
+.hero{background:linear-gradient(120deg,var(--dark),#145080);color:white;padding:45px 30px;border-radius:18px}
+.hero h1{font-size:clamp(28px,5vw,48px);margin:10px 0}
+.hero p{line-height:1.7;max-width:650px}
+.cta{display:inline-block;background:var(--orange);padding:13px 20px;border-radius:8px;margin-top:12px;font-weight:bold}
+section{margin-top:35px}
+h2{color:var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.card,.panel{background:white;border:1px solid var(--line);border-radius:13px;padding:18px}
+.card{font-weight:bold;color:var(--blue)}
+.product-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.product{background:white;border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.product img{width:100%;height:190px;object-fit:cover;background:#eaf2fa}
+.product-info{padding:15px}
+.product h3{margin:5px 0;color:var(--blue);font-size:17px}
+.price{font-size:19px;font-weight:bold;color:var(--orange);margin:9px 0}
+.store-name{font-size:12px;color:#64748b}
+.empty{text-align:center;padding:30px;color:#64748b}
+.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.reel{min-height:150px;border-radius:13px;background:linear-gradient(140deg,#dce9f5,#f9c69f);display:grid;place-items:center;font-weight:bold;color:var(--blue)}
+footer{background:var(--dark);color:white;padding:30px 4%;margin-top:50px}
+
+.auth-panel{max-width:520px;margin:auto;text-align:left}
+.auth-panel h3{color:var(--blue);margin-top:0}
+.auth-tabs{display:flex;gap:10px;margin-bottom:18px}
+.auth-tabs button{flex:1;background:#e8eef5;color:var(--blue)}
+.auth-tabs button.active{background:var(--blue);color:white}
+.auth-form{display:grid;gap:12px}
+.auth-form label{font-weight:bold;font-size:14px}
+.auth-form input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px;font-size:15px}
+.auth-form button{width:100%;margin-top:5px}
+.auth-message{padding:12px;border-radius:8px;background:#eef4fa;color:var(--blue);font-size:14px;line-height:1.5;margin-top:14px;overflow-wrap:anywhere}
+.auth-message.error{background:#fff0f0;color:#a11}
+.auth-message.success{background:#eaf8ee;color:#176b35}
+.account-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+.account-actions button{background:var(--blue)}
+[hidden]{display:none!important}
+
+@media(max-width:700px){
+  .grid,.reels{grid-template-columns:repeat(2,1fr)}
+  .product-grid{grid-template-columns:repeat(2,1fr)}
+  header{align-items:stretch}
+  .search{flex-basis:100%}
+}
+@media(max-width:420px){
+  .product-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+Marketplace internationale — Achetez, vendez et expédiez dans le monde entier.
+</div>
+
+<header>
+<a class="logo" href="#accueil">GLOB<span>EXA</span></a>
+
+<form class="search" id="searchForm">
+<input id="searchInput" type="search" placeholder="Rechercher un produit ou fournisseur">
+<button type="submit">Rechercher</button>
+</form>
+
+<a href="#compte">Mon compte</a>
+<a href="#panier">Panier</a>
+</header>
+
+<nav>
+<a href="#accueil">Accueil</a>
+<a href="#categories">Catégories</a>
+<a href="#produits">Produits</a>
+<a href="#videos">Vidéos</a>
+<a href="#fournisseurs">Fournisseurs</a>
+<a href="#compte">Compte</a>
+</nav>
+
+<main id="accueil">
+
+<div class="hero">
+<h1>Découvrez le commerce mondial avec GLOBEXA.</h1>
+<p>
+Une marketplace internationale pour découvrir des produits,
+rencontrer des fournisseurs et préparer vos achats.
+</p>
+<a class="cta" href="#produits">Découvrir les produits</a>
+</div>
+
+<section id="categories">
+<h2>Explorer les catégories</h2>
+<div class="grid">
+<div class="card">📱 Électronique</div>
+<div class="card">👕 Mode et vêtements</div>
+<div class="card">🏠 Maison et décoration</div>
+<div class="card">⚙️ Industrie et équipement</div>
+</div>
+</section>
+
+<section id="produits">
+<h2>Produits à découvrir</h2>
+<p id="productStatus" class="panel empty">
+Chargement du catalogue GLOBEXA...
+</p>
+<div id="productList" class="product-grid"></div>
+</section>
+
+<section id="videos">
+<h2>Vidéos et découvertes</h2>
+<div class="reels">
+<div class="reel">Vidéo produit 01</div>
+<div class="reel">Vidéo produit 02</div>
+<div class="reel">Vidéo produit 03</div>
+<div class="reel">Vidéo produit 04</div>
+</div>
+</section>
+
+<section id="fournisseurs">
+<h2>Nos fournisseurs</h2>
+<div class="panel empty">
+Les boutiques professionnelles seront présentées ici.
+</div>
+</section>
+
+<section id="compte">
+<h2>Mon compte GLOBEXA</h2>
+
+<div class="panel auth-panel">
+
+<div id="authLoggedOut">
+<h3>Bienvenue sur GLOBEXA</h3>
+<p>Créez votre compte ou connectez-vous pour accéder à votre espace.</p>
+
+<div class="auth-tabs">
+<button type="button" id="showLogin" class="active">Connexion</button>
+<button type="button" id="showSignup">Créer un compte</button>
+</div>
+
+<form id="loginForm" class="auth-form">
+<label>
+Adresse e-mail
+<input type="email" id="loginEmail" autocomplete="email" required placeholder="Votre adresse e-mail">
+</label>
+
+<label>
+Mot de passe
+<input type="password" id="loginPassword" autocomplete="current-password" required minlength="8" placeholder="Votre mot de passe">
+</label>
+
+<button type="submit" id="loginButton">Se connecter</button>
+</form>
+
+<form id="signupForm" class="auth-form" hidden>
+<label>
+Nom complet
+<input type="text" id="signupName" autocomplete="name" required maxlength="100" placeholder="Votre nom complet">
+</label>
+
+<label>
+Pays
+<input type="text" id="signupCountry" autocomplete="country-name" maxlength="80" placeholder="Votre pays">
+</label>
+
+<label>
+Adresse e-mail
+<input type="email" id="signupEmail" autocomplete="email" required placeholder="Votre adresse e-mail">
+</label>
+
+<label>
+Mot de passe
+<input type="password" id="signupPassword" autocomplete="new-password" required minlength="8" placeholder="8 caractères minimum">
+</label>
+
+<button type="submit" id="signupButton">Créer mon compte</button>
+</form>
+
+<div id="authMessage" class="auth-message" hidden aria-live="polite"></div>
+</div>
+
+<div id="authLoggedIn" hidden>
+<h3>Mon espace GLOBEXA</h3>
+<p id="welcomeMessage"></p>
+<p id="userEmail"></p>
+
+<div class="account-actions">
+<button type="button" id="logoutButton">Se déconnecter</button>
+</div>
+</div>
+
+</div>
+</section>
+
+<section id="panier">
+<h2>Mon panier</h2>
+<div class="panel empty">
+Votre panier sera disponible dans une prochaine étape.
+</div>
+</section>
+
+</main>
+
+<footer>
+<strong>GLOBEXA</strong><br>
+Marketplace internationale — Acheter. Vendre. Expédier.<br>
+© 2026 GLOBEXA
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+(function(){
+"use strict";
+
+/* 01 — Configuration Supabase */
+
+const SUPABASE_URL="https://xlxkiyihagoupsajwmze.supabase.co";
+const SUPABASE_KEY="sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
+
+if(!window.supabase||!window.supabase.createClient){
+document.getElementById("productStatus").textContent="Connexion Supabase indisponible.";
+document.getElementById("authMessage").hidden=false;
+document.getElementById("authMessage").textContent="La bibliothèque Supabase n'a pas pu être chargée.";
+return;
+}
+
+const db=window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY,
+{
+auth:{
+autoRefreshToken:true,
+persistSession:true,
+detectSessionInUrl:true
+}
+}
+);
+
+window.globexaSupabase=db;
+
+/* 02 — Outils d'affichage */
+
+function element(tag,cls,text){
+const node=document.createElement(tag);
+if(cls)node.className=cls;
+if(text!==undefined)node.textContent=text;
+return node;
+}
+
+function showMessage(message,type){
+const box=document.getElementById("authMessage");
+box.textContent=message;
+box.className="auth-message"+(type?" "+type:"");
+box.hidden=false;
+}
+
+function clearMessage(){
+const box=document.getElementById("authMessage");
+box.textContent="";
+box.hidden=true;
+box.className="auth-message";
+}
+
+/* 03 — Catalogue Supabase */
+
+const status=document.getElementById("productStatus");
+const list=document.getElementById("productList");
+let allProducts=[];
+
+function renderProducts(products){
+list.replaceChildren();
+
+if(!products.length){
+status.textContent="Aucun produit publié pour le moment.";
+return;
+}
+
+status.textContent=products.length+" produit(s) affiché(s).";
+
+products.forEach(product=>{
+const card=element("article","product");
+const image=element("img");
+
+image.alt=product.title||"Produit GLOBEXA";
+image.loading="lazy";
+
+const imageUrl=Array.isArray(product.images)?product.images[0]:null;
+
+if(typeof imageUrl==="string"&&/^https:\/\//i.test(imageUrl)){
+image.src=imageUrl;
+}else{
+image.src="data:image/svg+xml,"+encodeURIComponent(
+'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="100%" height="100%" fill="#eaf2fa"/><text x="50%" y="50%" text-anchor="middle" fill="#0b2d52" font-size="20">GLOBEXA</text></svg>'
+);
+}
+
+const info=element("div","product-info");
+
+info.appendChild(element("h3","",product.title||"Produit sans nom"));
+
+info.appendChild(element(
+"div",
+"price",
+Number(product.base_price).toLocaleString("fr-FR")+" "+product.currency
+));
+
+info.appendChild(element("p","","Quantité minimum : "+product.moq));
+info.appendChild(element("p","","Stock disponible : "+product.stock_quantity));
+
+const store=Array.isArray(product.store)?product.store[0]:product.store;
+
+if(store){
+info.appendChild(element(
+"div",
+"store-name",
+"Vendeur : "+(store.company_name||"Boutique GLOBEXA")+" — "+(store.country||"")
+));
+}
+
+card.appendChild(image);
+card.appendChild(info);
+list.appendChild(card);
+});
+}
+
+async function loadProducts(){
+status.textContent="Chargement des produits...";
+
+const {data,error}=await db
+.from("globexa_market_products")
+.select("id,title,description,currency,base_price,moq,stock_quantity,images,created_at,store:globexa_stores(company_name,country)")
+.eq("status","published")
+.order("created_at",{ascending:false})
+.limit(60);
+
+if(error){
+console.error("GLOBEXA catalogue:",error);
+status.textContent="Le catalogue n'a pas pu être chargé.";
+return;
+}
+
+allProducts=data||[];
+renderProducts(allProducts);
+}
+
+/* 04 — Recherche des produits */
+
+document.getElementById("searchForm").addEventListener("submit",function(event){
+event.preventDefault();
+
+const term=document.getElementById("searchInput").value.trim().toLocaleLowerCase("fr");
+
+if(!term){
+renderProducts(allProducts);
+return;
+}
+
+const filtered=allProducts.filter(product=>
+(product.title||"").toLocaleLowerCase("fr").includes(term)||
+(product.description||"").toLocaleLowerCase("fr").includes(term)
+);
+
+renderProducts(filtered);
+});
+
+/* 05 — Affichage de l'espace utilisateur */
+
+function renderSession(session){
+const loggedOut=document.getElementById("authLoggedOut");
+const loggedIn=document.getElementById("authLoggedIn");
+
+if(session&&session.user){
+loggedOut.hidden=true;
+loggedIn.hidden=false;
+
+const user=session.user;
+const fullName=user.user_metadata?.full_name||"Utilisateur GLOBEXA";
+
+document.getElementById("welcomeMessage").textContent="Bienvenue, "+fullName;
+document.getElementById("userEmail").textContent="E-mail : "+(user.email||"");
+clearMessage();
+}else{
+loggedOut.hidden=false;
+loggedIn.hidden=true;
+}
+}
+
+/* 06 — Choix connexion ou inscription */
+
+const loginForm=document.getElementById("loginForm");
+const signupForm=document.getElementById("signupForm");
+const loginTab=document.getElementById("showLogin");
+const signupTab=document.getElementById("showSignup");
+
+loginTab.addEventListener("click",function(){
+loginForm.hidden=false;
+signupForm.hidden=true;
+loginTab.classList.add("active");
+signupTab.classList.remove("active");
+clearMessage();
+});
+
+signupTab.addEventListener("click",function(){
+loginForm.hidden=true;
+signupForm.hidden=false;
+signupTab.classList.add("active");
+loginTab.classList.remove("active");
+clearMessage();
+});
+
+/* 07 — Création du compte */
+
+signupForm.addEventListener("submit",async function(event){
+event.preventDefault();
+clearMessage();
+
+const button=document.getElementById("signupButton");
+const fullName=document.getElementById("signupName").value.trim();
+const country=document.getElementById("signupCountry").value.trim();
+const email=document.getElementById("signupEmail").value.trim();
+const password=document.getElementById("signupPassword").value;
+
+if(fullName.length<2){
+showMessage("Veuillez saisir votre nom complet.","error");
+return;
+}
+
+if(password.length<8){
+showMessage("Le mot de passe doit contenir au moins 8 caractères.","error");
+return;
+}
+
+button.disabled=true;
+button.textContent="Création en cours...";
+
+try{
+const {data,error}=await db.auth.signUp({
+email:email,
+password:password,
+options:{
+data:{
+full_name:fullName,
+country:country
+}
+}
+});
+
+if(error)throw error;
+
+if(data.session){
+renderSession(data.session);
+showMessage("Votre compte GLOBEXA a été créé avec succès.","success");
+}else{
+showMessage(
+"Votre inscription est enregistrée. Consultez votre boîte e-mail pour confirmer votre adresse avant de vous connecter.",
+"success"
+);
+signupForm.reset();
+}
+}catch(error){
+console.error("GLOBEXA inscription:",error);
+showMessage(error.message||"Impossible de créer votre compte. Réessayez.","error");
+}finally{
+button.disabled=false;
+button.textContent="Créer mon compte";
+}
+});
+
+/* 08 — Connexion */
+
+loginForm.addEventListener("submit",async function(event){
+event.preventDefault();
+clearMessage();
+
+const button=document.getElementById("loginButton");
+const email=document.getElementById("loginEmail").value.trim();
+const password=document.getElementById("loginPassword").value;
+
+button.disabled=true;
+button.textContent="Connexion en cours...";
+
+try{
+const {data,error}=await db.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error)throw error;
+
+renderSession(data.session);
+showMessage("Connexion réussie. Bienvenue sur GLOBEXA.","success");
+loginForm.reset();
+
+}catch(error){
+console.error("GLOBEXA connexion:",error);
+showMessage(error.message||"Adresse e-mail ou mot de passe incorrect.","error");
+}finally{
+button.disabled=false;
+button.textContent="Se connecter";
+}
+});
+
+/* 09 — Déconnexion */
+
+document.getElementById("logoutButton").addEventListener("click",async function(){
+const button=this;
+button.disabled=true;
+button.textContent="Déconnexion...";
+
+try{
+const {error}=await db.auth.signOut();
+if(error)throw error;
+
+renderSession(null);
+showMessage("Vous êtes déconnecté de GLOBEXA.","success");
+
+}catch(error){
+console.error("GLOBEXA déconnexion:",error);
+showMessage("La déconnexion n'a pas abouti. Réessayez.","error");
+}finally{
+button.disabled=false;
+button.textContent="Se déconnecter";
+}
+});
+
+/* 10 — Restauration de la session et écoute des changements */
+
+db.auth.onAuthStateChange(function(event,session){
+renderSession(session);
+});
+
+db.auth.getSession().then(function(result){
+if(result.error){
+console.error("GLOBEXA session:",result.error);
+return;
+}
+renderSession(result.data.session);
+});
+
+/* Démarrage du catalogue */
+
+loadProducts();
+
+})();
+</script>
+
+</body>
+</html>
