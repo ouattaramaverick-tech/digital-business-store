@@ -3469,60 +3469,84 @@ if (globexaRFQForm) {
 
 /* FIN DU CODE 12C */
 
+
 /* =====================================================
-   GLOBEXA - CODE 12D
-   GESTION DES COMMANDES AVEC SUPABASE
+   GLOBEXA - CODE 13
+   GESTION COMPLETE ET CORRIGEE DES COMMANDES
+   COMPATIBLE AVEC LA TABLE SUPABASE ORDERS
 ===================================================== */
 
-/* 1. RECUPERER LES COMMANDES DE L'ACHETEUR */
+/* 1. RECUPERER L'UTILISATEUR CONNECTE */
 
-async function globexaLoadBuyerOrders() {
-  if (!globexaDB) return [];
+async function globexaOrderGetUser() {
+  if (!globexaDB) return null;
 
-  const { data: authData, error: authError } =
-    await globexaDB.auth.getUser();
+  const { data, error } = await globexaDB.auth.getUser();
 
-  if (authError || !authData.user) {
-    toast("Connectez-vous pour voir vos commandes.");
-    return [];
+  if (error || !data.user) {
+    return null;
   }
 
-  globexaUser = authData.user;
+  globexaUser = data.user;
+  return data.user;
+}
+
+/* 2. RECUPERER LES COMMANDES DE L'ACHETEUR */
+
+async function globexaLoadBuyerOrders() {
+  const user = await globexaOrderGetUser();
+
+  if (!user) {
+    return [];
+  }
 
   const { data, error } = await globexaDB
     .from("orders")
     .select("*")
-    .eq("buyer_id", globexaUser.id)
+    .eq("buyer_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Erreur commandes acheteur :", error);
-    toast("Impossible de charger vos commandes.");
+    toast("Impossible de charger vos achats.");
     return [];
   }
 
   return data || [];
 }
 
-/* 2. RECUPERER LES COMMANDES DU VENDEUR */
+/* 3. RECUPERER LES COMMANDES DU VENDEUR */
 
 async function globexaLoadSellerOrders() {
-  if (!globexaDB) return [];
+  const user = await globexaOrderGetUser();
 
-  const { data: authData, error: authError } =
-    await globexaDB.auth.getUser();
-
-  if (authError || !authData.user) {
-    toast("Connectez-vous pour voir les commandes reçues.");
+  if (!user) {
     return [];
   }
 
-  globexaUser = authData.user;
+  const { data: sellersData, error: sellerError } =
+    await globexaDB
+      .from("sellers")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+
+  if (sellerError) {
+    console.error("Erreur vendeur :", sellerError);
+    toast("Impossible de vérifier votre compte vendeur.");
+    return [];
+  }
+
+  if (!sellersData || sellersData.length === 0) {
+    return [];
+  }
+
+  const sellerId = sellersData[0].id;
 
   const { data, error } = await globexaDB
     .from("orders")
     .select("*")
-    .eq("seller_id", globexaUser.id)
+    .eq("seller_id", sellerId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -3534,115 +3558,214 @@ async function globexaLoadSellerOrders() {
   return data || [];
 }
 
-/* 3. CREER UNE COMMANDE DANS SUPABASE */
+/* 4. CREER LES COMMANDES DANS SUPABASE */
 
-async function globexaCreateCloudOrder(orderData) {
+async function globexaCreateCloudOrders(orderRows) {
   if (!globexaDB) {
     toast("Base de données indisponible.");
     return null;
   }
 
-  const { data: authData, error: authError } =
-    await globexaDB.auth.getUser();
-
-  if (authError || !authData.user) {
-    toast("Connectez-vous avant de commander.");
+  if (!Array.isArray(orderRows) || orderRows.length === 0) {
+    toast("Aucune commande à enregistrer.");
     return null;
   }
-
-  if (!orderData || !Array.isArray(orderData.items) ||
-      orderData.items.length === 0) {
-    toast("Votre commande ne contient aucun produit.");
-    return null;
-  }
-
-  const total = Number(orderData.total);
-
-  if (!Number.isFinite(total) || total <= 0) {
-    toast("Le montant de la commande est invalide.");
-    return null;
-  }
-
-  const sellerId = orderData.seller_id || null;
-
-  const newOrder = {
-    buyer_id: authData.user.id,
-    seller_id: sellerId,
-    total: total,
-    currency: orderData.currency || "USD",
-    status: "pending",
-    items: orderData.items,
-    shipping_address: orderData.shipping_address || {}
-  };
 
   const { data, error } = await globexaDB
     .from("orders")
-    .insert(newOrder)
-    .select()
-    .single();
+    .insert(orderRows)
+    .select();
 
   if (error) {
-    console.error("Erreur création commande :", error);
+    console.error("Erreur enregistrement commandes :", error);
     toast("Erreur commande : " + error.message);
     return null;
   }
 
-  toast("Commande enregistrée avec succès !");
-
-  return data;
+  return data || [];
 }
 
-/* 4. AFFICHER LES COMMANDES DE L'ACHETEUR */
+/* 5. SECURISER LE TEXTE A AFFICHER */
+
+function globexaOrderEscape(value) {
+  const textValue = String(value ?? "");
+
+  if (typeof escapeHTML === "function") {
+    return escapeHTML(textValue);
+  }
+
+  return textValue.replace(/[&<>"']/g, function(character) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character];
+  });
+}
+
+/* 6. FORMATER LES INFORMATIONS DES COMMANDES */
+
+function globexaOrderMoney(amount, currency) {
+  const value = Number(amount || 0);
+  const unit = currency || "FCFA";
+
+  if (typeof money === "function") {
+    return money(value, unit);
+  }
+
+  return value.toLocaleString("fr-FR") + " " + unit;
+}
+
+function globexaOrderDate(dateValue) {
+  if (!dateValue) return "";
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("fr-FR");
+}
+
+/* 7. AFFICHER LES ACHATS DE L'ACHETEUR */
 
 async function globexaRenderBuyerOrders() {
   const list = document.getElementById("orderList");
+
   if (!list) return;
 
-  list.innerHTML = "<p>Chargement des commandes...</p>";
+  list.innerHTML = "<p>Chargement de vos achats...</p>";
 
-  const orderData = await globexaLoadBuyerOrders();
+  const orders = await globexaLoadBuyerOrders();
 
-  if (!orderData.length) {
-    list.innerHTML = "<p>Aucune commande enregistrée.</p>";
+  if (!orders.length) {
+    list.innerHTML =
+      '<p class="muted">Aucune commande enregistrée.</p>';
     return;
   }
 
-  list.innerHTML = orderData.map(order => `
-    <div class="list-row">
-      <strong>Commande #${escapeHTML(String(order.id).slice(0, 8))}</strong>
-      <p>Montant : ${money(order.total, order.currency)}</p>
-      <p>Statut : ${escapeHTML(order.status || "pending")}</p>
-      <small>${new Date(order.created_at).toLocaleString("fr-FR")}</small>
-    </div>
-  `).join("");
+  list.innerHTML = orders.map(function(order) {
+    const product = Array.isArray(products)
+      ? products.find(item =>
+          String(item.id) === String(order.product_id)
+        )
+      : null;
+
+    const productName = product
+      ? product.name
+      : "Produit #" + String(order.product_id).slice(0, 8);
+
+    return `
+      <div class="list-row">
+        <strong>
+          Commande #${globexaOrderEscape(
+            String(order.id).slice(0, 8)
+          )}
+        </strong>
+
+        <p>
+          Produit : ${globexaOrderEscape(productName)}
+        </p>
+
+        <p>
+          Quantité : ${Number(order.quantity)}
+        </p>
+
+        <p>
+          Montant : ${globexaOrderMoney(
+            order.total_amount,
+            order.currency
+          )}
+        </p>
+
+        <p>
+          Statut : ${globexaOrderEscape(
+            order.status || "pending"
+          )}
+        </p>
+
+        <small>
+          ${globexaOrderEscape(
+            globexaOrderDate(order.created_at)
+          )}
+        </small>
+      </div>
+    `;
+  }).join("");
 }
 
-/* 5. AFFICHER LES COMMANDES DU VENDEUR */
+/* 8. AFFICHER LES COMMANDES DU VENDEUR */
 
 async function globexaRenderSellerOrders() {
   const list = document.getElementById("receivedOrders");
+
   if (!list) return;
 
-  list.innerHTML = "<p>Chargement des commandes reçues...</p>";
+  list.innerHTML =
+    "<p>Chargement des commandes reçues...</p>";
 
-  const orderData = await globexaLoadSellerOrders();
+  const orders = await globexaLoadSellerOrders();
 
-  if (!orderData.length) {
-    list.innerHTML = "<p>Aucune commande reçue.</p>";
+  if (!orders.length) {
+    list.innerHTML =
+      '<p class="muted">Aucune commande reçue.</p>';
     return;
   }
 
-  list.innerHTML = orderData.map(order => `
-    <div class="list-row">
-      <strong>Commande #${escapeHTML(String(order.id).slice(0, 8))}</strong>
-      <p>Montant : ${money(order.total, order.currency)}</p>
-      <p>Statut : ${escapeHTML(order.status || "pending")}</p>
-      <small>${new Date(order.created_at).toLocaleString("fr-FR")}</small>
-    </div>
-  `).join("");
+  list.innerHTML = orders.map(function(order) {
+    const product = Array.isArray(products)
+      ? products.find(item =>
+          String(item.id) === String(order.product_id)
+        )
+      : null;
+
+    const productName = product
+      ? product.name
+      : "Produit #" + String(order.product_id).slice(0, 8);
+
+    return `
+      <div class="list-row">
+        <strong>
+          Commande #${globexaOrderEscape(
+            String(order.id).slice(0, 8)
+          )}
+        </strong>
+
+        <p>
+          Produit : ${globexaOrderEscape(productName)}
+        </p>
+
+        <p>
+          Quantité : ${Number(order.quantity)}
+        </p>
+
+        <p>
+          Montant : ${globexaOrderMoney(
+            order.total_amount,
+            order.currency
+          )}
+        </p>
+
+        <p>
+          Statut : ${globexaOrderEscape(
+            order.status || "pending"
+          )}
+        </p>
+
+        <small>
+          ${globexaOrderEscape(
+            globexaOrderDate(order.created_at)
+          )}
+        </small>
+      </div>
+    `;
+  }).join("");
 }
 
-/* 6. ACTUALISER LES COMMANDES */
+/* 9. ACTUALISER LES DEUX LISTES */
 
 async function globexaRefreshOrders() {
   await Promise.all([
@@ -3651,13 +3774,7 @@ async function globexaRefreshOrders() {
   ]);
 }
 
-/* FIN DU CODE 12D */
-
-
-/* =====================================================
-   GLOBEXA - CODE 12E
-   VALIDATION DU PANIER ET COMMANDE SUPABASE
-===================================================== */
+/* 10. FINALISER UNE COMMANDE */
 
 let globexaCheckoutBusy = false;
 
@@ -3677,10 +3794,9 @@ window.checkout = async function() {
   globexaCheckoutBusy = true;
 
   try {
-    const { data: authData, error: authError } =
-      await globexaDB.auth.getUser();
+    const user = await globexaOrderGetUser();
 
-    if (authError || !authData.user) {
+    if (!user) {
       toast("Connectez-vous avant de commander.");
 
       if (typeof showSection === "function") {
@@ -3690,14 +3806,15 @@ window.checkout = async function() {
       return;
     }
 
-    globexaUser = authData.user;
+    const orderRows = [];
+    const sellerCache = new Map();
 
-    const groups = new Map();
+    /* VERIFIER CHAQUE PRODUIT DU PANIER */
 
     for (const cartItem of cart) {
-      const product = products.find(
-        item => String(item.id) === String(cartItem.id)
-      );
+      const product = products.find(function(item) {
+        return String(item.id) === String(cartItem.id);
+      });
 
       if (!product) {
         toast("Un produit de votre panier est introuvable.");
@@ -3706,17 +3823,16 @@ window.checkout = async function() {
 
       const quantity = Number(cartItem.quantity);
       const price = Number(product.price);
-      const sellerId = product.owner_id;
-      const currency = product.currency || "USD";
+      const ownerId = product.owner_id;
 
       if (
         !Number.isInteger(quantity) ||
         quantity <= 0 ||
         !Number.isFinite(price) ||
         price <= 0 ||
-        !sellerId
+        !ownerId
       ) {
-        toast("Vérifiez le produit, son prix et son vendeur.");
+        toast("Vérifiez le prix, la quantité et le vendeur.");
         return;
       }
 
@@ -3728,73 +3844,67 @@ window.checkout = async function() {
         return;
       }
 
-      const groupKey = String(sellerId) + "::" + currency;
+      /* TROUVER LE VRAI IDENTIFIANT DU VENDEUR */
 
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, {
-          seller_id: sellerId,
-          currency: currency,
-          total: 0,
-          items: [],
-          productIds: []
-        });
+      let sellerId = sellerCache.get(String(ownerId));
+
+      if (!sellerId) {
+        const { data: sellerRows, error: sellerError } =
+          await globexaDB
+            .from("sellers")
+            .select("id")
+            .eq("user_id", ownerId)
+            .limit(1);
+
+        if (sellerError) {
+          console.error(sellerError);
+          toast("Impossible de vérifier le vendeur.");
+          return;
+        }
+
+        if (!sellerRows || sellerRows.length === 0) {
+          toast(
+            "Le vendeur de ce produit n'a pas de compte vendeur enregistré."
+          );
+          return;
+        }
+
+        sellerId = sellerRows[0].id;
+        sellerCache.set(String(ownerId), sellerId);
       }
 
-      const group = groups.get(groupKey);
+      /* CREER UNE LIGNE COMPATIBLE AVEC LA TABLE ORDERS */
 
-      group.total += price * quantity;
-
-      group.items.push({
-        id: product.id,
-        name: product.name || "",
-        price: price,
-        quantity: quantity
-      });
-
-      group.productIds.push(String(product.id));
-    }
-
-    const successfulProductIds = new Set();
-
-    for (const group of groups.values()) {
-      const savedOrder = await globexaCreateCloudOrder({
-        seller_id: group.seller_id,
-        currency: group.currency,
-        total: group.total,
-        items: group.items
-      });
-
-      if (!savedOrder) {
-        cart.splice(
-          0,
-          cart.length,
-          ...cart.filter(
-            item => !successfulProductIds.has(String(item.id))
-          )
-        );
-
-        saveLocal("cart", cart);
-        renderCart();
-        await globexaRefreshOrders();
-
-        toast("Certaines commandes n'ont pas pu être enregistrées.");
-        return;
-      }
-
-      group.productIds.forEach(id => {
-        successfulProductIds.add(id);
+      orderRows.push({
+        buyer_id: user.id,
+        customer_id: user.id,
+        product_id: product.id,
+        seller_id: sellerId,
+        quantity: quantity,
+        total_amount: price * quantity,
+        currency: product.currency || "FCFA",
+        status: "pending",
+        payment_status: "pending",
+        order_status: "pending"
       });
     }
 
-    cart.splice(
-      0,
-      cart.length,
-      ...cart.filter(
-        item => !successfulProductIds.has(String(item.id))
-      )
-    );
+    /* ENREGISTRER TOUTES LES LIGNES EN UNE OPERATION */
 
-    saveLocal("cart", cart);
+    const savedOrders =
+      await globexaCreateCloudOrders(orderRows);
+
+    if (!savedOrders) {
+      return;
+    }
+
+    /* VIDER LE PANIER APRES ENREGISTREMENT REUSSI */
+
+    cart.splice(0, cart.length);
+
+    if (typeof saveLocal === "function") {
+      saveLocal("cart", cart);
+    }
 
     if (typeof renderCart === "function") {
       renderCart();
@@ -3802,22 +3912,38 @@ window.checkout = async function() {
 
     await globexaRefreshOrders();
 
-    toast("Votre commande a été enregistrée.");
+    toast("Votre commande a été enregistrée avec succès !");
 
     if (typeof showSection === "function") {
       showSection("orders");
     }
 
   } catch (error) {
-    console.error("Erreur commande GLOBEXA :", error);
-    toast("Une erreur est survenue pendant la commande.");
+    console.error("Erreur CODE 13 :", error);
+    toast("Une erreur est survenue : " + error.message);
+
   } finally {
     globexaCheckoutBusy = false;
   }
 };
 
-/* FIN DU CODE 12E */
+/* 11. CHARGER LES COMMANDES APRES CONNEXION */
 
+if (globexaDB) {
+  globexaDB.auth.onAuthStateChange(function(event) {
+    if (
+      event === "SIGNED_IN" ||
+      event === "INITIAL_SESSION"
+    ) {
+      setTimeout(function() {
+        globexaRefreshOrders();
+      }, 500);
+    }
+  });
+}
+
+/* FIN DU CODE 13 */
+ 
 /* FERMETURE DU DOCUMENT GLOBEXA */
 </script>
 <!-- FIN DU DOCUMENT GLOBEXA -->
