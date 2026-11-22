@@ -6270,6 +6270,385 @@ loadMyQuotes();
   initialize();
 
 })();
+
+/* =====================================================
+   CODE 23A — MODERATION DES REELS
+   GLOBEXA — ADMINISTRATEUR
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (
+    !db ||
+    document.getElementById("globexaReelsAdminSection")
+  ) {
+    return;
+  }
+
+  const section = document.createElement("section");
+  section.id = "globexaReelsAdminSection";
+
+  section.innerHTML = `
+    <h2>Administration — Modération des Reels</h2>
+
+    <div class="panel" style="padding:15px">
+      <p id="globexaReelsAdminFeedback">
+        Vérification des accès administrateur...
+      </p>
+
+      <button type="button" id="globexaReelsAdminRefresh">
+        Actualiser les vidéos
+      </button>
+
+      <div id="globexaReelsAdminList">
+        Chargement...
+      </div>
+    </div>
+  `;
+
+  const adminSection =
+    document.getElementById("globexaAdminModerationSection");
+
+  if (adminSection) {
+    adminSection.insertAdjacentElement("afterend", section);
+  } else {
+    const main = document.querySelector("main");
+    (main || document.body).appendChild(section);
+  }
+
+  const nav = document.querySelector("nav");
+
+  if (
+    nav &&
+    !nav.querySelector('a[href="#globexaReelsAdminSection"]')
+  ) {
+    const link = document.createElement("a");
+    link.href = "#globexaReelsAdminSection";
+    link.textContent = "Modération Reels";
+    nav.appendChild(link);
+  }
+
+  const $ = id => document.getElementById(id);
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function feedback(message, error = false) {
+    const element = $("globexaReelsAdminFeedback");
+    element.textContent = message;
+    element.style.color = error ? "#c0392b" : "";
+  }
+
+  async function verifyAdmin() {
+    const {
+      data: { user },
+      error: authError
+    } = await db.auth.getUser();
+
+    if (authError) throw authError;
+
+    if (!user) {
+      throw new Error("Connectez-vous avec votre compte administrateur.");
+    }
+
+    const { data, error } = await db.rpc("is_globexa_admin");
+
+    if (error) throw error;
+
+    if (data !== true) {
+      throw new Error("Accès réservé à l'administrateur GLOBEXA.");
+    }
+
+    return user;
+  }
+
+  function actionButton(label, action, id, color) {
+    return `
+      <button
+        type="button"
+        data-reel-action="${action}"
+        data-reel-id="${escapeHtml(id)}"
+        style="
+          margin:5px;
+          padding:9px 13px;
+          border:0;
+          border-radius:6px;
+          background:${color};
+          color:white;
+          cursor:pointer
+        "
+      >
+        ${escapeHtml(label)}
+      </button>
+    `;
+  }
+
+  async function loadReels() {
+    const container = $("globexaReelsAdminList");
+    container.textContent = "Chargement des vidéos...";
+
+    await verifyAdmin();
+
+    const { data: reels, error } = await db
+      .from("globexa_reels")
+      .select(`
+        id,
+        supplier_id,
+        product_id,
+        caption,
+        video_path,
+        duration_seconds,
+        status,
+        created_at
+      `)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    if (!reels || reels.length === 0) {
+      container.textContent = "Aucune vidéo publiée pour le moment.";
+      return;
+    }
+
+    const supplierIds = [
+      ...new Set(reels.map(reel => reel.supplier_id))
+    ];
+
+    const { data: stores, error: storesError } = await db
+      .from("globexa_stores")
+      .select("owner_id,company_name,country")
+      .in("owner_id", supplierIds);
+
+    if (storesError) throw storesError;
+
+    const storeMap = {};
+
+    (stores || []).forEach(store => {
+      storeMap[store.owner_id] = store;
+    });
+
+    container.replaceChildren();
+
+    reels.forEach(reel => {
+      const store = storeMap[reel.supplier_id];
+
+      const videoUrl = db.storage
+        .from("globexa-reels")
+        .getPublicUrl(reel.video_path).data.publicUrl;
+
+      const card = document.createElement("article");
+
+      card.style.cssText = `
+        margin:18px 0;
+        padding:14px;
+        border:1px solid #d9e1ea;
+        border-radius:10px;
+        background:#fff;
+        color:#172b43
+      `;
+
+      const video = document.createElement("video");
+      video.src = videoUrl;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+
+      video.style.cssText = `
+        width:100%;
+        max-width:420px;
+        max-height:520px;
+        display:block;
+        background:#111;
+        border-radius:8px
+      `;
+
+      const title = document.createElement("h3");
+      title.textContent = store
+        ? store.company_name + " — " + (store.country || "")
+        : "Fournisseur GLOBEXA";
+
+      const caption = document.createElement("p");
+      caption.textContent =
+        reel.caption || "Vidéo sans description";
+
+      const status = document.createElement("p");
+      status.textContent =
+        "Statut : " + reel.status +
+        " | Durée : " + reel.duration_seconds + " secondes";
+
+      const date = document.createElement("small");
+      date.textContent =
+        "Publication : " +
+        new Date(reel.created_at).toLocaleString("fr-FR");
+
+      card.append(video, title, caption, status, date);
+
+      if (reel.status === "pending") {
+        const actions = document.createElement("div");
+
+        actions.innerHTML =
+          actionButton(
+            "Approuver la vidéo",
+            "approve",
+            reel.id,
+            "#16834a"
+          ) +
+          actionButton(
+            "Refuser la vidéo",
+            "reject",
+            reel.id,
+            "#c0392b"
+          );
+
+        card.appendChild(actions);
+
+      } else if (reel.status === "approved") {
+        const actions = document.createElement("div");
+
+        actions.innerHTML = actionButton(
+          "Masquer la vidéo",
+          "hide",
+          reel.id,
+          "#b9770e"
+        );
+
+        card.appendChild(actions);
+
+      } else if (reel.status === "hidden") {
+        const actions = document.createElement("div");
+
+        actions.innerHTML = actionButton(
+          "Remettre en ligne",
+          "approve",
+          reel.id,
+          "#16834a"
+        );
+
+        card.appendChild(actions);
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  async function refresh() {
+    try {
+      feedback("Vérification de votre compte...");
+
+      await loadReels();
+
+      feedback("Liste des vidéos chargée.");
+
+    } catch (error) {
+      console.error("GLOBEXA Reels Admin :", error);
+
+      feedback(
+        error.message || "Erreur de chargement.",
+        true
+      );
+
+      $("globexaReelsAdminList").textContent =
+        "Les vidéos ne peuvent pas être chargées.";
+    }
+  }
+
+  section.addEventListener("click", async event => {
+    const button = event.target.closest(
+      "button[data-reel-action]"
+    );
+
+    if (!button || button.disabled) return;
+
+    const action = button.dataset.reelAction;
+    const id = button.dataset.reelId;
+
+    const statuses = {
+      approve: "approved",
+      reject: "rejected",
+      hide: "hidden"
+    };
+
+    const newStatus = statuses[action];
+
+    if (!newStatus) return;
+
+    const confirmation = {
+      approve: "Approuver et publier cette vidéo ?",
+      reject: "Refuser cette vidéo ?",
+      hide: "Masquer cette vidéo ?"
+    };
+
+    if (!window.confirm(confirmation[action])) return;
+
+    button.disabled = true;
+
+    try {
+      await verifyAdmin();
+
+      const { data, error } = await db
+        .from("globexa_reels")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select("id,status")
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Aucune modification. Vérifiez les droits administrateur."
+        );
+      }
+
+      const messages = {
+        approved: "Vidéo approuvée et publiée.",
+        rejected: "Vidéo refusée.",
+        hidden: "Vidéo masquée."
+      };
+
+      feedback(messages[newStatus]);
+
+      await loadReels();
+
+    } catch (error) {
+      console.error("Modération Reels :", error);
+
+      feedback(
+        error.message || "La modération a échoué.",
+        true
+      );
+
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("globexaReelsAdminRefresh").addEventListener(
+    "click",
+    refresh
+  );
+
+  db.auth.onAuthStateChange(function () {
+    setTimeout(refresh, 0);
+  });
+
+  refresh();
+
+})();
 </script>
 
 </body>
