@@ -4245,3 +4245,281 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 19 : Centre des litiges chargé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 20 : ESPACE DE SUIVI DES PAIEMENTS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexa-payment-center")) {
+    console.error("CODE 20 : Supabase indisponible ou code déjà chargé.");
+    return;
+  }
+
+  const root = document.createElement("section");
+  root.id = "globexa-payment-center";
+  root.style.cssText =
+    "margin:25px 0;padding:20px;background:#f4f7fb;" +
+    "border:1px solid #dce5ef;border-radius:12px;" +
+    "font-family:Arial,sans-serif;color:#17324d;";
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #globexa-payment-center * { box-sizing:border-box; }
+    #globexa-payment-center h2 { color:#123f75;margin-top:0; }
+    #globexa-payment-center .g20-card {
+      background:white;border:1px solid #dce5ef;
+      border-radius:10px;padding:15px;margin:12px 0;
+    }
+    #globexa-payment-center .g20-muted {
+      color:#64748b;font-size:14px;
+    }
+    #globexa-payment-center .g20-status {
+      display:inline-block;padding:5px 10px;
+      border-radius:20px;background:#fff0dc;
+      color:#9a4c00;font-size:12px;font-weight:bold;
+    }
+    #globexa-payment-center .g20-paid {
+      background:#dcfce7;color:#166534;
+    }
+    #globexa-payment-center .g20-failed {
+      background:#fee2e2;color:#991b1b;
+    }
+    #globexa-payment-center button {
+      border:0;border-radius:7px;padding:10px 14px;
+      background:#123f75;color:white;font-weight:bold;
+      cursor:pointer;margin-top:10px;
+    }
+  `;
+
+  root.appendChild(style);
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Mes paiements GLOBEXA";
+
+  const intro = document.createElement("p");
+  intro.className = "g20-muted";
+  intro.textContent =
+    "Consultez vos commandes, leurs montants et leur état de paiement.";
+
+  const notice = document.createElement("p");
+  notice.className = "g20-muted";
+  notice.textContent = "Vérification de votre compte...";
+
+  const summary = document.createElement("div");
+  summary.className = "g20-card";
+
+  const listTitle = document.createElement("h3");
+  listTitle.textContent = "Historique de mes paiements";
+
+  const list = document.createElement("div");
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "Actualiser mes commandes";
+
+  root.append(heading, intro, notice, summary, listTitle, list, refresh);
+
+  const anchor =
+    document.querySelector("#globexa-disputes") ||
+    document.querySelector("#g19-disputes") ||
+    document.querySelector("#g17-tracking") ||
+    document.querySelector("main") ||
+    document.body;
+
+  anchor.insertAdjacentElement("afterend", root);
+
+  let currentUser = null;
+
+  function element(tag, text, className) {
+    const item = document.createElement(tag);
+    if (text !== undefined) item.textContent = text;
+    if (className) item.className = className;
+    return item;
+  }
+
+  function money(value, currency) {
+    return Number(value || 0).toLocaleString("fr-FR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) + " " + (currency || "USD");
+  }
+
+  function date(value) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+      ? "Date inconnue"
+      : d.toLocaleString("fr-FR");
+  }
+
+  function paymentLabel(status) {
+    const labels = {
+      pending: "En attente de paiement",
+      paid: "Payé",
+      failed: "Échec du paiement",
+      refunded: "Remboursé",
+      cancelled: "Annulé"
+    };
+
+    return labels[status] || status || "Non renseigné";
+  }
+
+  function paymentClass(status) {
+    if (status === "paid") return "g20-status g20-paid";
+    if (status === "failed" || status === "cancelled") {
+      return "g20-status g20-failed";
+    }
+    return "g20-status";
+  }
+
+  async function loadPayments() {
+    list.replaceChildren();
+    summary.replaceChildren();
+
+    const auth = await db.auth.getUser();
+    currentUser = auth.data?.user || null;
+
+    if (auth.error || !currentUser) {
+      notice.textContent =
+        "Connectez-vous pour consulter vos paiements.";
+      refresh.hidden = true;
+      list.appendChild(
+        element("p", "Connexion nécessaire.")
+      );
+      return;
+    }
+
+    refresh.hidden = false;
+    notice.textContent = "Chargement de vos commandes...";
+
+    const { data: orders, error } = await db
+      .from("globexa_market_orders")
+      .select(
+        "id,quantity,unit_price,subtotal,currency,status," +
+        "payment_status,payment_method,created_at"
+      )
+      .eq("buyer_id", currentUser.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("CODE 20 — commandes :", error);
+      notice.textContent =
+        "Impossible de charger vos informations de paiement.";
+      return;
+    }
+
+    const records = orders || [];
+
+    const total = records.reduce(
+      (sum, order) => sum + Number(order.subtotal || 0),
+      0
+    );
+
+    const paid = records.filter(
+      order => order.payment_status === "paid"
+    );
+
+    const pending = records.filter(
+      order => order.payment_status === "pending"
+    );
+
+    summary.append(
+      element("strong", "Résumé de vos commandes"),
+      element("p", "Nombre de commandes : " + records.length),
+      element("p", "Commandes payées : " + paid.length),
+      element("p", "En attente de paiement : " + pending.length),
+      element("p", "Montant total des commandes : " + money(
+        total,
+        records[0]?.currency || "USD"
+      ))
+    );
+
+    if (!records.length) {
+      notice.textContent = "Aucune commande trouvée.";
+      list.appendChild(
+        element("p", "Vos commandes apparaîtront ici.")
+      );
+      return;
+    }
+
+    notice.textContent =
+      records.length + " commande(s) trouvée(s).";
+
+    records.forEach(order => {
+      const card = element("article", undefined, "g20-card");
+
+      card.append(
+        element(
+          "strong",
+          "Commande " + order.id.slice(0, 8)
+        ),
+        element(
+          "p",
+          "Quantité : " + order.quantity
+        ),
+        element(
+          "p",
+          "Prix unitaire : " +
+          money(order.unit_price, order.currency)
+        ),
+        element(
+          "p",
+          "Montant : " +
+          money(order.subtotal, order.currency)
+        ),
+        element(
+          "p",
+          "Date : " + date(order.created_at)
+        ),
+        element(
+          "p",
+          "Commande : " + order.status
+        ),
+        element(
+          "span",
+          paymentLabel(order.payment_status),
+          paymentClass(order.payment_status)
+        )
+      );
+
+      if (order.payment_method) {
+        card.append(
+          element("p", "Moyen utilisé : " + order.payment_method)
+        );
+      }
+
+      if (order.payment_status === "pending") {
+        card.append(
+          element(
+            "p",
+            "Le paiement en ligne n'est pas encore activé pour cette commande.",
+            "g20-muted"
+          )
+        );
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  refresh.addEventListener("click", async () => {
+    refresh.disabled = true;
+    refresh.textContent = "Actualisation...";
+    await loadPayments();
+    refresh.disabled = false;
+    refresh.textContent = "Actualiser mes commandes";
+  });
+
+  db.auth.onAuthStateChange(() => {
+    loadPayments();
+  });
+
+  loadPayments();
+
+  console.log("GLOBEXA CODE 20 : Suivi des paiements chargé.");
+})();
