@@ -3031,3 +3031,511 @@ startGlobexa();
   })();
 
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 17 : SUIVI DÉTAILLÉ DES EXPÉDITIONS
+   Historique, étapes, lieux et mise à jour du transport.
+   ========================================================= */
+
+(() => {
+  'use strict';
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById('g17-tracking')) return;
+
+  const anchor =
+    document.getElementById('globexa-forwarders') ||
+    document.getElementById('fournisseurs');
+
+  if (!anchor) {
+    console.error('CODE 17 : emplacement introuvable.');
+    return;
+  }
+
+  const section = document.createElement('section');
+  section.id = 'g17-tracking';
+
+  section.style.cssText = [
+    'margin:25px 0',
+    'padding:18px',
+    'background:#f4f7fb',
+    'border-radius:12px',
+    'border:1px solid #dce5ef'
+  ].join(';');
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #g17-tracking * { box-sizing:border-box; }
+    #g17-tracking h2 { color:#123c68; margin:0 0 8px; }
+    #g17-tracking .g17-muted { color:#64748b; font-size:14px; }
+    #g17-tracking .g17-card {
+      background:white;
+      border:1px solid #dce5ef;
+      border-radius:10px;
+      padding:15px;
+      margin-top:14px;
+    }
+    #g17-tracking .g17-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    #g17-tracking .g17-field {
+      width:100%;
+      padding:11px;
+      border:1px solid #cbd5e1;
+      border-radius:7px;
+      margin-top:5px;
+      background:white;
+      color:#172b45;
+    }
+    #g17-tracking button {
+      padding:11px 15px;
+      border:0;
+      border-radius:7px;
+      background:#123f70;
+      color:white;
+      font-weight:600;
+      cursor:pointer;
+      margin-top:10px;
+    }
+    #g17-tracking button:disabled {
+      opacity:.6;
+      cursor:wait;
+    }
+    #g17-tracking .g17-event {
+      border-left:3px solid #f28c28;
+      padding:8px 12px;
+      margin:10px 0;
+      background:#f8fafc;
+      border-radius:0 7px 7px 0;
+    }
+    #g17-tracking .g17-status {
+      display:inline-block;
+      padding:5px 9px;
+      border-radius:20px;
+      background:#e8f1fb;
+      color:#123f70;
+      font-size:12px;
+      font-weight:700;
+    }
+    #g17-tracking textarea { min-height:75px; }
+  `;
+
+  document.head.appendChild(style);
+
+  const title = document.createElement('h2');
+  title.textContent = 'Suivi de mes expéditions';
+
+  const intro = document.createElement('p');
+  intro.className = 'g17-muted';
+  intro.textContent =
+    'Consultez les étapes du transport, les lieux de passage et les dates de livraison.';
+
+  const message = document.createElement('p');
+  message.className = 'g17-muted';
+  message.textContent = 'Chargement du suivi...';
+
+  const list = document.createElement('div');
+  list.id = 'g17-list';
+
+  section.append(title, intro, message, list);
+  anchor.insertAdjacentElement('afterend', section);
+
+  const labels = {
+    preparing: 'Préparation',
+    in_transit: 'En transit',
+    customs: 'En douane',
+    delivered: 'Livré',
+    exception: 'Incident'
+  };
+
+  function element(tag, text, className) {
+    const item = document.createElement(tag);
+    if (text !== undefined) item.textContent = text;
+    if (className) item.className = className;
+    return item;
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Non renseignée';
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return 'Date inconnue';
+
+    return date.toLocaleString('fr-FR');
+  }
+
+  function addField(parent, labelText, type, placeholder) {
+    const wrapper = element('label', labelText);
+    wrapper.style.cssText = 'display:block;margin-top:10px;';
+
+    const input = document.createElement(
+      type === 'textarea' ? 'textarea' : type
+    );
+
+    input.className = 'g17-field';
+    input.placeholder = placeholder || '';
+
+    wrapper.appendChild(input);
+    parent.appendChild(wrapper);
+
+    return input;
+  }
+
+  async function loadTracking() {
+    list.replaceChildren();
+
+    const auth = await db.auth.getUser();
+    const user = auth.data?.user;
+
+    if (auth.error || !user) {
+      message.textContent =
+        'Connectez-vous pour consulter vos expéditions.';
+      return;
+    }
+
+    message.textContent = 'Chargement des expéditions...';
+
+    const [buyerResult, supplierResult, transitaireResult] =
+      await Promise.all([
+        db.from('globexa_market_orders')
+          .select('id')
+          .eq('buyer_id', user.id),
+
+        db.from('globexa_market_orders')
+          .select('id')
+          .eq('supplier_id', user.id),
+
+        db.from('transitaires')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'approved')
+          .limit(1)
+      ]);
+
+    if (buyerResult.error || supplierResult.error) {
+      message.textContent =
+        'Impossible de vérifier vos commandes. Réessayez.';
+      console.error(
+        'CODE 17 — commandes :',
+        buyerResult.error || supplierResult.error
+      );
+      return;
+    }
+
+    const buyerIds = (buyerResult.data || []).map(x => x.id);
+    const supplierIds = (supplierResult.data || []).map(x => x.id);
+
+    const transitaireId =
+      transitaireResult.data?.[0]?.id || null;
+
+    const { data: shipments, error } = await db
+      .from('globexa_shipments')
+      .select(
+        'id,order_id,carrier,tracking_number,origin,destination,status,estimated_delivery,created_at,transitaire_id'
+      )
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      message.textContent =
+        'Impossible de charger les expéditions.';
+      console.error('CODE 17 — expéditions :', error);
+      return;
+    }
+
+    const allShipments = shipments || [];
+
+    if (!allShipments.length) {
+      message.textContent =
+        'Aucune expédition disponible pour votre compte.';
+      return;
+    }
+
+    message.textContent =
+      allShipments.length + ' expédition(s) trouvée(s).';
+
+    for (const shipment of allShipments) {
+      const isBuyer = buyerIds.includes(shipment.order_id);
+      const isSupplier = supplierIds.includes(shipment.order_id);
+      const isAssignedTransitaire =
+        !!transitaireId &&
+        shipment.transitaire_id === transitaireId;
+
+      const card = element('article', undefined, 'g17-card');
+
+      card.appendChild(
+        element(
+          'h3',
+          'Expédition ' + shipment.id.slice(0, 8)
+        )
+      );
+
+      card.appendChild(
+        element(
+          'p',
+          'Commande : ' + shipment.order_id.slice(0, 8)
+        )
+      );
+
+      card.appendChild(
+        element(
+          'span',
+          labels[shipment.status] || shipment.status,
+          'g17-status'
+        )
+      );
+
+      const details = element('div', undefined, 'g17-grid');
+
+      const detailItems = [
+        ['Transporteur', shipment.carrier],
+        ['Numéro de suivi', shipment.tracking_number],
+        ['Départ', shipment.origin],
+        ['Destination', shipment.destination],
+        ['Livraison estimée', shipment.estimated_delivery]
+      ];
+
+      detailItems.forEach(([label, value]) => {
+        const block = element('div');
+        block.appendChild(
+          element('strong', label)
+        );
+        block.appendChild(
+          element('p', value || 'Non renseigné', 'g17-muted')
+        );
+        details.appendChild(block);
+      });
+
+      card.appendChild(details);
+
+      card.appendChild(
+        element('h4', 'Historique du transport')
+      );
+
+      const history = element('div');
+
+      const { data: events, error: eventError } = await db
+        .from('globexa_tracking_events')
+        .select('id,event_status,location,details,occurred_at')
+        .eq('shipment_id', shipment.id)
+        .order('occurred_at', { ascending: false })
+        .limit(50);
+
+      if (eventError) {
+        history.appendChild(
+          element(
+            'p',
+            'Historique momentanément indisponible.',
+            'g17-muted'
+          )
+        );
+        console.error('CODE 17 — historique :', eventError);
+      } else if (!events || !events.length) {
+        history.appendChild(
+          element(
+            'p',
+            'Aucune étape de transport enregistrée.',
+            'g17-muted'
+          )
+        );
+      } else {
+        events.forEach(event => {
+          const row = element('div', undefined, 'g17-event');
+
+          row.appendChild(
+            element(
+              'strong',
+              labels[event.event_status] || event.event_status
+            )
+          );
+
+          if (event.location) {
+            row.appendChild(
+              element('p', 'Lieu : ' + event.location)
+            );
+          }
+
+          if (event.details) {
+            row.appendChild(
+              element('p', event.details)
+            );
+          }
+
+          row.appendChild(
+            element(
+              'small',
+              formatDate(event.occurred_at),
+              'g17-muted'
+            )
+          );
+
+          history.appendChild(row);
+        });
+      }
+
+      card.appendChild(history);
+
+      const canAddEvent =
+        isSupplier || isAssignedTransitaire;
+
+      if (canAddEvent && shipment.status !== 'delivered') {
+        const form = element('div', undefined, 'g17-card');
+
+        form.appendChild(
+          element('h4', 'Ajouter une étape de transport')
+        );
+
+        const statusLabel = element('label', 'État de l’expédition');
+        statusLabel.style.display = 'block';
+
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'g17-field';
+
+        const allowedStatuses = isSupplier
+          ? ['preparing', 'in_transit', 'customs', 'exception', 'delivered']
+          : ['preparing', 'in_transit', 'customs', 'exception'];
+
+        allowedStatuses.forEach(status => {
+          const option = element(
+            'option',
+            labels[status] || status
+          );
+          option.value = status;
+          option.selected = status === shipment.status;
+          statusSelect.appendChild(option);
+        });
+
+        statusLabel.appendChild(statusSelect);
+        form.appendChild(statusLabel);
+
+        const locationInput = addField(
+          form,
+          'Lieu actuel',
+          'text',
+          'Exemple : Abidjan, Côte d’Ivoire'
+        );
+
+        const detailsInput = addField(
+          form,
+          'Détails de cette étape',
+          'textarea',
+          'Informations sur le transport...'
+        );
+
+        const save = element(
+          'button',
+          'Enregistrer cette étape'
+        );
+
+        save.type = 'button';
+
+        save.addEventListener('click', async () => {
+          const newStatus = statusSelect.value;
+          const location = locationInput.value.trim();
+          const detailsText = detailsInput.value.trim();
+
+          if (!location || !detailsText) {
+            alert('Renseignez le lieu et les détails.');
+            return;
+          }
+
+          save.disabled = true;
+          save.textContent = 'Enregistrement...';
+
+          const { error: insertError } = await db
+            .from('globexa_tracking_events')
+            .insert({
+              shipment_id: shipment.id,
+              event_status: newStatus,
+              location: location,
+              details: detailsText
+            });
+
+          if (insertError) {
+            console.error(
+              'CODE 17 — ajout étape :',
+              insertError
+            );
+
+            alert(
+              'Impossible d’enregistrer cette étape. Vérifiez vos droits et votre connexion.'
+            );
+
+            save.disabled = false;
+            save.textContent = 'Enregistrer cette étape';
+            return;
+          }
+
+          let statusUpdated = true;
+
+          if (isSupplier && newStatus !== shipment.status) {
+            const { error: updateError } = await db
+              .from('globexa_shipments')
+              .update({ status: newStatus })
+              .eq('id', shipment.id);
+
+            if (updateError) {
+              statusUpdated = false;
+              console.error(
+                'CODE 17 — mise à jour statut :',
+                updateError
+              );
+            }
+          }
+
+          if (statusUpdated) {
+            alert('Étape de transport enregistrée.');
+          } else {
+            alert(
+              'Étape enregistrée, mais le statut général n’a pas pu être actualisé.'
+            );
+          }
+
+          await loadTracking();
+        });
+
+        form.appendChild(save);
+        card.appendChild(form);
+      }
+
+      if (isBuyer) {
+        card.appendChild(
+          element(
+            'p',
+            'Vous consultez le suivi de votre commande.',
+            'g17-muted'
+          )
+        );
+      }
+
+      if (isAssignedTransitaire) {
+        card.appendChild(
+          element(
+            'p',
+            'Vous êtes le transitaire attribué à cette expédition.',
+            'g17-muted'
+          )
+        );
+      }
+
+      list.appendChild(card);
+    }
+  }
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(() => {
+      loadTracking();
+    }, 0);
+  });
+
+  loadTracking();
+
+  console.log(
+    'GLOBEXA CODE 17 : Suivi détaillé des expéditions activé.'
+  );
+})();
