@@ -877,7 +877,8 @@ startGlobexa();
   }
 
 
-    if (!currentUser) {
+  form.addEventListener("submit", async event => {
+  event.preventDefault();  if (!currentUser) {
       showMessage("Connecte-toi pour publier une vidéo.", true);
       return;
     }
