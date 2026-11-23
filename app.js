@@ -4485,6 +4485,7 @@ function createOrderCard(order) {
           "Date : " + date(order.created_at)
         ),
         element(
+          "p",
           "Commande : " + ({
             pending: "En attente",
             awaiting_payment: "En attente de paiement",
@@ -4494,8 +4495,8 @@ function createOrderCard(order) {
             delivered: "Livrée",
             cancelled: "Annulée",
             disputed: "En litige"
-          }[order.status] || order.status)      
-        element(
+          }[order.status] || order.status)
+        ),                
           "span",
           paymentLabel(order.payment_status),
           paymentClass(order.payment_status)
