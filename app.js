@@ -4496,11 +4496,11 @@ function createOrderCard(order) {
             cancelled: "Annulée",
             disputed: "En litige"
           }[order.status] || order.status)
-        ),                
+        element(
           "span",
           paymentLabel(order.payment_status),
           paymentClass(order.payment_status)
-        )
+        )     
       );
 
       if (order.payment_method) {
