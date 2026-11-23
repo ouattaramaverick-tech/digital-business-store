@@ -3894,3 +3894,354 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 18 : Centre de notifications activé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 19 : CENTRE DE GESTION DES LITIGES
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexa-disputes")) {
+    console.error("CODE 19 : Supabase indisponible ou code déjà chargé.");
+    return;
+  }
+
+  const root = document.createElement("section");
+  root.id = "globexa-disputes";
+  root.style.cssText =
+    "margin:25px 0;padding:20px;background:#f4f7fb;" +
+    "border:1px solid #dce5ef;border-radius:12px;" +
+    "font-family:Arial,sans-serif;color:#17324d;";
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #globexa-disputes * { box-sizing:border-box; }
+    #globexa-disputes h2 { color:#123f75;margin-top:0; }
+    #globexa-disputes .g19-card {
+      background:white;border:1px solid #dce5ef;
+      border-radius:10px;padding:15px;margin:12px 0;
+    }
+    #globexa-disputes .g19-field {
+      display:block;width:100%;padding:11px;margin:7px 0 13px;
+      border:1px solid #cbd5e1;border-radius:7px;
+      background:white;color:#17324d;
+    }
+    #globexa-disputes button {
+      border:0;border-radius:7px;padding:11px 15px;
+      background:#123f75;color:white;font-weight:bold;
+      cursor:pointer;margin-top:8px;
+    }
+    #globexa-disputes button:disabled {
+      opacity:.6;cursor:wait;
+    }
+    #globexa-disputes .g19-status {
+      display:inline-block;padding:5px 9px;border-radius:20px;
+      background:#fff0dc;color:#9a4c00;font-size:12px;
+      font-weight:bold;
+    }
+    #globexa-disputes .g19-muted {
+      color:#64748b;font-size:14px;
+    }
+  `;
+
+  root.appendChild(style);
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Centre de gestion des litiges";
+
+  const intro = document.createElement("p");
+  intro.className = "g19-muted";
+  intro.textContent =
+    "Signalez un problème concernant une commande et suivez son traitement.";
+
+  const notice = document.createElement("p");
+  notice.className = "g19-muted";
+  notice.textContent = "Vérification de votre compte...";
+
+  const form = document.createElement("form");
+  form.className = "g19-card";
+
+  const formTitle = document.createElement("h3");
+  formTitle.textContent = "Ouvrir un nouveau litige";
+
+  const orderLabel = document.createElement("label");
+  orderLabel.textContent = "Commande concernée";
+
+  const orderSelect = document.createElement("select");
+  orderSelect.className = "g19-field";
+  orderSelect.required = true;
+
+  const reasonLabel = document.createElement("label");
+  reasonLabel.textContent = "Motif du litige";
+
+  const reason = document.createElement("select");
+  reason.className = "g19-field";
+  reason.required = true;
+
+  [
+    ["", "Choisir un motif"],
+    ["Produit non reçu", "Produit non reçu"],
+    ["Produit non conforme", "Produit non conforme"],
+    ["Produit endommagé", "Produit endommagé"],
+    ["Problème de livraison", "Problème de livraison"],
+    ["Problème de paiement", "Problème de paiement"],
+    ["Autre", "Autre"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    reason.appendChild(option);
+  });
+
+  const descriptionLabel = document.createElement("label");
+  descriptionLabel.textContent = "Expliquez votre problème";
+
+  const description = document.createElement("textarea");
+  description.className = "g19-field";
+  description.rows = 5;
+  description.maxLength = 3000;
+  description.required = true;
+  description.placeholder =
+    "Décrivez clairement le problème rencontré...";
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "Envoyer le litige";
+
+  form.append(
+    formTitle,
+    orderLabel,
+    orderSelect,
+    reasonLabel,
+    reason,
+    descriptionLabel,
+    description,
+    submit
+  );
+
+  const listTitle = document.createElement("h3");
+  listTitle.textContent = "Mes litiges";
+
+  const list = document.createElement("div");
+
+  root.append(heading, intro, notice, form, listTitle, list);
+
+  const anchor =
+    document.querySelector("#globexa-forwarders") ||
+    document.querySelector("#g17-tracking") ||
+    document.querySelector("main") ||
+    document.body;
+
+  anchor.insertAdjacentElement("afterend", root);
+
+  const statusLabels = {
+    open: "Ouvert",
+    under_review: "En cours d'examen",
+    resolved: "Résolu",
+    rejected: "Rejeté"
+  };
+
+  let currentUser = null;
+
+  function makeElement(tag, text, className) {
+    const element = document.createElement(tag);
+    if (text !== undefined) element.textContent = text;
+    if (className) element.className = className;
+    return element;
+  }
+
+  function formatDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "Date inconnue"
+      : date.toLocaleString("fr-FR");
+  }
+
+  async function loadDisputes() {
+    list.replaceChildren();
+
+    const { data, error } = await db
+      .from("globexa_disputes")
+      .select(
+        "id,order_id,opened_by,reason,description,status,resolution,created_at"
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("CODE 19 — chargement des litiges :", error);
+      list.append(
+        makeElement("p", "Impossible de charger vos litiges.")
+      );
+      return;
+    }
+
+    if (!data || !data.length) {
+      list.append(
+        makeElement("p", "Vous n'avez pas encore de litige.")
+      );
+      return;
+    }
+
+    data.forEach(item => {
+      const card = makeElement("article", undefined, "g19-card");
+
+      card.append(
+        makeElement(
+          "strong",
+          "Litige — commande " + item.order_id.slice(0, 8)
+        ),
+        makeElement("p", "Motif : " + item.reason),
+        makeElement("p", "Description : " + item.description),
+        makeElement(
+          "span",
+          statusLabels[item.status] || item.status,
+          "g19-status"
+        ),
+        makeElement("p", "Date : " + formatDate(item.created_at))
+      );
+
+      if (item.resolution) {
+        card.append(
+          makeElement("strong", "Réponse de GLOBEXA"),
+          makeElement("p", item.resolution)
+        );
+      } else {
+        card.append(
+          makeElement(
+            "p",
+            "En attente d'une réponse de l'administration.",
+            "g19-muted"
+          )
+        );
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  async function initialize() {
+    const { data, error } = await db.auth.getUser();
+
+    if (error || !data.user) {
+      currentUser = null;
+      notice.textContent =
+        "Connectez-vous pour ouvrir et consulter vos litiges.";
+      form.hidden = true;
+      list.replaceChildren(
+        makeElement("p", "Connexion nécessaire.")
+      );
+      return;
+    }
+
+    currentUser = data.user;
+    form.hidden = false;
+
+    const { data: orders, error: orderError } = await db
+      .from("globexa_market_orders")
+      .select("id,status")
+      .or(
+        "buyer_id.eq." + currentUser.id +
+        ",supplier_id.eq." + currentUser.id
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (orderError) {
+      console.error("CODE 19 — commandes :", orderError);
+      notice.textContent =
+        "Impossible de charger vos commandes.";
+      form.hidden = true;
+      return;
+    }
+
+    orderSelect.replaceChildren();
+
+    const firstOption = makeElement(
+      "option",
+      "Choisir une commande"
+    );
+    firstOption.value = "";
+    orderSelect.appendChild(firstOption);
+
+    (orders || []).forEach(order => {
+      const option = makeElement(
+        "option",
+        "Commande " + order.id.slice(0, 8) +
+        " — " + order.status
+      );
+      option.value = order.id;
+      orderSelect.appendChild(option);
+    });
+
+    if (!orders || !orders.length) {
+      notice.textContent =
+        "Aucune commande trouvée pour votre compte.";
+      form.hidden = true;
+    } else {
+      notice.textContent =
+        "Vous pouvez signaler un problème concernant vos commandes.";
+    }
+
+    await loadDisputes();
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!currentUser) {
+      notice.textContent = "Connectez-vous avant de continuer.";
+      return;
+    }
+
+    const orderId = orderSelect.value;
+    const selectedReason = reason.value;
+    const details = description.value.trim();
+
+    if (!orderId || !selectedReason || details.length < 10) {
+      notice.textContent =
+        "Choisissez une commande, un motif et une description d'au moins 10 caractères.";
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Envoi en cours...";
+
+    const { error } = await db
+      .from("globexa_disputes")
+      .insert({
+        order_id: orderId,
+        opened_by: currentUser.id,
+        reason: selectedReason,
+        description: details,
+        status: "open"
+      });
+
+    submit.disabled = false;
+    submit.textContent = "Envoyer le litige";
+
+    if (error) {
+      console.error("CODE 19 — création du litige :", error);
+      notice.textContent =
+        "Impossible d'envoyer le litige. Vérifiez vos droits ou réessayez.";
+      return;
+    }
+
+    form.reset();
+    notice.textContent =
+      "Votre litige a été envoyé. Vous pouvez suivre son évolution ci-dessous.";
+
+    await loadDisputes();
+  });
+
+  db.auth.onAuthStateChange(() => {
+    initialize();
+  });
+
+  initialize();
+
+  console.log("GLOBEXA CODE 19 : Centre des litiges chargé.");
+})();
