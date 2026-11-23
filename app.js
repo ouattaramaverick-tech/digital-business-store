@@ -5165,3 +5165,50 @@ startGlobexa();
     "GLOBEXA CODE 23 : Filtres Dubaï, Chine et Turquie activés."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 24 : AFFICHAGE DES VILLES FOURNISSEURS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  if (window.globexaCode24Loaded) return;
+  window.globexaCode24Loaded = true;
+
+  if (typeof renderProducts !== "function") {
+    console.error("GLOBEXA CODE 24 : Catalogue indisponible.");
+    return;
+  }
+
+  const previousRender = renderProducts;
+
+  renderProducts = function(items) {
+    previousRender(items);
+
+    const cards = document.querySelectorAll(
+      "#productList .product-card"
+    );
+
+    (items || []).forEach((product, index) => {
+      const store = Array.isArray(product.store)
+        ? product.store[0]
+        : product.store;
+
+      if (!store || !store.city) return;
+
+      const info = cards[index]?.querySelector(".product-info");
+      if (!info || info.querySelector(".globexa-supplier-city")) return;
+
+      const city = document.createElement("div");
+      city.className = "muted globexa-supplier-city";
+      city.textContent = "Ville du fournisseur : " + store.city;
+
+      info.appendChild(city);
+    });
+  };
+
+  console.log(
+    "GLOBEXA CODE 24 : Affichage des villes activé."
+  );
+})();
