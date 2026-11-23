@@ -4523,3 +4523,459 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 20 : Suivi des paiements chargé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 21 : MOYENS DE RÉCEPTION DES FOURNISSEURS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexa-supplier-payouts")) {
+    console.error("CODE 21 : Supabase indisponible ou code déjà chargé.");
+    return;
+  }
+
+  const root = document.createElement("section");
+  root.id = "globexa-supplier-payouts";
+  root.style.cssText =
+    "margin:25px 0;padding:20px;background:#f4f7fb;" +
+    "border:1px solid #dce5ef;border-radius:12px;" +
+    "font-family:Arial,sans-serif;color:#17324d;";
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #globexa-supplier-payouts * { box-sizing:border-box; }
+    #globexa-supplier-payouts h2 { color:#123f75; }
+    #globexa-supplier-payouts .g21-card {
+      background:white;border:1px solid #dce5ef;
+      border-radius:10px;padding:14px;margin:12px 0;
+    }
+    #globexa-supplier-payouts .g21-field {
+      display:block;width:100%;padding:12px;margin:8px 0 14px;
+      border:1px solid #cbd5e1;border-radius:7px;
+      background:white;color:#17324d;
+    }
+    #globexa-supplier-payouts button {
+      border:0;border-radius:7px;padding:11px 15px;
+      background:#123f75;color:white;font-weight:bold;
+      cursor:pointer;margin:5px 5px 5px 0;
+    }
+    #globexa-supplier-payouts button:disabled {
+      opacity:.6;cursor:wait;
+    }
+    #globexa-supplier-payouts .g21-muted {
+      color:#64748b;font-size:13px;
+    }
+    #globexa-supplier-payouts .g21-status {
+      display:inline-block;padding:5px 10px;
+      border-radius:20px;background:#fff0dc;
+      color:#9a4c00;font-size:12px;font-weight:bold;
+    }
+    #globexa-supplier-payouts .g21-approved {
+      background:#dcfce7;color:#166534;
+    }
+    #globexa-supplier-payouts .g21-rejected {
+      background:#fee2e2;color:#991b1b;
+    }
+    #globexa-supplier-payouts .g21-danger {
+      background:#991b1b;
+    }
+  `;
+
+  root.appendChild(style);
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Mes moyens de réception";
+
+  const intro = document.createElement("p");
+  intro.textContent =
+    "Ajoutez un moyen de réception pour recevoir vos versements GLOBEXA.";
+
+  const notice = document.createElement("p");
+  notice.className = "g21-muted";
+  notice.textContent = "Vérification de votre compte...";
+
+  const form = document.createElement("form");
+  form.className = "g21-card";
+  form.hidden = true;
+
+  const formHeading = document.createElement("h3");
+  formHeading.textContent = "Ajouter un moyen de réception";
+
+  function fieldLabel(text) {
+    const label = document.createElement("label");
+    label.textContent = text;
+    return label;
+  }
+
+  const method = document.createElement("select");
+  method.className = "g21-field";
+  method.required = true;
+
+  [
+    ["", "Choisir un moyen de réception"],
+    ["visa", "Carte Visa — via un prestataire compatible"],
+    ["mastercard", "Carte Mastercard — via un prestataire compatible"],
+    ["paypal", "PayPal"],
+    ["alipay", "Alipay"],
+    ["bank_transfer", "Virement bancaire"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    method.appendChild(option);
+  });
+
+  const holder = document.createElement("input");
+  holder.className = "g21-field";
+  holder.required = true;
+  holder.maxLength = 120;
+  holder.placeholder = "Nom du titulaire du compte";
+
+  const reference = document.createElement("input");
+  reference.className = "g21-field";
+  reference.required = true;
+  reference.maxLength = 255;
+  reference.placeholder = "Adresse ou référence du compte";
+
+  const bank = document.createElement("input");
+  bank.className = "g21-field";
+  bank.maxLength = 120;
+  bank.placeholder = "Nom de la banque (si nécessaire)";
+
+  const country = document.createElement("input");
+  country.className = "g21-field";
+  country.maxLength = 100;
+  country.placeholder = "Pays";
+
+  const currency = document.createElement("input");
+  currency.className = "g21-field";
+  currency.maxLength = 10;
+  currency.placeholder = "Devise (ex. XOF, EUR, USD)";
+
+  const warning = document.createElement("p");
+  warning.className = "g21-muted";
+  warning.textContent =
+    "Ne saisissez jamais votre code PIN, CVV, mot de passe ou numéro complet de carte. " +
+    "Pour Visa et Mastercard, utilisez uniquement une référence sécurisée fournie par votre prestataire.";
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "Envoyer pour approbation";
+
+  form.append(
+    formHeading,
+    fieldLabel("Moyen de réception"),
+    method,
+    fieldLabel("Nom du titulaire"),
+    holder,
+    fieldLabel("Adresse ou référence du compte"),
+    reference,
+    fieldLabel("Banque"),
+    bank,
+    fieldLabel("Pays"),
+    country,
+    fieldLabel("Devise"),
+    currency,
+    warning,
+    submit
+  );
+
+  const listHeading = document.createElement("h3");
+  listHeading.textContent = "Mes demandes";
+
+  const list = document.createElement("div");
+
+  const adminPanel = document.createElement("div");
+  adminPanel.hidden = true;
+
+  const adminHeading = document.createElement("h3");
+  adminHeading.textContent = "Administration — demandes fournisseurs";
+
+  const adminList = document.createElement("div");
+  adminPanel.append(adminHeading, adminList);
+
+  root.append(
+    heading,
+    intro,
+    notice,
+    form,
+    listHeading,
+    list,
+    adminPanel
+  );
+
+  const anchor =
+    document.querySelector("#globexa-payment-center") ||
+    document.querySelector("#globexa-disputes") ||
+    document.querySelector("main") ||
+    document.body;
+
+  anchor.insertAdjacentElement("afterend", root);
+
+  let currentUser = null;
+  let isAdmin = false;
+
+  const methodLabels = {
+    visa: "Visa",
+    mastercard: "Mastercard",
+    paypal: "PayPal",
+    alipay: "Alipay",
+    bank_transfer: "Virement bancaire"
+  };
+
+  const statusLabels = {
+    pending: "En attente de validation",
+    approved: "Approuvé",
+    rejected: "Refusé",
+    disabled: "Désactivé"
+  };
+
+  function element(tag, text, className) {
+    const item = document.createElement(tag);
+    if (text !== undefined) item.textContent = text;
+    if (className) item.className = className;
+    return item;
+  }
+
+  function statusClass(status) {
+    if (status === "approved") return "g21-status g21-approved";
+    if (status === "rejected" || status === "disabled") {
+      return "g21-status g21-rejected";
+    }
+    return "g21-status";
+  }
+
+  function displayMethod(item) {
+    const card = element("article", undefined, "g21-card");
+
+    card.append(
+      element("strong", methodLabels[item.method_code] || item.method_code),
+      element("p", "Titulaire : " + item.account_holder),
+      element("p", "Référence : " + item.account_reference),
+      element("p", "Pays : " + (item.country || "Non renseigné")),
+      element("p", "Devise : " + (item.currency || "Non renseignée")),
+      element("span", statusLabels[item.status] || item.status, statusClass(item.status))
+    );
+
+    if (item.bank_name) {
+      card.append(element("p", "Banque : " + item.bank_name));
+    }
+
+    if (item.admin_note) {
+      card.append(
+        element("p", "Note de l'administration : " + item.admin_note)
+      );
+    }
+
+    return card;
+  }
+
+  async function loadSupplierMethods() {
+    list.replaceChildren();
+
+    const { data, error } = await db
+      .from("globexa_supplier_payout_methods")
+      .select(
+        "id,method_code,account_holder,account_reference,bank_name," +
+        "country,currency,status,admin_note,created_at"
+      )
+      .eq("supplier_user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("CODE 21 — chargement fournisseur :", error);
+      list.append(element("p", "Impossible de charger vos demandes."));
+      return;
+    }
+
+    if (!data || !data.length) {
+      list.append(element("p", "Aucun moyen de réception enregistré."));
+      return;
+    }
+
+    data.forEach(item => list.appendChild(displayMethod(item)));
+  }
+
+  async function loadAdminRequests() {
+    adminList.replaceChildren();
+
+    const { data, error } = await db
+      .from("globexa_supplier_payout_methods")
+      .select(
+        "id,supplier_user_id,method_code,account_holder,account_reference," +
+        "bank_name,country,currency,status,admin_note,created_at"
+      )
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) {
+      console.error("CODE 21 — demandes administration :", error);
+      adminList.append(
+        element("p", "Impossible de charger les demandes.")
+      );
+      return;
+    }
+
+    if (!data || !data.length) {
+      adminList.append(element("p", "Aucune demande en attente."));
+      return;
+    }
+
+    data.forEach(item => {
+      const card = displayMethod(item);
+
+      card.append(
+        element("p", "Identifiant fournisseur : " + item.supplier_user_id)
+      );
+
+      const note = document.createElement("input");
+      note.className = "g21-field";
+      note.maxLength = 500;
+      note.placeholder = "Note facultative pour le fournisseur";
+
+      const approve = element("button", "Approuver");
+      const reject = element("button", "Refuser", "g21-danger");
+
+      approve.addEventListener("click", () =>
+        decideRequest(item.id, "approved", note.value.trim(), approve)
+      );
+
+      reject.addEventListener("click", () =>
+        decideRequest(item.id, "rejected", note.value.trim(), reject)
+      );
+
+      card.append(note, approve, reject);
+      adminList.appendChild(card);
+    });
+  }
+
+  async function decideRequest(id, status, adminNote, button) {
+    if (!isAdmin) return;
+
+    button.disabled = true;
+
+    const { error } = await db
+      .from("globexa_supplier_payout_methods")
+      .update({
+        status,
+        admin_note: adminNote || null,
+        approved_by: status === "approved" ? currentUser.id : null,
+        approved_at: status === "approved" ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .eq("status", "pending");
+
+    button.disabled = false;
+
+    if (error) {
+      console.error("CODE 21 — décision admin :", error);
+      notice.textContent = "Impossible d'enregistrer cette décision.";
+      return;
+    }
+
+    notice.textContent =
+      status === "approved"
+        ? "Moyen de réception approuvé."
+        : "Demande refusée.";
+
+    await loadAdminRequests();
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!currentUser || isAdmin) return;
+
+    const methodCode = method.value;
+    const accountHolder = holder.value.trim();
+    const accountReference = reference.value.trim();
+
+    if (!methodCode || !accountHolder || accountReference.length < 3) {
+      notice.textContent = "Veuillez remplir correctement les champs obligatoires.";
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = "Envoi en cours...";
+
+    const { error } = await db
+      .from("globexa_supplier_payout_methods")
+      .insert({
+        supplier_user_id: currentUser.id,
+        method_code: methodCode,
+        account_holder: accountHolder,
+        account_reference: accountReference,
+        bank_name: bank.value.trim() || null,
+        country: country.value.trim() || null,
+        currency: currency.value.trim().toUpperCase() || null,
+        status: "pending"
+      });
+
+    submit.disabled = false;
+    submit.textContent = "Envoyer pour approbation";
+
+    if (error) {
+      console.error("CODE 21 — ajout du moyen :", error);
+      notice.textContent =
+        "Enregistrement impossible. Vérifiez que votre boutique est active et réessayez.";
+      return;
+    }
+
+    form.reset();
+    notice.textContent =
+      "Votre demande a été envoyée. Elle attend l'approbation de l'administrateur.";
+
+    await loadSupplierMethods();
+  });
+
+  async function initialize() {
+    const auth = await db.auth.getUser();
+
+    if (auth.error || !auth.data.user) {
+      currentUser = null;
+      form.hidden = true;
+      notice.textContent = "Connectez-vous pour gérer vos moyens de réception.";
+      list.replaceChildren(element("p", "Connexion nécessaire."));
+      adminPanel.hidden = true;
+      return;
+    }
+
+    currentUser = auth.data.user;
+
+    const adminCheck = await db.rpc("is_globexa_admin");
+    isAdmin = !adminCheck.error && adminCheck.data === true;
+
+    if (isAdmin) {
+      form.hidden = true;
+      adminPanel.hidden = false;
+      notice.textContent = "Espace administrateur : validation des moyens fournisseurs.";
+      listHeading.hidden = true;
+      list.hidden = true;
+      await loadAdminRequests();
+      return;
+    }
+
+    form.hidden = false;
+    adminPanel.hidden = true;
+    listHeading.hidden = false;
+    list.hidden = false;
+    notice.textContent =
+      "Ajoutez vos coordonnées. Elles seront vérifiées avant toute utilisation.";
+
+    await loadSupplierMethods();
+  }
+
+  db.auth.onAuthStateChange(() => {
+    initialize();
+  });
+
+  initialize();
+
+  console.log("GLOBEXA CODE 21 : Moyens de réception fournisseurs chargé.");
+})();
