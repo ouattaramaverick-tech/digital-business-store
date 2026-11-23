@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b2d52">
+<title>GLOBEXA | Marketplace internationale</title>
+<meta name="description" content="Achetez en gros, trouvez des fournisseurs et développez votre commerce avec GLOBEXA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--blue:#0b2d52;
+--orange:#f47721;
+--light:#f5f7fa;
+--text:#172b43;
+--muted:#69798b;
+--line:#e3e8ef;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--light);color:var(--text);font-family:Inter,Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;border:0;border-radius:5px;padding:11px 16px;background:var(--orange);color:white;font-weight:700}
+a{text-decoration:none;color:inherit}
+.topbar{background:#08233f;color:white;padding:9px 4%;font-size:12px;display:flex;justify-content:space-between}
+.header{background:white;padding:18px 4%;display:flex;align-items:center;gap:22px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.logo{font-size:29px;font-weight:800;color:var(--blue)}
+.logo span{color:var(--orange)}
+.search{display:flex;flex:1;min-width:220px;max-width:760px}
+.search input{flex:1;min-width:0;padding:14px;border:2px solid var(--orange);border-radius:6px 0 0 6px}
+.search button{border-radius:0 6px 6px 0}
+.header-actions{display:flex;gap:17px;font-size:13px;font-weight:700}
+.nav{background:var(--blue);color:white;display:flex;gap:27px;padding:14px 4%;overflow-x:auto;white-space:nowrap;font-size:13px;font-weight:600}
+.nav a:hover{color:#ffb16f}
+main{max-width:1500px;margin:auto;padding:22px 4%}
+.hero-layout{display:grid;grid-template-columns:235px minmax(0,1fr) 245px;gap:15px}
+.category-panel,.hero,.panel,.product-section,.supplier-section,.account-section,.cart-section,.reels-section{background:white;border:1px solid var(--line);border-radius:7px;padding:18px}
+.category-panel h3,.panel h3{margin-top:0;color:var(--blue)}
+.category-list{display:grid;gap:4px}
+.category-list button{background:white;color:var(--text);text-align:left;padding:10px;font-size:13px;border:1px solid transparent}
+.category-list button:hover,.category-list button.active{background:#fff2e8;border-color:#ffd2b3;color:#a94708}
+.hero{min-height:315px;background:linear-gradient(115deg,#0b2d52,#1b5486);color:white;display:flex;flex-direction:column;justify-content:center}
+.hero h1{font-size:clamp(27px,4vw,43px);margin:0 0 12px;max-width:620px}
+.hero p{line-height:1.7;color:#e2edf8;max-width:600px}
+.hero button{align-self:flex-start;margin-top:12px}
+.hero-side{display:grid;gap:12px}
+.hero-side .panel{line-height:1.6}
+.hero-side strong{color:var(--blue)}
+.section{margin-top:22px}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:15px}
+.section-heading h2{font-size:21px;color:var(--blue);margin:0}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.product-card{background:white;border:1px solid var(--line);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.product-card img{width:100%;height:165px;object-fit:cover;background:#edf1f5}
+.product-info{padding:13px;display:flex;flex-direction:column;gap:8px;flex:1}
+.product-info h3{font-size:14px;margin:0;line-height:1.5}
+.price{font-size:18px;font-weight:800;color:var(--blue)}
+.muted{color:var(--muted);font-size:12px}
+.product-info button{margin-top:auto}
+.supplier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.supplier-card{background:white;border:1px solid var(--line);border-radius:7px;padding:15px}
+.supplier-card h3{margin:0 0 8px;color:var(--blue)}
+.empty{background:white;border:1px dashed #b9c8d8;padding:22px;border-radius:7px;color:var(--muted);text-align:center}
+.auth-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.form-box{display:grid;gap:11px}
+.form-box input{width:100%;padding:12px;border:1px solid #ccd6e1;border-radius:6px}
+.form-box label{font-size:13px;font-weight:600}
+.message{padding:10px;border-radius:7px;background:#edf5ff;margin-top:10px;font-size:13px}
+.message.error{background:#fff0ef;color:#a3261d}
+.message.success{background:#eaf8ef;color:#176534}
+.cart-row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0;flex-wrap:wrap}
+.cart-row input{width:75px;padding:8px;border:1px solid var(--line);border-radius:6px}
+footer{margin-top:35px;background:#08233f;color:white;padding:30px 5%;line-height:1.8}
+.small-btn{background:var(--blue);padding:8px 11px;font-size:12px}
+@media(max-width:950px){.hero-layout{grid-template-columns:1fr}.hero-side{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){
+.header{gap:12px}.header-actions{width:100%;justify-content:space-between}
+.hero-side{grid-template-columns:1fr}
+.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.product-card img{height:125px}
+.product-info{padding:10px}
+.product-info h3{font-size:12px}
+}
+</style>
+</head>
+
+<body>
+<div class="topbar">
+<span>Bienvenue sur GLOBEXA — Le commerce international</span>
+<span>Acheter | Vendre | Trouver des fournisseurs</span>
+</div>
+
+<header class="header">
+<a class="logo" href="#accueil">GLOB<span>EXA</span></a>
+
+<form class="search" id="searchForm">
+<input id="searchInput" type="search" placeholder="Que recherchez-vous aujourd'hui ?" aria-label="Rechercher un produit ou fournisseur">
+<button type="submit">Rechercher</button>
+</form>
+
+<div class="header-actions">
+<a href="#compte">Mon compte</a>
+<a href="#panier">Panier (<span id="cartCount">0</span>)</a>
+</div>
+</header>
+
+<nav class="nav">
+<a href="#accueil">Accueil</a>
+<a href="#categories">Toutes les catégories</a>
+<a href="#produits">Produits</a>
+<a href="#fournisseurs">Fournisseurs</a>
+<a href="#reels">Vidéos produits</a>
+<a href="#compte">Connexion / Inscription</a>
+<a href="#panier">Mon panier</a>
+</nav>
+
+<main id="accueil">
+
+<div class="hero-layout">
+
+<aside class="category-panel" id="categories">
+<h3>Toutes les catégories</h3>
+<div class="category-list" id="categoryList">
+<p class="muted">Chargement des catégories...</p>
+</div>
+</aside>
+
+<section class="hero">
+<h1>Découvrez des millions de possibilités commerciales</h1>
+<p>GLOBEXA vous connecte aux produits, aux fournisseurs et aux opportunités du commerce international.</p>
+<button type="button" id="discoverButton">Découvrir les produits</button>
+</section>
+
+<aside class="hero-side">
+<div class="panel">
+<strong>Bienvenue sur GLOBEXA</strong>
+<p>Connectez-vous pour découvrir votre espace commercial.</p>
+<a href="#compte">Se connecter →</a>
+</div>
+<div class="panel">
+<strong>Vous êtes fournisseur ?</strong>
+<p>Présentez vos produits et développez votre clientèle.</p>
+<a href="#compte">Créer un compte →</a>
+</div>
+</aside>
+
+</div>
+
+<section class="section product-section" id="produits">
+<div class="section-heading">
+<h2>Produits recommandés</h2>
+<span class="muted" id="productStatus">Chargement...</span>
+</div>
+<div class="product-grid" id="productList"></div>
+</section>
+
+<!-- CODE 6 — ESPACE REELS GLOBEXA -->
+<section class="section reels-section" id="reels">
+<div class="section-heading">
+<h2>GLOBEXA REELS</h2>
+<span class="muted">Découvrez les produits en vidéo</span>
+</div>
+
+<div id="reelUploadPanel" class="panel" hidden style="margin-bottom:18px">
+<h3>Publier une vidéo produit</h3>
+<form id="reelUploadForm" class="form-box">
+<label>Description de la vidéo
+<input id="reelCaption" type="text" maxlength="500" placeholder="Présentez votre produit...">
+</label>
+<label>Choisir une vidéo
+<input id="reelVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" required>
+</label>
+<p class="muted">MP4, WebM ou MOV — maximum 100 Mo et 90 secondes.</p>
+<button id="reelUploadButton" type="submit">Envoyer ma vidéo</button>
+</form>
+<p id="reelUploadMessage" class="message" hidden></p>
+</div>
+
+<p id="reelLoginNotice" class="muted">Connectez-vous comme fournisseur pour envoyer une vidéo.</p>
+<div id="reelFeed" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:15px">
+<p class="muted">Chargement des vidéos...</p>
+</div>
+</section>
+
+<section class="section supplier-section" id="fournisseurs">
+<div class="section-heading">
+<h2>Fournisseurs et boutiques</h2>
+</div>
+<div class="supplier-grid" id="supplierList"></div>
+</section>
+
+<section class="section account-section" id="compte">
+<div class="section-heading">
+<h2>Mon compte GLOBEXA</h2>
+</div>
+
+<div id="loggedOut" class="auth-grid">
+<div class="panel">
+<h3>Se connecter</h3>
+<form id="loginForm" class="form-box">
+<label>Adresse e-mail<input id="loginEmail" type="email" required autocomplete="email"></label>
+<label>Mot de passe<input id="loginPassword" type="password" required minlength="8" autocomplete="current-password"></label>
+<button id="loginButton" type="submit">Se connecter</button>
+</form>
+</div>
+
+<div class="panel">
+<h3>Créer un compte</h3>
+<form id="signupForm" class="form-box">
+<label>Nom complet<input id="signupName" required maxlength="100" autocomplete="name"></label>
+<label>Pays<input id="signupCountry" maxlength="80" autocomplete="country-name"></label>
+<label>Adresse e-mail<input id="signupEmail" type="email" required autocomplete="email"></label>
+<label>Mot de passe<input id="signupPassword" type="password" required minlength="8" autocomplete="new-password"></label>
+<button id="signupButton" type="submit">Créer mon compte</button>
+</form>
+</div>
+</div>
+
+<div id="loggedIn" class="panel" hidden>
+<h3>Bienvenue dans votre espace</h3>
+<p id="welcomeText"></p>
+<button type="button" id="logoutButton">Se déconnecter</button>
+</div>
+<div id="authMessage" class="message" hidden aria-live="polite"></div>
+</section>
+
+<section class="section cart-section" id="panier">
+<div class="section-heading">
+<h2>Mon panier</h2>
+</div>
+<p id="cartMessage" class="muted">Connectez-vous pour utiliser votre panier.</p>
+<div id="cartItems"></div>
+<div id="cartTotal"></div>
+<button id="checkoutButton" type="button" disabled>Passer la commande</button>
+</section>
+
+</main>
+
+<footer>
+<strong>GLOBEXA</strong><br>
+Marketplace internationale — Acheter. Vendre. Expédier.<br>
+© 2026 GLOBEXA
+</footer>
+
+<!-- FENÊTRE DÉTAIL DU PRODUIT -->
+<div id="productDetailModal" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);padding:18px;overflow:auto">
+<div style="max-width:850px;margin:35px auto;background:white;border-radius:12px;padding:20px;position:relative">
+<button id="closeProductDetail" type="button" style="position:absolute;right:15px;top:15px;background:#0b2d52">Fermer ✕</button>
+<div id="productDetailContent" style="padding-top:35px"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>
