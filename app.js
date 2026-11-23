@@ -802,7 +802,8 @@ startGlobexa();
     if (loginNotice) loginNotice.hidden = loggedIn;
   }
 
-  function createReelCard(reel) {
+  
+  async function createReelCard(reel) {
     const card = document.createElement("article");
     card.style.cssText =
       "background:#fff;border-radius:14px;padding:12px;margin:12px 0;box-shadow:0 2px 12px #0001";
@@ -814,8 +815,15 @@ startGlobexa();
     video.style.cssText =
       "width:100%;max-height:520px;object-fit:contain;background:#000;border-radius:10px";
 
-    const publicUrl = db.storage.from(BUCKET).getPublicUrl(reel.video_path);
-    video.src = publicUrl.data.publicUrl;
+    const { data: signedData, error: signedError } =
+      await db.storage.from(BUCKET).createSignedUrl(reel.video_path, 3600);
+
+    if (signedError || !signedData?.signedUrl) {
+      card.textContent = "Vidéo momentanément indisponible.";
+      return card;
+    }
+
+    video.src = signedData.signedUrl;
 
     const caption = document.createElement("p");
     caption.textContent = reel.caption || "Vidéo GLOBEXA";
@@ -862,13 +870,12 @@ startGlobexa();
       return;
     }
 
-    data.forEach((reel) => {
-      feed.appendChild(createReelCard(reel));
-    });
+    for (const reel of data) {
+      const card = await createReelCard(reel);
+      feed.appendChild(card);
+    }
   }
 
-  form.addEventListener("submit", async function (event) {
-    event.preventDefault();
 
     if (!currentUser) {
       showMessage("Connecte-toi pour publier une vidéo.", true);
