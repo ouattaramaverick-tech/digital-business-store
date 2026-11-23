@@ -1635,3 +1635,624 @@ startGlobexa();
   console.log("GLOBEXA CODE 13 : Gestion des commandes activée.");
 })();
 
+
+/* =========================================================
+   GLOBEXA — CODE 14
+   DEMANDES DE DEVIS ET OFFRES FOURNISSEURS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db) {
+    console.error("GLOBEXA CODE 14 : Supabase indisponible.");
+    return;
+  }
+
+  if (document.getElementById("globexa-rfq-panel")) return;
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-rfq-panel";
+  panel.style.cssText =
+    "max-width:1100px;margin:30px auto;padding:20px;" +
+    "background:#f5f8fc;border-radius:12px;";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Demandes de devis GLOBEXA";
+  heading.style.color = "#0b2d52";
+
+  const intro = document.createElement("p");
+  intro.textContent =
+    "Publiez vos besoins d'achat ou proposez vos prix aux acheteurs.";
+
+  const notice = document.createElement("p");
+  notice.style.cssText =
+    "padding:10px;border-radius:7px;background:#eaf2ff;color:#17436b;";
+  notice.textContent = "Connectez-vous pour utiliser les demandes de devis.";
+
+  const formArea = document.createElement("div");
+  const requestList = document.createElement("div");
+
+  requestList.style.cssText =
+    "display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));" +
+    "gap:15px;margin-top:20px;";
+
+  panel.append(heading, intro, notice, formArea, requestList);
+
+  const accountSection = document.getElementById("compte");
+
+  if (accountSection) {
+    accountSection.parentNode.insertBefore(panel, accountSection);
+  } else {
+    document.querySelector("main")?.appendChild(panel);
+  }
+
+  let categories = [];
+  let activeStore = false;
+
+  function element(tag, text, parent) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  function field(labelText, type, placeholder, parent) {
+    const wrapper = element("div", undefined, parent);
+    wrapper.style.marginBottom = "12px";
+
+    const label = element("label", labelText, wrapper);
+    label.style.cssText = "display:block;font-weight:600;margin-bottom:5px;";
+
+    const input = document.createElement(
+      type === "textarea" ? "textarea" : "input"
+    );
+
+    if (type !== "textarea") input.type = type;
+    input.placeholder = placeholder || "";
+    input.style.cssText =
+      "box-sizing:border-box;width:100%;padding:11px;" +
+      "border:1px solid #ccd6e1;border-radius:7px;font-size:15px;";
+
+    if (type === "textarea") input.rows = 4;
+
+    wrapper.appendChild(input);
+    return input;
+  }
+
+  function actionButton(text, parent) {
+    const button = element("button", text, parent);
+    button.type = "button";
+    button.style.cssText =
+      "padding:11px 15px;border:0;border-radius:7px;" +
+      "background:#f28c28;color:white;font-weight:700;" +
+      "cursor:pointer;margin-top:8px;";
+    return button;
+  }
+
+  function showNotice(text, error = false) {
+    notice.textContent = text;
+    notice.style.background = error ? "#fff0ef" : "#eaf2ff";
+    notice.style.color = error ? "#a3261d" : "#17436b";
+  }
+
+  function money(value, currency) {
+    return Number(value || 0).toLocaleString("fr-FR") +
+      " " + (currency || "USD");
+  }
+
+  async function loadCategories() {
+    const { data, error } = await db
+      .from("globexa_categories")
+      .select("id,name")
+      .order("name");
+
+    if (error) {
+      console.error("Catégories des devis :", error);
+      categories = [];
+      return;
+    }
+
+    categories = data || [];
+  }
+
+  function createRequestForm() {
+    const box = element("div");
+    box.style.cssText =
+      "background:white;padding:17px;border-radius:10px;" +
+      "margin-top:18px;border:1px solid #e0e7ef;";
+
+    element("h3", "Publier une demande de devis", box);
+
+    const title = field(
+      "Nom du produit recherché",
+      "text",
+      "Exemple : Téléphones Android",
+      box
+    );
+
+    const details = field(
+      "Description et caractéristiques",
+      "textarea",
+      "Décrivez précisément le produit souhaité...",
+      box
+    );
+
+    const quantity = field(
+      "Quantité souhaitée",
+      "number",
+      "Exemple : 100",
+      box
+    );
+    quantity.min = "1";
+    quantity.step = "1";
+
+    const targetPrice = field(
+      "Prix cible unitaire (facultatif)",
+      "number",
+      "Prix souhaité",
+      box
+    );
+    targetPrice.min = "0";
+    targetPrice.step = "0.01";
+
+    const currency = field(
+      "Devise",
+      "text",
+      "USD",
+      box
+    );
+    currency.value = "USD";
+    currency.maxLength = 10;
+
+    const destination = field(
+      "Pays de destination",
+      "text",
+      "Exemple : Burkina Faso",
+      box
+    );
+
+    const deadline = field(
+      "Date limite de réception des offres (facultatif)",
+      "datetime-local",
+      "",
+      box
+    );
+
+    const categoryLabel = element("label", "Catégorie (facultatif)", box);
+    categoryLabel.style.cssText =
+      "display:block;font-weight:600;margin-bottom:5px;";
+
+    const category = document.createElement("select");
+    category.style.cssText =
+      "width:100%;padding:11px;border:1px solid #ccd6e1;" +
+      "border-radius:7px;margin-bottom:12px;";
+
+    const emptyOption = element("option", "Toutes les catégories");
+    emptyOption.value = "";
+    category.appendChild(emptyOption);
+
+    categories.forEach(item => {
+      const option = element("option", item.name);
+      option.value = item.id;
+      category.appendChild(option);
+    });
+
+    box.appendChild(category);
+
+    const submit = actionButton("Publier ma demande", box);
+
+    submit.addEventListener("click", async () => {
+      if (!currentUser) {
+        showNotice("Connectez-vous avant de publier une demande.", true);
+        return;
+      }
+
+      const amount = Number(quantity.value);
+      const price = targetPrice.value.trim()
+        ? Number(targetPrice.value)
+        : null;
+
+      const currencyValue = currency.value.trim().toUpperCase();
+
+      if (!title.value.trim() || !details.value.trim()) {
+        showNotice("Remplissez le nom et la description du produit.", true);
+        return;
+      }
+
+      if (!Number.isInteger(amount) || amount <= 0) {
+        showNotice("La quantité doit être un nombre entier positif.", true);
+        return;
+      }
+
+      if (price !== null && (!Number.isFinite(price) || price < 0)) {
+        showNotice("Le prix cible est incorrect.", true);
+        return;
+      }
+
+      if (!/^[A-Z]{3,10}$/.test(currencyValue)) {
+        showNotice("Indiquez une devise valide, par exemple USD ou XOF.", true);
+        return;
+      }
+
+      let deadlineValue = null;
+
+      if (deadline.value) {
+        const date = new Date(deadline.value);
+
+        if (Number.isNaN(date.getTime()) || date <= new Date()) {
+          showNotice("La date limite doit être dans le futur.", true);
+          return;
+        }
+
+        deadlineValue = date.toISOString();
+      }
+
+      submit.disabled = true;
+      submit.textContent = "Publication en cours...";
+
+      const payload = {
+        buyer_id: currentUser.id,
+        title: title.value.trim(),
+        details: details.value.trim(),
+        quantity: amount,
+        target_price: price,
+        currency: currencyValue,
+        destination_country: destination.value.trim() || null,
+        deadline: deadlineValue,
+        category_id: category.value || null,
+        status: "open"
+      };
+
+      const { error } = await db
+        .from("globexa_rfqs")
+        .insert(payload);
+
+      if (error) {
+        console.error("Publication demande :", error);
+        showNotice(
+          error.message || "Impossible de publier la demande.",
+          true
+        );
+        submit.disabled = false;
+        submit.textContent = "Publier ma demande";
+        return;
+      }
+
+      title.value = "";
+      details.value = "";
+      quantity.value = "";
+      targetPrice.value = "";
+      destination.value = "";
+      deadline.value = "";
+      category.value = "";
+
+      showNotice("Votre demande de devis a été publiée.");
+      submit.disabled = false;
+      submit.textContent = "Publier ma demande";
+
+      await loadRequests();
+    });
+  }
+
+  async function loadBuyerQuotes(rfq, container) {
+    const result = await db
+      .from("globexa_quotes")
+      .select(
+        "id,unit_price,currency,quantity,lead_time_days,shipping_terms,message,status,created_at"
+      )
+      .eq("rfq_id", rfq.id)
+      .order("created_at", { ascending: false });
+
+    if (result.error) {
+      element("p", "Impossible de charger les offres.", container);
+      console.error(result.error);
+      return;
+    }
+
+    const quotes = result.data || [];
+
+    element("h4", "Offres reçues : " + quotes.length, container);
+
+    if (!quotes.length) {
+      element("p", "Aucune offre reçue pour le moment.", container);
+      return;
+    }
+
+    quotes.forEach(quote => {
+      const offer = element("div", undefined, container);
+      offer.style.cssText =
+        "background:#f4f7fb;padding:12px;border-radius:7px;margin-top:9px;";
+
+      element(
+        "strong",
+        money(quote.unit_price, quote.currency) + " / unité",
+        offer
+      );
+
+      element("p", "Quantité proposée : " + quote.quantity, offer);
+
+      if (quote.lead_time_days !== null) {
+        element("p", "Délai : " + quote.lead_time_days + " jours", offer);
+      }
+
+      if (quote.shipping_terms) {
+        element("p", "Livraison : " + quote.shipping_terms, offer);
+      }
+
+      if (quote.message) {
+        element("p", "Message : " + quote.message, offer);
+      }
+
+      element("p", "État de l'offre : " + quote.status, offer);
+    });
+  }
+
+  async function createSupplierQuoteForm(rfq, container) {
+    const existing = await db
+      .from("globexa_quotes")
+      .select("id,status")
+      .eq("rfq_id", rfq.id)
+      .eq("supplier_id", currentUser.id)
+      .maybeSingle();
+
+    if (existing.error) {
+      console.error("Vérification offre existante :", existing.error);
+      element("p", "Impossible de vérifier votre offre.", container);
+      return;
+    }
+
+    if (existing.data) {
+      element(
+        "p",
+        "Vous avez déjà envoyé une offre pour cette demande. État : " +
+          existing.data.status,
+        container
+      );
+      return;
+    }
+
+    const form = element("div", undefined, container);
+    form.style.cssText =
+      "margin-top:12px;padding:12px;background:#f4f7fb;border-radius:8px;";
+
+    element("h4", "Envoyer votre offre", form);
+
+    const price = field(
+      "Votre prix unitaire",
+      "number",
+      "Exemple : 25",
+      form
+    );
+    price.min = "0";
+    price.step = "0.01";
+
+    const offeredQuantity = field(
+      "Quantité proposée",
+      "number",
+      String(rfq.quantity),
+      form
+    );
+    offeredQuantity.value = String(rfq.quantity);
+    offeredQuantity.min = "1";
+    offeredQuantity.step = "1";
+
+    const leadTime = field(
+      "Délai de livraison en jours",
+      "number",
+      "Exemple : 15",
+      form
+    );
+    leadTime.min = "1";
+    leadTime.step = "1";
+
+    const shipping = field(
+      "Conditions de livraison",
+      "text",
+      "Exemple : transport maritime",
+      form
+    );
+
+    const messageBox = field(
+      "Message pour l'acheteur (facultatif)",
+      "textarea",
+      "Précisions sur votre offre...",
+      form
+    );
+
+    const send = actionButton("Envoyer mon offre", form);
+
+    send.addEventListener("click", async () => {
+      const priceValue = Number(price.value);
+      const quantityValue = Number(offeredQuantity.value);
+      const daysValue = leadTime.value.trim()
+        ? Number(leadTime.value)
+        : null;
+
+      if (price.value.trim() === "" ||
+          !Number.isFinite(priceValue) ||
+          priceValue < 0) {
+        showNotice("Indiquez un prix unitaire valide.", true);
+        return;
+      }
+
+      if (!Number.isInteger(quantityValue) || quantityValue <= 0) {
+        showNotice("La quantité proposée doit être positive.", true);
+        return;
+      }
+
+      if (daysValue !== null &&
+          (!Number.isInteger(daysValue) || daysValue <= 0)) {
+        showNotice("Le délai doit être un nombre de jours positif.", true);
+        return;
+      }
+
+      send.disabled = true;
+      send.textContent = "Envoi en cours...";
+
+      const payload = {
+        rfq_id: rfq.id,
+        supplier_id: currentUser.id,
+        unit_price: priceValue,
+        currency: rfq.currency,
+        quantity: quantityValue,
+        lead_time_days: daysValue,
+        shipping_terms: shipping.value.trim() || null,
+        message: messageBox.value.trim() || null,
+        status: "sent"
+      };
+
+      const { error } = await db
+        .from("globexa_quotes")
+        .insert(payload);
+
+      if (error) {
+        console.error("Envoi offre fournisseur :", error);
+        showNotice(
+          error.message ||
+            "Impossible d'envoyer l'offre. Vérifiez votre boutique et votre connexion.",
+          true
+        );
+        send.disabled = false;
+        send.textContent = "Envoyer mon offre";
+        return;
+      }
+
+      showNotice("Votre offre a été envoyée à l'acheteur.");
+      await loadRequests();
+    });
+  }
+
+  async function loadRequests() {
+    requestList.replaceChildren();
+
+    if (!currentUser) {
+      showNotice("Connectez-vous pour publier ou consulter vos demandes.");
+      formArea.replaceChildren();
+      return;
+    }
+
+    showNotice("Chargement des demandes de devis...");
+
+    const { data, error } = await db
+      .from("globexa_rfqs")
+      .select(
+        "id,buyer_id,title,details,quantity,target_price,currency,destination_country,deadline,status,created_at,category_id"
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("Chargement des demandes :", error);
+      showNotice("Impossible de charger les demandes de devis.", true);
+      return;
+    }
+
+    const requests = data || [];
+
+    showNotice(requests.length + " demande(s) de devis trouvée(s).");
+
+    requestList.replaceChildren();
+
+    if (!requests.length) {
+      element("p", "Aucune demande disponible pour le moment.", requestList);
+      return;
+    }
+
+    for (const rfq of requests) {
+      const card = element("article", undefined, requestList);
+      card.style.cssText =
+        "background:white;border:1px solid #e0e7ef;" +
+        "border-radius:10px;padding:16px;";
+
+      element("h3", rfq.title, card);
+
+      element("p", rfq.details, card);
+      element("p", "Quantité recherchée : " + rfq.quantity, card);
+
+      if (rfq.target_price !== null) {
+        element(
+          "p",
+          "Prix cible : " + money(rfq.target_price, rfq.currency),
+          card
+        );
+      }
+
+      if (rfq.destination_country) {
+        element("p", "Destination : " + rfq.destination_country, card);
+      }
+
+      if (rfq.deadline) {
+        element(
+          "p",
+          "Date limite : " +
+            new Date(rfq.deadline).toLocaleDateString("fr-FR"),
+          card
+        );
+      }
+
+      element("p", "Statut : " + rfq.status, card);
+
+      if (rfq.buyer_id === currentUser.id) {
+        const quoteArea = element("div", undefined, card);
+        await loadBuyerQuotes(rfq, quoteArea);
+      } else if (rfq.status === "open" && activeStore) {
+        await createSupplierQuoteForm(rfq, card);
+      }
+    }
+  }
+
+  async function refreshAccount() {
+    formArea.replaceChildren();
+    activeStore = false;
+
+    if (!currentUser) {
+      showNotice("Connectez-vous pour utiliser les demandes de devis.");
+      await loadRequests();
+      return;
+    }
+
+    await loadCategories();
+
+    const storeResult = await db
+      .from("globexa_stores")
+      .select("id")
+      .eq("owner_id", currentUser.id)
+      .eq("status", "active")
+      .limit(1);
+
+    if (storeResult.error) {
+      console.error("Vérification boutique :", storeResult.error);
+    }
+
+    activeStore = !!(storeResult.data && storeResult.data.length);
+
+    createRequestForm();
+
+    if (activeStore) {
+      const supplierInfo = element(
+        "p",
+        "Votre boutique est active : vous pouvez répondre aux demandes ouvertes.",
+        formArea
+      );
+      supplierInfo.style.color = "#176534";
+    }
+
+    await loadRequests();
+  }
+
+  db.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    setTimeout(refreshAccount, 0);
+  });
+
+  if (currentUser) {
+    refreshAccount();
+  } else {
+    loadRequests();
+  }
+
+  console.log("GLOBEXA CODE 14 : Demandes de devis activées.");
+})();
