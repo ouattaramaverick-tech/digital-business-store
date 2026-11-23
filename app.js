@@ -5832,3 +5832,118 @@ startGlobexa();
     "GLOBEXA CODE 28 : Notifications en direct activées."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 30 : CONTRÔLE ADMINISTRATEUR DES PAIEMENTS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || window.globexaCode30Loaded) return;
+  window.globexaCode30Loaded = true;
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-admin-payment-readiness";
+  panel.hidden = true;
+  panel.style.cssText = [
+    "margin:25px 0",
+    "padding:20px",
+    "background:#f4f7fb",
+    "border:2px solid #123f75",
+    "border-radius:12px",
+    "font-family:Arial,sans-serif",
+    "color:#17324d"
+  ].join(";");
+
+  const title = document.createElement("h2");
+  title.textContent = "GLOBEXA — Contrôle des paiements";
+
+  const description = document.createElement("p");
+  description.textContent =
+    "État des moyens de paiement proposés aux acheteurs.";
+
+  const warning = document.createElement("p");
+  warning.style.cssText =
+    "padding:12px;background:#fff0dc;color:#8a4500;border-radius:8px;";
+  warning.textContent =
+    "Attention : un moyen activé dans la configuration ne prouve pas qu'un paiement réel fonctionne. Une intégration avec le prestataire reste nécessaire.";
+
+  const status = document.createElement("p");
+  status.textContent = "Vérification des moyens de paiement...";
+
+  const list = document.createElement("div");
+
+  panel.append(title, description, warning, status, list);
+  document.body.appendChild(panel);
+
+  function addLine(provider) {
+    const card = document.createElement("article");
+    card.style.cssText =
+      "background:white;padding:13px;margin:10px 0;border-radius:8px;border:1px solid #dce5ef;";
+
+    const name = document.createElement("strong");
+    name.textContent = provider.display_name || provider.provider;
+
+    const state = document.createElement("p");
+    state.textContent = provider.is_enabled
+      ? "Configuration activée"
+      : "Désactivé";
+
+    const currencies = document.createElement("p");
+    currencies.textContent =
+      "Devises configurées : " +
+      ((provider.supported_currencies || []).join(", ") || "Aucune");
+
+    const readiness = document.createElement("p");
+    readiness.textContent = provider.readiness || "";
+
+    card.append(name, state, currencies, readiness);
+    list.appendChild(card);
+  }
+
+  async function loadAdminPaymentStatus() {
+    panel.hidden = true;
+    list.replaceChildren();
+
+    const { data: auth, error: authError } = await db.auth.getUser();
+
+    if (authError || !auth?.user) return;
+
+    const { data, error } = await db.rpc(
+      "globexa_admin_payment_readiness"
+    );
+
+    if (error) {
+      console.info(
+        "CODE 30 : accès administrateur non autorisé ou données indisponibles."
+      );
+      return;
+    }
+
+    panel.hidden = false;
+
+    if (!data || !data.length) {
+      status.textContent =
+        "Aucun moyen de paiement acheteur configuré.";
+      return;
+    }
+
+    status.textContent =
+      "État des moyens de paiement :";
+
+    data.forEach(addLine);
+  }
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(loadAdminPaymentStatus, 0);
+  });
+
+  loadAdminPaymentStatus();
+
+  console.log(
+    "GLOBEXA CODE 30 : Contrôle administrateur des paiements chargé."
+  );
+})();
