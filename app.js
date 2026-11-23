@@ -4484,7 +4484,7 @@ function createOrderCard(order) {
           "p",
           "Date : " + date(order.created_at)
         ),
-        element(
+         element(
           "p",
           "Commande : " + ({
             pending: "En attente",
@@ -4496,11 +4496,12 @@ function createOrderCard(order) {
             cancelled: "Annulée",
             disputed: "En litige"
           }[order.status] || order.status)
+        ),
         element(
           "span",
           paymentLabel(order.payment_status),
           paymentClass(order.payment_status)
-        )     
+        )          
       );
 
       if (order.payment_method) {
