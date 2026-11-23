@@ -534,3 +534,107 @@ async function startGlobexa() {
 }
 
 startGlobexa();
+
+/* CODE 4 — DÉTAILS ET CONSULTATION DES PRODUITS */
+
+(function () {
+  const modal = document.getElementById("productDetailModal");
+  const content = document.getElementById("productDetailContent");
+  const close = document.getElementById("closeProductDetail");
+
+  if (!modal || !content || !close) {
+    console.error("GLOBEXA : fenêtre de détail introuvable.");
+    return;
+  }
+
+  function addText(parent, tag, text, style) {
+    const el = document.createElement(tag);
+    el.textContent = text || "";
+    if (style) el.style.cssText = style;
+    parent.appendChild(el);
+    return el;
+  }
+
+  function showProduct(product) {
+    content.replaceChildren();
+
+    const image = document.createElement("img");
+    image.src = safeImage(product.images);
+    image.alt = product.title || "Produit";
+    image.style.cssText = "width:100%;max-height:350px;object-fit:contain;background:#f3f6fa;border-radius:9px";
+    content.appendChild(image);
+
+    addText(content, "h2", product.title, "color:#0b2d52;margin-top:18px;font-size:24px");
+    addText(content, "p", money(product.base_price, product.currency), "font-size:24px;font-weight:800;color:#f47721");
+
+    addText(content, "p", "Quantité minimum : " + product.moq);
+    addText(content, "p", "Stock disponible : " + product.stock_quantity);
+    addText(content, "p", "Origine : " + (product.country_of_origin || "Non renseignée"));
+    addText(content, "p", "Référence : " + (product.sku || "Non renseignée"));
+
+    addText(content, "h3", "Description du produit", "color:#0b2d52;margin-top:22px");
+    addText(content, "p", product.description || "Aucune description disponible.", "line-height:1.7;white-space:pre-wrap");
+
+    const store = Array.isArray(product.store) ? product.store[0] : product.store;
+
+    if (store) {
+      addText(content, "h3", "Boutique fournisseur", "color:#0b2d52;margin-top:22px");
+      addText(content, "p", store.company_name || "Fournisseur GLOBEXA");
+      addText(content, "p", store.country || "");
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Ajouter au panier";
+    button.style.marginTop = "18px";
+    button.addEventListener("click", async () => {
+      await addToCart(product);
+      modal.hidden = true;
+    });
+
+    content.appendChild(button);
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    close.focus();
+  }
+
+  function hideProduct() {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  close.addEventListener("click", hideProduct);
+
+  modal.addEventListener("click", event => {
+    if (event.target === modal) hideProduct();
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !modal.hidden) hideProduct();
+  });
+
+  const originalRenderProducts = renderProducts;
+
+  renderProducts = function (items) {
+    originalRenderProducts(items);
+
+    const cards = document.querySelectorAll("#productList .product-card");
+
+    cards.forEach((card, index) => {
+      const product = items[index];
+      if (!product) return;
+
+      const detailButton = document.createElement("button");
+      detailButton.type = "button";
+      detailButton.textContent = "Voir les détails";
+      detailButton.style.cssText = "background:#0b2d52;margin-top:7px";
+
+      detailButton.addEventListener("click", () => showProduct(product));
+
+      const info = card.querySelector(".product-info");
+      if (info) info.appendChild(detailButton);
+    });
+  };
+
+  console.log("GLOBEXA CODE 4 : fiches produits activées.");
+})();
