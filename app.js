@@ -6444,3 +6444,234 @@ function createOrderCard(order) {
     "GLOBEXA CODE 67 : Demandes de remboursement acheteur chargées."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 69 : SUIVI DES REMBOURSEMENTS ACHETEUR
+   ========================================================= */
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || window.globexaCode69Loaded) return;
+  window.globexaCode69Loaded = true;
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-buyer-refund-history";
+  panel.hidden = true;
+  panel.style.cssText =
+    "max-width:1100px;margin:25px auto;padding:20px;" +
+    "background:#fff;border:2px solid #123f75;" +
+    "border-radius:12px;color:#17324d;font-family:Arial,sans-serif;";
+
+  const title = document.createElement("h2");
+  title.textContent = "GLOBEXA — Suivi de mes remboursements";
+
+  const description = document.createElement("p");
+  description.textContent =
+    "Consultez l'évolution de vos demandes de remboursement.";
+
+  const message = document.createElement("p");
+  message.setAttribute("role", "status");
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "Actualiser le suivi";
+
+  const list = document.createElement("div");
+  list.style.cssText = "display:grid;gap:14px;margin-top:15px;";
+
+  panel.append(title, description, message, refresh, list);
+
+  const buyerPanel = document.getElementById(
+    "globexa-buyer-refund-panel"
+  );
+
+  if (buyerPanel && buyerPanel.parentNode) {
+    buyerPanel.parentNode.insertBefore(panel, buyerPanel.nextSibling);
+  } else {
+    document.querySelector("main")?.appendChild(panel);
+  }
+
+  const labels = {
+    requested: "Demande envoyée",
+    under_review: "Demande en examen",
+    approved: "Demande approuvée",
+    processing: "Remboursement en traitement",
+    succeeded: "Remboursement effectué",
+    failed: "Échec du remboursement",
+    rejected: "Demande refusée"
+  };
+
+  function element(tag, value) {
+    const node = document.createElement(tag);
+    if (value !== undefined) node.textContent = String(value);
+    return node;
+  }
+
+  function show(text, error = false) {
+    message.textContent = text;
+    message.style.color = error ? "#b42318" : "#176534";
+  }
+
+  function formatDate(value) {
+    if (!value) return "Non disponible";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Non disponible";
+    }
+
+    return date.toLocaleString("fr-FR");
+  }
+
+  function createCard(item) {
+    const card = element("article");
+    card.style.cssText =
+      "padding:16px;border:1px solid #dce5ef;" +
+      "border-radius:10px;background:#f9fbfd;";
+
+    const heading = element(
+      "h3",
+      labels[item.refund_status] || item.refund_status
+    );
+
+    const amount = element(
+      "p",
+      "Montant : " +
+        Number(item.amount).toLocaleString("fr-FR") +
+        " " + item.currency
+    );
+
+    const order = element(
+      "p",
+      "Commande : #" + String(item.order_id).slice(0, 8).toUpperCase()
+    );
+
+    const reason = element(
+      "p",
+      "Motif : " + item.reason
+    );
+
+    const requested = element(
+      "p",
+      "Date de demande : " + formatDate(item.requested_at)
+    );
+
+    const updated = element(
+      "p",
+      "Dernière mise à jour : " + formatDate(item.updated_at)
+    );
+
+    card.append(heading, amount, order, reason, requested, updated);
+
+    if (item.refund_status === "succeeded") {
+      card.appendChild(element(
+        "p",
+        "Le remboursement a été enregistré comme effectué."
+      ));
+
+      if (item.provider_refund_reference) {
+        card.appendChild(element(
+          "p",
+          "Référence du remboursement : " +
+            item.provider_refund_reference
+        ));
+      }
+
+      card.appendChild(element(
+        "p",
+        "Date de traitement : " + formatDate(item.processed_at)
+      ));
+    }
+
+    if (item.refund_status === "failed") {
+      card.appendChild(element(
+        "p",
+        "Motif de l'échec : " +
+          (item.failure_reason || "Non précisé")
+      ));
+    }
+
+    if (item.refund_status === "rejected") {
+      card.appendChild(element(
+        "p",
+        "Motif du refus : " +
+          (item.admin_note || "Non précisé")
+      ));
+    }
+
+    if (
+      item.admin_note &&
+      !["rejected", "failed"].includes(item.refund_status)
+    ) {
+      card.appendChild(element(
+        "p",
+        "Note de l'administrateur : " + item.admin_note
+      ));
+    }
+
+    return card;
+  }
+
+  async function loadHistory() {
+    list.replaceChildren();
+    show("Chargement de vos remboursements…");
+
+    const { data: auth, error: authError } =
+      await db.auth.getUser();
+
+    if (authError || !auth?.user) {
+      show("Connectez-vous pour consulter votre suivi.", true);
+      return;
+    }
+
+    const { data, error } = await db.rpc(
+      "globexa_buyer_market_refund_list"
+    );
+
+    if (error) {
+      console.error("GLOBEXA CODE69 :", error);
+      show(
+        error.message || "Impossible de charger votre suivi.",
+        true
+      );
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      show("Vous n'avez aucune demande de remboursement.");
+      return;
+    }
+
+    show(data.length + " demande(s) de remboursement trouvée(s).");
+
+    data.forEach(item => {
+      list.appendChild(createCard(item));
+    });
+  }
+
+  async function initialize() {
+    panel.hidden = true;
+
+    const { data, error } = await db.auth.getUser();
+
+    if (error || !data?.user) return;
+
+    panel.hidden = false;
+    await loadHistory();
+  }
+
+  refresh.addEventListener("click", loadHistory);
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(initialize, 0);
+  });
+
+  initialize();
+
+  console.log(
+    "GLOBEXA CODE 69 : Suivi des remboursements acheteur chargé."
+  );
+})();
