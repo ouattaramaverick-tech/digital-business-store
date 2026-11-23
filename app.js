@@ -2383,3 +2383,651 @@ startGlobexa();
   loadForwarders();
   console.log('GLOBEXA CODE 15 : Annuaire public des transitaires activé.');
 })();
+
+/* GLOBEXA — CODE 16 : INSCRIPTION, NOTES ET AVIS DES TRANSITAIRES */
+(() => {
+  'use strict';
+
+  const db = window.globexaSupabase;
+  const anchor = document.querySelector('#fournisseurs');
+
+  if (!db || !anchor) {
+    console.error('GLOBEXA CODE 16 : connexion ou emplacement introuvable.');
+    return;
+  }
+
+  // Remplace l'ancien annuaire CODE 15 par sa version complète.
+  const oldSection = document.getElementById('globexa-forwarders');
+  if (oldSection) oldSection.remove();
+
+  const section = document.createElement('section');
+  section.id = 'globexa-forwarders';
+  section.className = 'section';
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #globexa-forwarders {
+      background:#fff;
+      border:1px solid #e2e8f0;
+      border-radius:12px;
+      padding:20px;
+      margin-top:22px;
+    }
+    #globexa-forwarders h2,
+    #globexa-forwarders h3 {
+      color:#123b63;
+    }
+    #globexa-forwarders .g16-panel {
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      padding:16px;
+      margin:15px 0;
+    }
+    #globexa-forwarders input,
+    #globexa-forwarders select,
+    #globexa-forwarders textarea {
+      width:100%;
+      box-sizing:border-box;
+      padding:11px;
+      margin:6px 0 12px;
+      border:1px solid #cbd5e1;
+      border-radius:7px;
+      font:inherit;
+      background:white;
+    }
+    #globexa-forwarders textarea {
+      min-height:75px;
+      resize:vertical;
+    }
+    #globexa-forwarders button {
+      padding:10px 15px;
+      border:0;
+      border-radius:7px;
+      background:#123b63;
+      color:white;
+      font-weight:700;
+      cursor:pointer;
+    }
+    #globexa-forwarders button:disabled {
+      opacity:.55;
+      cursor:not-allowed;
+    }
+    #globexa-forwarders .g16-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:14px;
+      margin-top:15px;
+    }
+    #globexa-forwarders .g16-card {
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      padding:15px;
+      min-width:0;
+      background:white;
+    }
+    #globexa-forwarders .g16-country {
+      display:inline-block;
+      background:#fff1e6;
+      color:#a64b0b;
+      border-radius:20px;
+      padding:5px 10px;
+      font-size:13px;
+      font-weight:700;
+    }
+    #globexa-forwarders .g16-stars {
+      color:#f59e0b;
+      font-size:21px;
+      letter-spacing:2px;
+    }
+    #globexa-forwarders .g16-muted {
+      color:#64748b;
+      font-size:13px;
+      line-height:1.5;
+    }
+    #globexa-forwarders .g16-comment {
+      border-top:1px solid #e2e8f0;
+      padding-top:9px;
+      margin-top:9px;
+      overflow-wrap:anywhere;
+    }
+    #globexa-forwarders .g16-message {
+      padding:12px;
+      background:#f1f5f9;
+      border-radius:7px;
+      margin:10px 0;
+      color:#334155;
+    }
+    #globexa-forwarders .g16-search {
+      max-width:480px;
+    }
+    #globexa-forwarders .g16-form-title {
+      margin-top:0;
+    }
+  `;
+  document.head.appendChild(style);
+
+  section.innerHTML = `
+    <h2>🌍 Transitaires et transport international</h2>
+    <p class="g16-muted">
+      Découvrez les transitaires approuvés, consultez leurs pays,
+      leurs notes et les commentaires des clients.
+    </p>
+
+    <div class="g16-panel">
+      <h3 class="g16-form-title">📝 Inscrire mon entreprise de transit</h3>
+      <p class="g16-muted">
+        Les inscriptions sont vérifiées par GLOBEXA avant publication.
+      </p>
+      <form id="g16-register">
+        <label>Nom de l'entreprise</label>
+        <input id="g16-company" required maxlength="150"
+          placeholder="Nom de votre entreprise">
+
+        <label>Pays</label>
+        <input id="g16-country" required maxlength="100"
+          placeholder="Exemple : Burkina Faso, Chine, France">
+
+        <label>Contact professionnel</label>
+        <input id="g16-contact" maxlength="150"
+          placeholder="Téléphone, WhatsApp ou email professionnel">
+
+        <button type="submit">Envoyer mon inscription</button>
+      </form>
+      <div id="g16-register-message" class="g16-message" hidden></div>
+    </div>
+
+    <div class="g16-panel">
+      <h3>🚚 Associer un transitaire à mes envois</h3>
+      <p class="g16-muted">
+        Les fournisseurs peuvent sélectionner un transitaire approuvé
+        pour leurs expéditions.
+      </p>
+      <div id="g16-shipments">
+        Chargement des expéditions...
+      </div>
+    </div>
+
+    <h3>⭐ Annuaire des transitaires</h3>
+    <input id="g16-search" class="g16-search" type="search"
+      placeholder="Rechercher une entreprise ou un pays...">
+
+    <div id="g16-count" class="g16-muted">Chargement...</div>
+    <div id="g16-list" class="g16-grid">
+      <div class="g16-message">Chargement des transitaires...</div>
+    </div>
+  `;
+
+  anchor.after(section);
+
+  const $ = id => section.querySelector('#' + id);
+
+  let user = null;
+  let forwarders = [];
+  let reviews = [];
+  let eligibleShipments = [];
+  let supplierShipments = [];
+
+  const node = (tag, className, value) => {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (value !== undefined) el.textContent = value;
+    return el;
+  };
+
+  const message = (target, value) => {
+    target.hidden = false;
+    target.textContent = value;
+  };
+
+  async function getUser() {
+    const result = await db.auth.getUser();
+    return result.data?.user || null;
+  }
+
+  function reviewsFor(transitaireId) {
+    return reviews.filter(r => r.transitaire_id === transitaireId);
+  }
+
+  function renderReviews(card, transitaire) {
+    const items = reviewsFor(transitaire.id);
+    const average = items.length
+      ? items.reduce((sum, r) => sum + Number(r.rating), 0) / items.length
+      : 0;
+
+    const rating = node('div', 'g16-stars');
+    rating.textContent = items.length
+      ? '★'.repeat(Math.round(average)) +
+        '☆'.repeat(5 - Math.round(average))
+      : '☆☆☆☆☆';
+
+    card.append(rating);
+
+    card.append(node(
+      'p',
+      'g16-muted',
+      items.length
+        ? average.toFixed(1) + '/5 — ' + items.length + ' avis'
+        : 'Aucun avis pour le moment'
+    ));
+
+    const title = node('h4', '', 'Commentaires des clients');
+    card.append(title);
+
+    if (!items.length) {
+      card.append(node('p', 'g16-muted', 'Soyez le premier client à laisser un avis après une livraison.'));
+      return;
+    }
+
+    items.slice(0, 4).forEach(review => {
+      const comment = node('div', 'g16-comment');
+      const stars = node('div', 'g16-stars');
+      stars.textContent =
+        '★'.repeat(Number(review.rating)) +
+        '☆'.repeat(5 - Number(review.rating));
+
+      comment.append(stars);
+
+      if (review.comment) {
+        comment.append(node('p', '', review.comment));
+      } else {
+        comment.append(node('p', 'g16-muted', 'Note sans commentaire.'));
+      }
+
+      comment.append(node(
+        'small',
+        'g16-muted',
+        new Date(review.created_at).toLocaleDateString('fr-FR')
+      ));
+
+      card.append(comment);
+    });
+  }
+
+  async function submitReview(card, transitaire) {
+    const available = eligibleShipments.filter(
+      s => s.transitaire_id === transitaire.id &&
+        !reviews.some(r => r.shipment_id === s.id)
+    );
+
+    if (!available.length) {
+      card.append(node(
+        'p',
+        'g16-muted',
+        'Un avis sera possible après une livraison confirmée avec ce transitaire.'
+      ));
+      return;
+    }
+
+    const form = node('form', 'g16-comment');
+    const heading = node('h4', '', 'Donner mon avis');
+
+    const shipmentSelect = node('select');
+    shipmentSelect.required = true;
+
+    available.forEach(shipment => {
+      const option = node('option', '', 'Expédition ' + shipment.id.slice(0, 8));
+      option.value = shipment.id;
+      shipmentSelect.append(option);
+    });
+
+    const ratingSelect = node('select');
+    ratingSelect.required = true;
+
+    [5, 4, 3, 2, 1].forEach(value => {
+      const option = node('option', '', value + ' étoile(s) sur 5');
+      option.value = String(value);
+      ratingSelect.append(option);
+    });
+
+    const comment = node('textarea');
+    comment.maxLength = 1500;
+    comment.placeholder = 'Écrivez votre commentaire...';
+
+    const submit = node('button', '', 'Publier mon avis');
+    submit.type = 'submit';
+
+    form.append(
+      heading,
+      node('label', '', 'Expédition livrée'),
+      shipmentSelect,
+      node('label', '', 'Votre note'),
+      ratingSelect,
+      node('label', '', 'Votre commentaire'),
+      comment,
+      submit
+    );
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      submit.disabled = true;
+
+      const { error } = await db
+        .from('globexa_transitaire_reviews')
+        .insert({
+          shipment_id: shipmentSelect.value,
+          transitaire_id: transitaire.id,
+          reviewer_id: user.id,
+          rating: Number(ratingSelect.value),
+          comment: comment.value.trim() || null
+        });
+
+      if (error) {
+        console.error('CODE 16 — avis :', error);
+        alert('Impossible de publier cet avis. Vérifiez votre connexion et votre livraison.');
+        submit.disabled = false;
+        return;
+      }
+
+      alert('Merci ! Votre avis a été publié.');
+      await loadAll();
+    });
+
+    card.append(form);
+  }
+
+  function renderDirectory() {
+    const term = $('g16-search').value.trim().toLocaleLowerCase('fr');
+    const list = $('g16-list');
+
+    list.replaceChildren();
+
+    const filtered = forwarders.filter(item =>
+      String(item.company_name || '').toLocaleLowerCase('fr').includes(term) ||
+      String(item.country || '').toLocaleLowerCase('fr').includes(term)
+    );
+
+    $('g16-count').textContent =
+      filtered.length + ' transitaire(s) approuvé(s)';
+
+    if (!filtered.length) {
+      list.append(node(
+        'div',
+        'g16-message',
+        'Aucun transitaire trouvé pour cette recherche.'
+      ));
+      return;
+    }
+
+    filtered.forEach(transitaire => {
+      const card = node('article', 'g16-card');
+
+      card.append(node(
+        'h3',
+        '',
+        transitaire.company_name || 'Entreprise de transport'
+      ));
+
+      card.append(node(
+        'span',
+        'g16-country',
+        '🌍 ' + (transitaire.country || 'Pays non précisé')
+      ));
+
+      if (transitaire.contact) {
+        card.append(node(
+          'p',
+          'g16-muted',
+          'Contact : ' + transitaire.contact
+        ));
+      }
+
+      renderReviews(card, transitaire);
+
+      if (user) {
+        submitReview(card, transitaire);
+      }
+
+      list.append(card);
+    });
+  }
+
+  async function loadRegistrationStatus() {
+    const target = $('g16-register-message');
+
+    if (!user) {
+      message(target, 'Connectez-vous à votre compte GLOBEXA pour inscrire votre entreprise.');
+      return;
+    }
+
+    const { data, error } = await db
+      .from('transitaires')
+      .select('id,status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('CODE 16 — profil :', error);
+      return;
+    }
+
+    if (data) {
+      $('g16-register').hidden = true;
+
+      message(
+        target,
+        data.status === 'approved'
+          ? 'Votre entreprise est déjà approuvée.'
+          : 'Votre inscription existe déjà. Statut : ' +
+            (data.status || 'en attente') +
+            '. Attendez la vérification de GLOBEXA.'
+      );
+    }
+  }
+
+  async function registerTransitaire(event) {
+    event.preventDefault();
+
+    const target = $('g16-register-message');
+    const submit = $('g16-register').querySelector('button');
+
+    if (!user) {
+      message(target, 'Connectez-vous avant de vous inscrire comme transitaire.');
+      return;
+    }
+
+    submit.disabled = true;
+
+    const company = $('g16-company').value.trim();
+    const country = $('g16-country').value.trim();
+    const contact = $('g16-contact').value.trim();
+
+    const { error } = await db.from('transitaires').insert({
+      user_id: user.id,
+      company_name: company,
+      country,
+      contact: contact || null,
+      status: 'pending'
+    });
+
+    if (error) {
+      console.error('CODE 16 — inscription :', error);
+      message(target, 'Inscription impossible. Vérifiez votre compte ou si votre entreprise est déjà inscrite.');
+      submit.disabled = false;
+      return;
+    }
+
+    $('g16-register').reset();
+    $('g16-register').hidden = true;
+    message(target, 'Inscription envoyée avec succès. Votre entreprise apparaîtra après approbation de GLOBEXA.');
+  }
+
+  async function loadShipmentManagement() {
+    const target = $('g16-shipments');
+    target.replaceChildren();
+
+    if (!user) {
+      target.append(node(
+        'p',
+        'g16-muted',
+        'Connectez-vous comme fournisseur pour associer un transitaire à vos expéditions.'
+      ));
+      return;
+    }
+
+    const { data: orders, error: orderError } = await db
+      .from('globexa_market_orders')
+      .select('id,status')
+      .eq('supplier_id', user.id)
+      .in('status', ['paid', 'processing', 'shipped']);
+
+    if (orderError) {
+      target.append(node('p', 'g16-muted', 'Impossible de charger vos commandes.'));
+      console.error(orderError);
+      return;
+    }
+
+    const orderIds = (orders || []).map(o => o.id);
+
+    if (!orderIds.length) {
+      target.append(node('p', 'g16-muted', 'Aucune commande à expédier pour le moment.'));
+      return;
+    }
+
+    const { data: shipments, error } = await db
+      .from('globexa_shipments')
+      .select('id,order_id,status,transitaire_id')
+      .in('order_id', orderIds)
+      .neq('status', 'delivered');
+
+    if (error) {
+      target.append(node('p', 'g16-muted', 'Impossible de charger les expéditions.'));
+      console.error(error);
+      return;
+    }
+
+    supplierShipments = shipments || [];
+
+    if (!supplierShipments.length) {
+      target.append(node('p', 'g16-muted', 'Aucune expédition en attente d’attribution.'));
+      return;
+    }
+
+    supplierShipments.forEach(shipment => {
+      const row = node('div', 'g16-comment');
+
+      row.append(node(
+        'strong',
+        '',
+        'Commande ' + shipment.order_id.slice(0, 8)
+      ));
+
+      const select = node('select');
+      const empty = node('option', '', 'Choisir un transitaire');
+      empty.value = '';
+      select.append(empty);
+
+      forwarders.forEach(transitaire => {
+        const option = node(
+          'option',
+          '',
+          transitaire.company_name + ' — ' + transitaire.country
+        );
+        option.value = transitaire.id;
+        option.selected = transitaire.id === shipment.transitaire_id;
+        select.append(option);
+      });
+
+      const save = node('button', '', 'Enregistrer le transitaire');
+      save.type = 'button';
+
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+
+        const { error: updateError } = await db
+          .from('globexa_shipments')
+          .update({ transitaire_id: select.value || null })
+          .eq('id', shipment.id);
+
+        if (updateError) {
+          console.error('CODE 16 — attribution :', updateError);
+          alert('Impossible d’enregistrer ce transitaire.');
+          save.disabled = false;
+          return;
+        }
+
+        alert('Transitaire associé à cette expédition.');
+        await loadAll();
+      });
+
+      row.append(select, save);
+      target.append(row);
+    });
+  }
+
+  async function loadBuyerShipments() {
+    eligibleShipments = [];
+
+    if (!user) return;
+
+    const { data: orders, error } = await db
+      .from('globexa_market_orders')
+      .select('id')
+      .eq('buyer_id', user.id)
+      .eq('status', 'delivered');
+
+    if (error || !orders?.length) return;
+
+    const { data: shipments, error: shipmentError } = await db
+      .from('globexa_shipments')
+      .select('id,order_id,transitaire_id,status')
+      .in('order_id', orders.map(o => o.id))
+      .eq('status', 'delivered')
+      .not('transitaire_id', 'is', null);
+
+    if (!shipmentError) {
+      eligibleShipments = shipments || [];
+    }
+  }
+
+  async function loadAll() {
+    const { data, error } = await db
+      .from('transitaires')
+      .select('id,company_name,country,contact')
+      .eq('status', 'approved')
+      .order('company_name', { ascending: true })
+      .limit(200);
+
+    if (error) {
+      console.error('CODE 16 — transitaires :', error);
+      $('g16-list').textContent = 'Impossible de charger les transitaires.';
+      return;
+    }
+
+    forwarders = data || [];
+
+    const ids = forwarders.map(item => item.id);
+    reviews = [];
+
+    if (ids.length) {
+      const result = await db
+        .from('globexa_transitaire_reviews')
+        .select('id,shipment_id,transitaire_id,rating,comment,created_at')
+        .in('transitaire_id', ids)
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (result.error) {
+        console.error('CODE 16 — commentaires :', result.error);
+      } else {
+        reviews = result.data || [];
+      }
+    }
+
+    renderDirectory();
+    await loadShipmentManagement();
+    await loadBuyerShipments();
+    renderDirectory();
+  }
+
+  $('g16-search').addEventListener('input', renderDirectory);
+  $('g16-register').addEventListener('submit', registerTransitaire);
+
+  (async () => {
+    user = await getUser();
+    await loadRegistrationStatus();
+    await loadAll();
+    console.log('GLOBEXA CODE 16 : Inscriptions, étoiles et avis transitaires activés.');
+  })();
+
+})();
