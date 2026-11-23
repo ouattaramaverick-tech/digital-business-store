@@ -7020,6 +7020,495 @@ loadMyQuotes();
   loadReels();
 
 })();
+
+/* =====================================================
+   CODE 26A — REFONTE VISUELLE DE L'ACCUEIL GLOBEXA
+   STYLE MARKETPLACE INTERNATIONALE
+   BLEU PROFESSIONNEL + ORANGE
+===================================================== */
+
+(function () {
+  "use strict";
+
+  if (window.globexaHomeRedesignReady) return;
+
+  const main = document.getElementById("accueil");
+  const hero = main && main.querySelector(".hero");
+  const categories = document.getElementById("categories");
+
+  if (!main || !hero || !categories) {
+    console.error("GLOBEXA CODE 26A : accueil introuvable.");
+    return;
+  }
+
+  window.globexaHomeRedesignReady = true;
+
+  /* 1. DESIGN */
+
+  const style = document.createElement("style");
+  style.id = "globexa-home-redesign-style";
+
+  style.textContent = `
+    :root {
+      --globexa-blue: #0b2d52;
+      --globexa-dark: #061c35;
+      --globexa-orange: #f47721;
+      --globexa-bg: #f3f6fa;
+    }
+
+    body {
+      background: var(--globexa-bg);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 15px rgba(0,0,0,.07);
+    }
+
+    header .logo {
+      letter-spacing: -1px;
+    }
+
+    nav {
+      position: relative;
+      z-index: 90;
+      box-shadow: 0 3px 10px rgba(0,0,0,.08);
+    }
+
+    .globexa-home-layout {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-top: 22px;
+    }
+
+    .globexa-side-categories {
+      background: white;
+      border: 1px solid #e0e7ef;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(10,40,70,.05);
+    }
+
+    .globexa-side-title {
+      background: var(--globexa-blue);
+      color: white;
+      padding: 17px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .globexa-side-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid #edf1f5;
+      border-radius: 0;
+      background: white;
+      color: #263d54;
+      padding: 14px 13px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .globexa-side-link:hover {
+      background: #fff3e9;
+      color: var(--globexa-orange);
+    }
+
+    .globexa-home-layout .hero {
+      min-height: 350px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-radius: 14px;
+      padding: clamp(25px, 5vw, 60px);
+      background:
+        radial-gradient(circle at 85% 20%, rgba(244,119,33,.35), transparent 30%),
+        linear-gradient(115deg, #061c35 0%, #0b4778 65%, #12649a 100%);
+      box-shadow: 0 8px 25px rgba(5,35,65,.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .globexa-home-layout .hero::after {
+      content: "GLOBEXA";
+      position: absolute;
+      right: 15px;
+      bottom: -20px;
+      color: rgba(255,255,255,.07);
+      font-size: clamp(55px, 10vw, 125px);
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .globexa-home-layout .hero h1 {
+      max-width: 680px;
+      line-height: 1.12;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
+    }
+
+    .globexa-home-layout .hero p {
+      font-size: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .globexa-home-layout .hero .cta {
+      width: fit-content;
+      color: white;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 5px 15px rgba(0,0,0,.15);
+    }
+
+    .globexa-trust-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .globexa-trust-item {
+      background: white;
+      border: 1px solid #e1e8ef;
+      border-radius: 12px;
+      padding: 17px 12px;
+      text-align: center;
+      color: var(--globexa-blue);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .globexa-trust-item strong {
+      display: block;
+      font-size: 23px;
+      margin-bottom: 7px;
+    }
+
+    #categories {
+      background: white;
+      border: 1px solid #e1e8ef;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 16px rgba(10,40,70,.04);
+    }
+
+    #categories h2,
+    #produits h2,
+    #videos h2,
+    #fournisseurs h2 {
+      font-size: clamp(21px, 3vw, 28px);
+      font-weight: 900;
+      margin: 0 0 18px;
+    }
+
+    .globexa-category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .globexa-category-card {
+      min-height: 112px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 15px 8px;
+      border: 1px solid #e4eaf1;
+      border-radius: 12px;
+      background: #f8fafc;
+      color: var(--globexa-blue);
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .globexa-category-card:hover {
+      border-color: var(--globexa-orange);
+      background: #fff5ed;
+      transform: translateY(-3px);
+    }
+
+    .globexa-category-icon {
+      font-size: 30px;
+    }
+
+    #produits {
+      margin-top: 30px;
+    }
+
+    #productList {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 17px;
+    }
+
+    #productList .product {
+      border: 1px solid #e3e9f0;
+      border-radius: 13px;
+      background: white;
+      box-shadow: 0 3px 12px rgba(10,40,70,.05);
+      transition: .2s ease;
+    }
+
+    #productList .product:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 9px 22px rgba(10,40,70,.11);
+    }
+
+    #productList .product img {
+      height: 190px;
+      object-fit: cover;
+    }
+
+    #productList .product-info {
+      padding: 14px;
+    }
+
+    #productList .product-info button {
+      background: var(--globexa-orange);
+      border-radius: 7px;
+    }
+
+    #productList .price {
+      color: var(--globexa-orange);
+      font-size: 19px;
+    }
+
+    #videos,
+    #fournisseurs,
+    #compte,
+    #panier {
+      scroll-margin-top: 100px;
+    }
+
+    @media(max-width: 850px) {
+      .globexa-home-layout {
+        grid-template-columns: 200px minmax(0, 1fr);
+      }
+
+      .globexa-category-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      #productList {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .globexa-trust-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media(max-width: 600px) {
+      .globexa-home-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .globexa-side-categories {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .globexa-side-title {
+        grid-column: 1 / -1;
+      }
+
+      .globexa-side-link {
+        min-width: 0;
+        padding: 12px 8px;
+        font-size: 12px;
+        border-right: 1px solid #edf1f5;
+      }
+
+      .globexa-home-layout .hero {
+        min-height: 280px;
+        padding: 25px 20px;
+      }
+
+      .globexa-home-layout .hero h1 {
+        font-size: 29px;
+      }
+
+      #categories {
+        padding: 16px;
+      }
+
+      #productList {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      #productList .product img {
+        height: 145px;
+      }
+
+      #productList .product-info {
+        padding: 10px;
+      }
+
+      #productList .product h3 {
+        font-size: 14px;
+      }
+
+      #productList .price {
+        font-size: 16px;
+      }
+
+      #productList .product-info p {
+        font-size: 12px;
+      }
+
+      #productList .product-info button {
+        padding: 10px 6px;
+        font-size: 12px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  /* 2. MENU DES CATÉGORIES À GAUCHE */
+
+  const homeLayout = document.createElement("div");
+  homeLayout.className = "globexa-home-layout";
+
+  const side = document.createElement("aside");
+  side.className = "globexa-side-categories";
+
+  const sideTitle = document.createElement("div");
+  sideTitle.className = "globexa-side-title";
+  sideTitle.textContent = "☰ Toutes les catégories";
+  side.appendChild(sideTitle);
+
+  const categoryData = [
+    ["📱", "Électronique"],
+    ["👕", "Mode et vêtements"],
+    ["🏠", "Maison et décoration"],
+    ["⚙️", "Industrie et équipement"],
+    ["💄", "Beauté et santé"],
+    ["🚗", "Automobile"],
+    ["🌾", "Agriculture"],
+    ["🧸", "Jouets et loisirs"]
+  ];
+
+  function searchCategory(name) {
+    const input = document.getElementById("searchInput");
+    const form = document.getElementById("searchForm");
+
+    if (input && form) {
+      input.value = name;
+      form.requestSubmit();
+      document.getElementById("produits").scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+  }
+
+  categoryData.forEach(item => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "globexa-side-link";
+    button.textContent = item[0] + "  " + item[1];
+    button.addEventListener("click", () => searchCategory(item[1]));
+    side.appendChild(button);
+  });
+
+  main.insertBefore(homeLayout, hero);
+  homeLayout.appendChild(side);
+  homeLayout.appendChild(hero);
+
+  /* 3. BANDEAU DE CONFIANCE */
+
+  const trust = document.createElement("div");
+  trust.className = "globexa-trust-row";
+
+  const trustData = [
+    ["🌍", "Commerce international"],
+    ["🏪", "Boutiques fournisseurs"],
+    ["📦", "Commandes et logistique"],
+    ["🤝", "Acheteurs et vendeurs"]
+  ];
+
+  trustData.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "globexa-trust-item";
+
+    const icon = document.createElement("strong");
+    icon.textContent = item[0];
+
+    const label = document.createElement("span");
+    label.textContent = item[1];
+
+    card.append(icon, label);
+    trust.appendChild(card);
+  });
+
+  homeLayout.insertAdjacentElement("afterend", trust);
+
+  /* 4. CATÉGORIES VISUELLES */
+
+  categories.replaceChildren();
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Explorer nos catégories";
+  categories.appendChild(heading);
+
+  const categoryGrid = document.createElement("div");
+  categoryGrid.className = "globexa-category-grid";
+
+  categoryData.forEach(item => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "globexa-category-card";
+
+    const icon = document.createElement("span");
+    icon.className = "globexa-category-icon";
+    icon.textContent = item[0];
+
+    const label = document.createElement("span");
+    label.textContent = item[1];
+
+    button.append(icon, label);
+    button.addEventListener("click", () => searchCategory(item[1]));
+
+    categoryGrid.appendChild(button);
+  });
+
+  categories.appendChild(categoryGrid);
+
+  /* 5. TITRES DES SECTIONS */
+
+  const productHeading = document.querySelector("#produits h2");
+  if (productHeading) {
+    productHeading.textContent = "Produits populaires";
+  }
+
+  const videoHeading = document.querySelector("#videos h2");
+  if (videoHeading) {
+    videoHeading.textContent = "Découvrez les vidéos des produits";
+  }
+
+  const supplierHeading = document.querySelector("#fournisseurs h2");
+  if (supplierHeading) {
+    supplierHeading.textContent = "Découvrez nos fournisseurs";
+  }
+
+  console.info("GLOBEXA CODE 26A : refonte visuelle installée.");
+
+})();
 </script>
 
 </body>
