@@ -6876,6 +6876,150 @@ loadMyQuotes();
   prepareReels();
 
 })();
+
+/* =====================================================
+   CODE 25A — PARTAGE DES REELS
+   GLOBEXA — WHATSAPP ET PARTAGE DIRECT
+===================================================== */
+
+(function () {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  const feed = document.getElementById("globexaReelsFeed");
+
+  if (!db || !feed || window.globexaReelsShareReady) return;
+
+  window.globexaReelsShareReady = true;
+
+  let reelsByUrl = {};
+
+  function getVideoUrl(reel) {
+    return db.storage
+      .from("globexa-reels")
+      .getPublicUrl(reel.video_path).data.publicUrl;
+  }
+
+  function getShareLink(reel) {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.hash = "videos";
+    return url.toString();
+  }
+
+  function getShareText(reel) {
+    const caption = reel.caption || "Découvrez cette vidéo sur GLOBEXA.";
+    return caption + "\n\nDécouvrez GLOBEXA : " + getShareLink(reel);
+  }
+
+  async function loadReels() {
+    const { data, error } = await db
+      .from("globexa_reels")
+      .select("id,caption,video_path")
+      .eq("status", "approved")
+      .limit(100);
+
+    if (error) {
+      console.error("GLOBEXA partage :", error);
+      return;
+    }
+
+    reelsByUrl = {};
+
+    (data || []).forEach(reel => {
+      reelsByUrl[getVideoUrl(reel)] = reel;
+    });
+
+    decorateFeed();
+  }
+
+  function decorateCard(card) {
+    if (card.dataset.globexaShareReady === "true") return;
+
+    const video = card.querySelector("video");
+    if (!video) return;
+
+    const reel = reelsByUrl[video.currentSrc || video.src];
+    if (!reel) return;
+
+    card.dataset.globexaShareReady = "true";
+
+    const controls = document.createElement("div");
+
+    controls.style.cssText =
+      "display:flex;gap:10px;flex-wrap:wrap;" +
+      "margin-top:10px;padding:8px 0";
+
+    const shareButton = document.createElement("button");
+    shareButton.type = "button";
+    shareButton.textContent = "↗ Partager";
+
+    shareButton.style.cssText =
+      "padding:11px 16px;border:0;border-radius:8px;" +
+      "background:#f28c28;color:white;font-weight:bold;" +
+      "cursor:pointer";
+
+    const whatsappButton = document.createElement("button");
+    whatsappButton.type = "button";
+    whatsappButton.textContent = "WhatsApp";
+
+    whatsappButton.style.cssText =
+      "padding:11px 16px;border:0;border-radius:8px;" +
+      "background:#168b50;color:white;font-weight:bold;" +
+      "cursor:pointer";
+
+    shareButton.addEventListener("click", async function () {
+      const text = getShareText(reel);
+
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: "GLOBEXA Reels",
+            text: text
+          });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+          alert("Lien de partage copié !");
+        } else {
+          window.prompt("Copiez ce texte :", text);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Partage GLOBEXA :", error);
+        }
+      }
+    });
+
+    whatsappButton.addEventListener("click", function () {
+      const text = encodeURIComponent(getShareText(reel));
+
+      window.open(
+        "https://wa.me/?text=" + text,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    });
+
+    controls.append(shareButton, whatsappButton);
+    card.appendChild(controls);
+  }
+
+  function decorateFeed() {
+    feed.querySelectorAll("article").forEach(decorateCard);
+  }
+
+  const observer = new MutationObserver(function () {
+    decorateFeed();
+  });
+
+  observer.observe(feed, {
+    childList: true,
+    subtree: true
+  });
+
+  loadReels();
+
+})();
 </script>
 
 </body>
