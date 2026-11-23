@@ -5684,3 +5684,151 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 27 : Favoris activés.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 28 : NOTIFICATIONS EN DIRECT
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || window.globexaCode28Loaded) return;
+  window.globexaCode28Loaded = true;
+
+  let channel = null;
+  let activeUserId = null;
+  let unreadCount = 0;
+  let toastTimer = null;
+
+  const toast = document.createElement("button");
+  toast.type = "button";
+  toast.id = "g28-live-alert";
+  toast.style.cssText = `
+    display:none;
+    position:fixed;
+    top:18px;
+    right:16px;
+    z-index:100000;
+    max-width:min(340px,calc(100vw - 32px));
+    padding:14px 18px;
+    border:0;
+    border-radius:10px;
+    background:#123f75;
+    color:white;
+    text-align:left;
+    font-weight:600;
+    box-shadow:0 5px 20px #0003;
+    cursor:pointer;
+  `;
+  document.body.appendChild(toast);
+
+  function showAlert(notification) {
+    toast.textContent =
+      "🔔 " + (notification.title || "Nouvelle notification") +
+      (notification.body ? " — " + notification.body : "");
+
+    toast.style.display = "block";
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.style.display = "none";
+    }, 7000);
+  }
+
+  toast.addEventListener("click", () => {
+    toast.style.display = "none";
+
+    const toggle = document.getElementById("g18-toggle");
+    const panel = document.getElementById("g18-panel");
+
+    if (toggle && panel && !panel.classList.contains("g18-open")) {
+      toggle.click();
+    }
+  });
+
+  async function connectNotifications() {
+    const { data, error } = await db.auth.getUser();
+
+    if (error || !data.user) {
+      activeUserId = null;
+
+      if (channel) {
+        await db.removeChannel(channel);
+        channel = null;
+      }
+
+      return;
+    }
+
+    const userId = data.user.id;
+
+    if (activeUserId === userId && channel) return;
+
+    if (channel) {
+      await db.removeChannel(channel);
+      channel = null;
+    }
+
+    activeUserId = userId;
+
+    const { count, error: countError } = await db
+      .from("globexa_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null);
+
+    if (!countError) {
+      unreadCount = count || 0;
+
+      const badge = document.getElementById("g18-count");
+      if (badge) badge.textContent = String(unreadCount);
+    }
+
+    channel = db
+      .channel("globexa-live-notifications-" + userId)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "globexa_notifications",
+          filter: "user_id=eq." + userId
+        },
+        payload => {
+          const notification = payload.new;
+
+          if (!notification || notification.user_id !== activeUserId) {
+            return;
+          }
+
+          if (!notification.read_at) {
+            unreadCount++;
+
+            const badge = document.getElementById("g18-count");
+            if (badge) badge.textContent = String(unreadCount);
+          }
+
+          showAlert(notification);
+        }
+      )
+      .subscribe(status => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error(
+            "GLOBEXA CODE 28 : Connexion aux notifications interrompue."
+          );
+        }
+      });
+  }
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(connectNotifications, 0);
+  });
+
+  connectNotifications();
+
+  console.log(
+    "GLOBEXA CODE 28 : Notifications en direct activées."
+  );
+})();
