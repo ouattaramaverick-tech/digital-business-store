@@ -638,3 +638,129 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 4 : fiches produits activées.");
 })();
+/* CODE 5 — INITIALISATION CORRECTE DE LA FENÊTRE PRODUIT */
+
+(function () {
+  function initProductDetails() {
+    const modal = document.getElementById("productDetailModal");
+    const content = document.getElementById("productDetailContent");
+    const close = document.getElementById("closeProductDetail");
+
+    if (!modal || !content || !close) {
+      console.error("GLOBEXA : fenêtre produit introuvable.");
+      return;
+    }
+
+    if (renderProducts.__globexaDetailsReady) return;
+
+    function showProduct(product) {
+      content.replaceChildren();
+
+      const image = document.createElement("img");
+      image.src = safeImage(product.images);
+      image.alt = product.title || "Produit";
+      image.style.cssText =
+        "width:100%;max-height:350px;object-fit:contain;background:#f3f6fa;border-radius:9px";
+      content.appendChild(image);
+
+      const title = document.createElement("h2");
+      title.id = "detailTitle";
+      title.textContent = product.title || "Produit";
+      content.appendChild(title);
+
+      const details = [
+        money(product.base_price, product.currency),
+        "Quantité minimum : " + product.moq,
+        "Stock disponible : " + product.stock_quantity,
+        "Origine : " + (product.country_of_origin || "Non renseignée"),
+        "Référence : " + (product.sku || "Non renseignée"),
+        "Description : " + (product.description || "Aucune description")
+      ];
+
+      details.forEach(value => {
+        const p = document.createElement("p");
+        p.textContent = value;
+        content.appendChild(p);
+      });
+
+      const store = Array.isArray(product.store)
+        ? product.store[0]
+        : product.store;
+
+      if (store) {
+        const p = document.createElement("p");
+        p.textContent =
+          "Boutique : " + (store.company_name || "Fournisseur") +
+          " — " + (store.country || "");
+        content.appendChild(p);
+      }
+
+      const add = document.createElement("button");
+      add.type = "button";
+      add.textContent = "Ajouter au panier";
+      add.addEventListener("click", async () => {
+        await addToCart(product);
+        hideProduct();
+      });
+
+      content.appendChild(add);
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+      close.focus();
+    }
+
+    function hideProduct() {
+      modal.hidden = true;
+      document.body.style.overflow = "";
+    }
+
+    close.addEventListener("click", hideProduct);
+
+    modal.addEventListener("click", event => {
+      if (event.target === modal) hideProduct();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !modal.hidden) hideProduct();
+    });
+
+    const originalRenderProducts = renderProducts;
+
+    function renderProductsWithDetails(items) {
+      originalRenderProducts(items);
+
+      document.querySelectorAll("#productList .product-card")
+        .forEach((card, index) => {
+          const product = items[index];
+          if (!product) return;
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = "Voir les détails";
+          button.style.cssText = "background:#0b2d52;margin-top:7px";
+          button.addEventListener("click", () => showProduct(product));
+
+          const info = card.querySelector(".product-info");
+          if (info) info.appendChild(button);
+        });
+    }
+
+    renderProductsWithDetails.__globexaDetailsReady = true;
+    renderProducts = renderProductsWithDetails;
+
+    if (Array.isArray(products)) {
+      renderProducts(products);
+    }
+
+    console.log("GLOBEXA CODE 5 : fenêtre produit initialisée.");
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initProductDetails, {
+      once: true
+    });
+  } else {
+    initProductDetails();
+  }
+})();
+
