@@ -6675,3 +6675,379 @@ function createOrderCard(order) {
     "GLOBEXA CODE 69 : Suivi des remboursements acheteur chargé."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 71 : AVIS ET NOTES DES PRODUITS
+   ========================================================= */
+(function initGlobexaProductReviews() {
+  const db = window.globexaSupabase;
+  const modal = document.getElementById("productDetailModal");
+  const content = document.getElementById("productDetailContent");
+
+  if (!db || !modal || !content) {
+    console.error("GLOBEXA CODE71 : éléments nécessaires introuvables.");
+    return;
+  }
+
+  let currentItems = [];
+  let currentProduct = null;
+  let loading = false;
+
+  function element(tag, value, style) {
+    const node = document.createElement(tag);
+    if (value !== undefined) node.textContent = value;
+    if (style) node.style.cssText = style;
+    return node;
+  }
+
+  function stars(rating) {
+    const n = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+    return "★".repeat(n) + "☆".repeat(5 - n);
+  }
+
+  function dateLabel(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? ""
+      : date.toLocaleDateString("fr-FR");
+  }
+
+  async function loadProductRatings(items) {
+    const ids = [...new Set(
+      (items || []).map(item => item.id).filter(Boolean)
+    )];
+
+    if (!ids.length) return;
+
+    const { data, error } = await db
+      .from("globexa_market_product_reviews")
+      .select("product_id,rating")
+      .in("product_id", ids);
+
+    if (error) {
+      console.error("CODE71 — notes :", error);
+      return;
+    }
+
+    const grouped = {};
+
+    (data || []).forEach(review => {
+      if (!grouped[review.product_id]) {
+        grouped[review.product_id] = [];
+      }
+      grouped[review.product_id].push(Number(review.rating));
+    });
+
+    document.querySelectorAll("#productList .product-card")
+      .forEach((card, index) => {
+        const product = items[index];
+        if (!product) return;
+
+        const old = card.querySelector(".g71-card-rating");
+        if (old) old.remove();
+
+        const ratings = grouped[product.id] || [];
+        const average = ratings.length
+          ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+          : 0;
+
+        const line = element(
+          "div",
+          ratings.length
+            ? stars(average) + " " + average.toFixed(1) +
+              "/5 (" + ratings.length + " avis)"
+            : "☆☆☆☆☆ Aucun avis",
+          "color:#d98b00;font-weight:700;margin:7px 0"
+        );
+
+        line.className = "g71-card-rating";
+
+        const info = card.querySelector(".product-info");
+        if (info) {
+          const price = info.querySelector(".price");
+          if (price) price.after(line);
+          else info.prepend(line);
+        }
+      });
+  }
+
+  async function loadReviews(product) {
+    const old = content.querySelector("#g71-reviews");
+    if (old) old.remove();
+
+    const section = element("section");
+    section.id = "g71-reviews";
+    section.style.cssText =
+      "margin-top:24px;padding-top:16px;border-top:1px solid #ddd";
+
+    section.appendChild(element("h3", "Avis des acheteurs"));
+
+    const message = element("p", "Chargement des avis...");
+    section.appendChild(message);
+    content.appendChild(section);
+
+    const { data, error } = await db
+      .from("globexa_market_product_reviews")
+      .select("id,rating,comment,created_at")
+      .eq("product_id", product.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      message.textContent = "Impossible de charger les avis.";
+      console.error("CODE71 — avis :", error);
+      return;
+    }
+
+    section.replaceChildren();
+    section.appendChild(element("h3", "Avis des acheteurs"));
+
+    const reviews = data || [];
+    const average = reviews.length
+      ? reviews.reduce((sum, item) => sum + Number(item.rating), 0)
+        / reviews.length
+      : 0;
+
+    section.appendChild(element(
+      "p",
+      reviews.length
+        ? stars(average) + " " + average.toFixed(1) +
+          "/5 — " + reviews.length + " avis"
+        : "Aucun avis pour ce produit.",
+      "color:#d98b00;font-weight:700"
+    ));
+
+    reviews.forEach(review => {
+      const card = element("div");
+      card.style.cssText =
+        "padding:12px;margin:10px 0;background:#f5f7fa;border-radius:8px";
+
+      card.appendChild(element(
+        "strong",
+        stars(review.rating),
+        "color:#d98b00"
+      ));
+
+      if (review.comment) {
+        card.appendChild(element(
+          "p",
+          review.comment,
+          "white-space:pre-wrap;line-height:1.5"
+        ));
+      }
+
+      card.appendChild(element(
+        "small",
+        dateLabel(review.created_at),
+        "color:#667085"
+      ));
+
+      section.appendChild(card);
+    });
+
+    await addReviewForm(section, product);
+  }
+
+  async function addReviewForm(section, product) {
+    const auth = await db.auth.getUser();
+    const user = auth.data?.user;
+
+    if (auth.error || !user) {
+      section.appendChild(element(
+        "p",
+        "Connectez-vous pour pouvoir laisser un avis."
+      ));
+      return;
+    }
+
+    const { data: orders, error } = await db
+      .from("globexa_market_orders")
+      .select("id,created_at")
+      .eq("buyer_id", user.id)
+      .eq("product_id", product.id)
+      .eq("status", "delivered")
+      .eq("payment_status", "paid")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("CODE71 — commandes éligibles :", error);
+      return;
+    }
+
+    if (!orders || !orders.length) {
+      section.appendChild(element(
+        "p",
+        "Vous pourrez noter ce produit après avoir reçu et payé votre commande."
+      ));
+      return;
+    }
+
+    const orderIds = orders.map(order => order.id);
+
+    const { data: existing, error: reviewError } = await db
+      .from("globexa_market_product_reviews")
+      .select("order_id")
+      .eq("buyer_id", user.id)
+      .in("order_id", orderIds);
+
+    if (reviewError) {
+      console.error("CODE71 — vérification avis :", reviewError);
+      return;
+    }
+
+    const reviewed = new Set(
+      (existing || []).map(item => item.order_id)
+    );
+
+    const eligible = orders.filter(order => !reviewed.has(order.id));
+
+    if (!eligible.length) {
+      section.appendChild(element(
+        "p",
+        "Vous avez déjà évalué votre commande."
+      ));
+      return;
+    }
+
+    const form = element("form");
+    form.style.cssText =
+      "display:grid;gap:10px;margin-top:18px";
+
+    form.appendChild(element("h4", "Donner votre avis"));
+
+    const orderLabel = element("label", "Votre commande");
+    const orderSelect = element("select");
+    orderSelect.required = true;
+    orderSelect.style.cssText = "padding:10px;border:1px solid #ccc;border-radius:6px";
+
+    eligible.forEach(order => {
+      const option = element(
+        "option",
+        "Commande du " + dateLabel(order.created_at)
+      );
+      option.value = order.id;
+      orderSelect.appendChild(option);
+    });
+
+    const ratingLabel = element("label", "Votre note");
+    const ratingSelect = element("select");
+    ratingSelect.required = true;
+    ratingSelect.style.cssText = "padding:10px;border:1px solid #ccc;border-radius:6px";
+
+    [
+      ["5", "5 étoiles — Excellent"],
+      ["4", "4 étoiles — Très bien"],
+      ["3", "3 étoiles — Bien"],
+      ["2", "2 étoiles — Moyen"],
+      ["1", "1 étoile — Mauvais"]
+    ].forEach(([value, label]) => {
+      const option = element("option", label);
+      option.value = value;
+      ratingSelect.appendChild(option);
+    });
+
+    const commentLabel = element("label", "Votre commentaire");
+    const comment = element("textarea");
+    comment.maxLength = 2000;
+    comment.rows = 4;
+    comment.placeholder = "Décrivez votre expérience (facultatif)...";
+    comment.style.cssText =
+      "padding:10px;border:1px solid #ccc;border-radius:6px;width:100%;box-sizing:border-box";
+
+    const status = element("p", "");
+    status.setAttribute("aria-live", "polite");
+
+    const submit = element("button", "Envoyer mon avis");
+    submit.type = "submit";
+    submit.style.cssText =
+      "padding:12px;background:#0b2d52;color:white;border:0;border-radius:6px;font-weight:700";
+
+    form.append(
+      orderLabel,
+      orderSelect,
+      ratingLabel,
+      ratingSelect,
+      commentLabel,
+      comment,
+      submit,
+      status
+    );
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (loading) return;
+
+      loading = true;
+      submit.disabled = true;
+      status.textContent = "Envoi de votre avis...";
+
+      const { error: submitError } = await db.rpc(
+        "globexa_submit_market_product_review",
+        {
+          p_order_id: orderSelect.value,
+          p_rating: Number(ratingSelect.value),
+          p_comment: comment.value.trim()
+        }
+      );
+
+      loading = false;
+      submit.disabled = false;
+
+      if (submitError) {
+        status.textContent =
+          submitError.message || "Impossible d'envoyer votre avis.";
+        console.error("CODE71 — envoi avis :", submitError);
+        return;
+      }
+
+      status.textContent = "Votre avis a été enregistré.";
+      await loadProductRatings(currentItems);
+      await loadReviews(product);
+    });
+
+    section.appendChild(form);
+  }
+
+  const originalRenderProducts = renderProducts;
+
+  renderProducts = function (items) {
+    currentItems = Array.isArray(items) ? items.slice() : [];
+    originalRenderProducts(items);
+    loadProductRatings(currentItems);
+  };
+
+  document.addEventListener("click", event => {
+    const button = event.target.closest(
+      "#productList .product-card button"
+    );
+
+    if (!button || button.textContent.trim() !== "Voir les détails") {
+      return;
+    }
+
+    const card = button.closest(".product-card");
+    const cards = Array.from(
+      document.querySelectorAll("#productList .product-card")
+    );
+    const index = cards.indexOf(card);
+
+    currentProduct = currentItems[index] || null;
+    if (!currentProduct) return;
+
+    setTimeout(() => {
+      if (!modal.hidden && currentProduct) {
+        loadReviews(currentProduct);
+      }
+    }, 0);
+  }, true);
+
+  if (Array.isArray(products)) {
+    currentItems = products.slice();
+    loadProductRatings(currentItems);
+  }
+
+  console.log("GLOBEXA CODE71 : avis et notes activés.");
+})();
