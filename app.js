@@ -764,3 +764,220 @@ startGlobexa();
   }
 })();
 
+/* =====================================================
+   GLOBEXA - CODE 7 : PUBLICATION ET AFFICHAGE DES REELS
+===================================================== */
+(function initGlobexaReels() {
+  const db = window.globexaSupabase;
+  if (!db) {
+    console.error("GLOBEXA : Supabase indisponible.");
+    return;
+  }
+
+  const BUCKET = "globexa-reels";
+  const feed = document.getElementById("reelFeed");
+  const panel = document.getElementById("reelUploadPanel");
+  const form = document.getElementById("reelUploadForm");
+  const fileInput = document.getElementById("reelVideoFile");
+  const captionInput = document.getElementById("reelCaption");
+  const message = document.getElementById("reelUploadMessage");
+  const loginNotice = document.getElementById("reelLoginNotice");
+  const uploadButton = document.getElementById("reelUploadButton");
+
+  if (!feed || !form || !fileInput || !captionInput) {
+    console.error("GLOBEXA : éléments Reels introuvables. Vérifie le CODE 6.");
+    return;
+  }
+
+  function showMessage(text, error = false) {
+    if (!message) return;
+    message.textContent = text;
+    message.style.color = error ? "#c62828" : "#16803c";
+  }
+
+  function updateUploadPanel() {
+    const loggedIn = !!currentUser;
+
+    if (panel) panel.hidden = !loggedIn;
+    if (loginNotice) loginNotice.hidden = loggedIn;
+  }
+
+  function createReelCard(reel) {
+    const card = document.createElement("article");
+    card.style.cssText =
+      "background:#fff;border-radius:14px;padding:12px;margin:12px 0;box-shadow:0 2px 12px #0001";
+
+    const video = document.createElement("video");
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.style.cssText =
+      "width:100%;max-height:520px;object-fit:contain;background:#000;border-radius:10px";
+
+    const publicUrl = db.storage.from(BUCKET).getPublicUrl(reel.video_path);
+    video.src = publicUrl.data.publicUrl;
+
+    const caption = document.createElement("p");
+    caption.textContent = reel.caption || "Vidéo GLOBEXA";
+    caption.style.cssText = "font-weight:600;margin:10px 0";
+
+    const status = document.createElement("small");
+    status.textContent =
+      reel.status === "pending" ? "En attente de validation" : "Vidéo publiée";
+    status.style.color = reel.status === "pending" ? "#b7791f" : "#16803c";
+
+    card.append(video, caption, status);
+    return card;
+  }
+
+  async function loadReels() {
+    feed.innerHTML = "<p>Chargement des vidéos...</p>";
+
+    let request = db
+      .from("globexa_reels")
+      .select("id,supplier_id,caption,video_path,duration_seconds,status,created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (currentUser) {
+      request = request.or(
+        "status.eq.approved,supplier_id.eq." + currentUser.id
+      );
+    } else {
+      request = request.eq("status", "approved");
+    }
+
+    const { data, error } = await request;
+
+    if (error) {
+      feed.textContent = "Impossible de charger les vidéos pour le moment.";
+      console.error("GLOBEXA Reels :", error);
+      return;
+    }
+
+    feed.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      feed.textContent = "Aucune vidéo disponible pour le moment.";
+      return;
+    }
+
+    data.forEach((reel) => {
+      feed.appendChild(createReelCard(reel));
+    });
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (!currentUser) {
+      showMessage("Connecte-toi pour publier une vidéo.", true);
+      return;
+    }
+
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) {
+      showMessage("Choisis une vidéo avant de publier.", true);
+      return;
+    }
+
+    const allowedTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      showMessage("Format accepté : MP4, WebM ou MOV.", true);
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      showMessage("La vidéo ne doit pas dépasser 100 Mo.", true);
+      return;
+    }
+
+    if (uploadButton) uploadButton.disabled = true;
+    showMessage("Vérification de la vidéo...");
+
+    const videoElement = document.createElement("video");
+    videoElement.preload = "metadata";
+    const objectUrl = URL.createObjectURL(file);
+
+    videoElement.onloadedmetadata = async function () {
+      const duration = Math.round(videoElement.duration);
+      URL.revokeObjectURL(objectUrl);
+
+      if (!Number.isFinite(duration) || duration < 1 || duration > 90) {
+        showMessage("La vidéo doit durer entre 1 et 90 secondes.", true);
+        if (uploadButton) uploadButton.disabled = false;
+        return;
+      }
+
+      const extension = file.name.split(".").pop().toLowerCase();
+      const filePath =
+        currentUser.id + "/" + crypto.randomUUID() + "." + extension;
+
+      showMessage("Envoi de la vidéo en cours...");
+
+      const { error: uploadError } = await db.storage
+        .from(BUCKET)
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error(uploadError);
+        showMessage("Échec de l'envoi de la vidéo.", true);
+        if (uploadButton) uploadButton.disabled = false;
+        return;
+      }
+
+      const { error: insertError } = await db
+        .from("globexa_reels")
+        .insert({
+          supplier_id: currentUser.id,
+          caption: captionInput.value.trim(),
+          video_path: filePath,
+          duration_seconds: duration,
+          status: "pending"
+        });
+
+      if (insertError) {
+        await db.storage.from(BUCKET).remove([filePath]);
+        console.error(insertError);
+        showMessage("Publication impossible. Vérifie ton compte fournisseur.", true);
+        if (uploadButton) uploadButton.disabled = false;
+        return;
+      }
+
+      form.reset();
+      showMessage("Vidéo envoyée ! Elle attend la validation de GLOBEXA.");
+      await loadReels();
+
+      if (uploadButton) uploadButton.disabled = false;
+    };
+
+    videoElement.onerror = function () {
+      URL.revokeObjectURL(objectUrl);
+      showMessage("Impossible de lire cette vidéo.", true);
+      if (uploadButton) uploadButton.disabled = false;
+    };
+
+    videoElement.src = objectUrl;
+  });
+
+  updateUploadPanel();
+  loadReels();
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(() => {
+      updateUploadPanel();
+      loadReels();
+    }, 0);
+  });
+
+  console.log("GLOBEXA CODE 7 : Reels initialisés.");
+})();
