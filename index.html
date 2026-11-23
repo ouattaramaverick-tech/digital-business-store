@@ -393,5 +393,292 @@ Marketplace internationale — Acheter. Vendre. Expédier.<br>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
+
+<!-- CODE 12 — MULTILINGUE GLOBEXA -->
+<script>
+(function () {
+  "use strict";
+
+  const languages = {
+    fr: "Français",
+    en: "English",
+    zh: "中文",
+    ar: "العربية",
+    es: "Español"
+  };
+
+  const translations = {
+    "Bienvenue sur GLOBEXA — Le commerce international": [
+      "Welcome to GLOBEXA — International Trade",
+      "欢迎来到 GLOBEXA — 国际贸易",
+      "مرحباً بكم في GLOBEXA — التجارة الدولية",
+      "Bienvenido a GLOBEXA — Comercio internacional"
+    ],
+    "Acheter | Vendre | Trouver des fournisseurs": [
+      "Buy | Sell | Find suppliers",
+      "采购 | 销售 | 寻找供应商",
+      "شراء | بيع | البحث عن موردين",
+      "Comprar | Vender | Encontrar proveedores"
+    ],
+    "Que recherchez-vous aujourd'hui ?": [
+      "What are you looking for today?",
+      "今天您在寻找什么？",
+      "ما الذي تبحث عنه اليوم؟",
+      "¿Qué buscas hoy?"
+    ],
+    "Rechercher": ["Search", "搜索", "بحث", "Buscar"],
+    "Mon compte": ["My account", "我的账户", "حسابي", "Mi cuenta"],
+    "Panier (": ["Cart (", "购物车 (", "السلة (", "Carrito ("],
+    "Accueil": ["Home", "首页", "الرئيسية", "Inicio"],
+    "Toutes les catégories": [
+      "All categories", "所有分类", "جميع الفئات", "Todas las categorías"
+    ],
+    "Produits": ["Products", "产品", "المنتجات", "Productos"],
+    "Fournisseurs": ["Suppliers", "供应商", "الموردون", "Proveedores"],
+    "Vidéos produits": [
+      "Product videos", "产品视频", "فيديوهات المنتجات", "Vídeos de productos"
+    ],
+    "Connexion / Inscription": [
+      "Login / Register", "登录 / 注册", "تسجيل الدخول / التسجيل", "Iniciar sesión / Registrarse"
+    ],
+    "Mon panier": ["My cart", "我的购物车", "سلتي", "Mi carrito"],
+    "Produits recommandés": [
+      "Recommended products", "推荐产品", "منتجات مقترحة", "Productos recomendados"
+    ],
+    "Découvrez des millions de possibilités commerciales": [
+      "Discover millions of business opportunities",
+      "发现数百万商机",
+      "اكتشف ملايين الفرص التجارية",
+      "Descubre millones de oportunidades comerciales"
+    ],
+    "GLOBEXA vous connecte aux produits, aux fournisseurs et aux opportunités du commerce international.": [
+      "GLOBEXA connects you with products, suppliers and international trade opportunities.",
+      "GLOBEXA 为您连接产品、供应商和国际贸易机会。",
+      "تربطك GLOBEXA بالمنتجات والموردين وفرص التجارة الدولية.",
+      "GLOBEXA te conecta con productos, proveedores y oportunidades de comercio internacional."
+    ],
+    "Découvrir les produits": [
+      "Discover products", "探索产品", "اكتشف المنتجات", "Descubrir productos"
+    ],
+    "Bienvenue sur GLOBEXA": [
+      "Welcome to GLOBEXA", "欢迎来到 GLOBEXA", "مرحباً بك في GLOBEXA", "Bienvenido a GLOBEXA"
+    ],
+    "Connectez-vous pour découvrir votre espace commercial.": [
+      "Sign in to discover your business space.",
+      "登录以查看您的商业空间。",
+      "سجّل الدخول لاكتشاف مساحتك التجارية.",
+      "Inicia sesión para descubrir tu espacio comercial."
+    ],
+    "Se connecter →": [
+      "Sign in →", "登录 →", "تسجيل الدخول ←", "Iniciar sesión →"
+    ],
+    "Vous êtes fournisseur ?": [
+      "Are you a supplier?", "您是供应商吗？", "هل أنت مورد؟", "¿Eres proveedor?"
+    ],
+    "Présentez vos produits et développez votre clientèle.": [
+      "Showcase your products and grow your customer base.",
+      "展示您的产品并扩大客户群。",
+      "اعرض منتجاتك ووسّع قاعدة عملائك.",
+      "Presenta tus productos y amplía tu clientela."
+    ],
+    "Créer un compte →": [
+      "Create an account →", "创建账户 →", "إنشاء حساب ←", "Crear una cuenta →"
+    ],
+    "GLOBEXA REELS": [
+      "GLOBEXA REELS", "GLOBEXA 短视频", "فيديوهات GLOBEXA", "GLOBEXA REELS"
+    ],
+    "Découvrez les produits en vidéo": [
+      "Discover products in videos", "通过视频发现产品", "اكتشف المنتجات بالفيديو", "Descubre productos en vídeo"
+    ],
+    "Publier une vidéo produit": [
+      "Publish a product video", "发布产品视频", "نشر فيديو للمنتج", "Publicar un vídeo de producto"
+    ],
+    "Description de la vidéo": [
+      "Video description", "视频描述", "وصف الفيديو", "Descripción del vídeo"
+    ],
+    "Présentez votre produit...": [
+      "Describe your product...", "介绍您的产品...", "عرّف بمنتجك...", "Presenta tu producto..."
+    ],
+    "Choisir une vidéo": [
+      "Choose a video", "选择视频", "اختر فيديو", "Elegir un vídeo"
+    ],
+    "Envoyer ma vidéo": [
+      "Upload my video", "上传我的视频", "إرسال الفيديو", "Enviar mi vídeo"
+    ],
+    "Fournisseurs et boutiques": [
+      "Suppliers and stores", "供应商和商店", "الموردون والمتاجر", "Proveedores y tiendas"
+    ],
+    "Mon compte GLOBEXA": [
+      "My GLOBEXA account", "我的 GLOBEXA 账户", "حسابي في GLOBEXA", "Mi cuenta GLOBEXA"
+    ],
+    "Se connecter": ["Sign in", "登录", "تسجيل الدخول", "Iniciar sesión"],
+    "Créer un compte": ["Create an account", "创建账户", "إنشاء حساب", "Crear una cuenta"],
+    "Adresse e-mail": ["Email address", "电子邮件地址", "البريد الإلكتروني", "Correo electrónico"],
+    "Mot de passe": ["Password", "密码", "كلمة المرور", "Contraseña"],
+    "Nom complet": ["Full name", "姓名", "الاسم الكامل", "Nombre completo"],
+    "Pays": ["Country", "国家", "الدولة", "País"],
+    "Créer mon compte": [
+      "Create my account", "创建我的账户", "إنشاء حسابي", "Crear mi cuenta"
+    ],
+    "Bienvenue dans votre espace": [
+      "Welcome to your account", "欢迎进入您的账户", "مرحباً بك في حسابك", "Bienvenido a tu espacio"
+    ],
+    "Se déconnecter": [
+      "Sign out", "退出登录", "تسجيل الخروج", "Cerrar sesión"
+    ],
+    "Passer la commande": [
+      "Place order", "提交订单", "إتمام الطلب", "Realizar pedido"
+    ],
+    "Marketplace internationale — Acheter. Vendre. Expédier.": [
+      "International marketplace — Buy. Sell. Ship.",
+      "国际市场 — 采购、销售、运输。",
+      "سوق دولي — اشترِ. بِع. اشحن.",
+      "Marketplace internacional — Comprar. Vender. Enviar."
+    ],
+    "Fermer ✕": ["Close ✕", "关闭 ✕", "إغلاق ✕", "Cerrar ✕"],
+    "Ajouter au panier": [
+      "Add to cart", "加入购物车", "أضف إلى السلة", "Añadir al carrito"
+    ],
+    "Voir les détails": [
+      "View details", "查看详情", "عرض التفاصيل", "Ver detalles"
+    ],
+    "Contacter le fournisseur": [
+      "Contact supplier", "联系供应商", "اتصل بالمورد", "Contactar proveedor"
+    ],
+    "Commande minimum : ": [
+      "Minimum order: ", "最低起订量：", "الحد الأدنى للطلب: ", "Pedido mínimo: "
+    ],
+    "Stock : ": ["Stock: ", "库存：", "المخزون: ", "Existencias: "],
+    "Chargement des catégories...": [
+      "Loading categories...", "正在加载分类...", "جارٍ تحميل الفئات...", "Cargando categorías..."
+    ],
+    "Chargement des produits...": [
+      "Loading products...", "正在加载产品...", "جارٍ تحميل المنتجات...", "Cargando productos..."
+    ],
+    "Aucun produit publié dans cette sélection.": [
+      "No products published in this selection.",
+      "此分类暂无已发布产品。",
+      "لا توجد منتجات منشورة في هذا الاختيار.",
+      "No hay productos publicados en esta selección."
+    ],
+    "Connectez-vous pour utiliser votre panier.": [
+      "Sign in to use your cart.",
+      "登录后使用购物车。",
+      "سجّل الدخول لاستخدام سلة التسوق.",
+      "Inicia sesión para usar tu carrito."
+    ]
+  };
+
+  let currentLanguage = "fr";
+
+  function translateText(value) {
+    const original = value;
+    const trimmed = value.trim();
+
+    if (!trimmed) return value;
+
+    const exact = translations[trimmed];
+    if (exact) {
+      const translated = exact[["fr","en","zh","ar","es"].indexOf(currentLanguage)];
+      return value.replace(trimmed, translated);
+    }
+
+    const prefixes = Object.keys(translations)
+      .filter(key => key.endsWith(" ") && trimmed.startsWith(key))
+      .sort((a, b) => b.length - a.length);
+
+    if (prefixes.length) {
+      const prefix = prefixes[0];
+      const translated = translations[prefix][["fr","en","zh","ar","es"].indexOf(currentLanguage)];
+      return value.replace(prefix, translated);
+    }
+
+    return original;
+  }
+
+  function translatePage() {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT
+    );
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node => {
+      const parent = node.parentElement;
+      if (!parent || parent.closest("script,style,textarea,[data-no-translate]")) return;
+      node.nodeValue = translateText(node.nodeValue);
+    });
+
+    document.querySelectorAll("input[placeholder],input[aria-label]").forEach(input => {
+      if (input.dataset.originalPlaceholder === undefined && input.placeholder) {
+        input.dataset.originalPlaceholder = input.placeholder;
+      }
+      if (input.dataset.originalAria === undefined && input.getAttribute("aria-label")) {
+        input.dataset.originalAria = input.getAttribute("aria-label");
+      }
+      if (input.dataset.originalPlaceholder) {
+        input.placeholder = translateText(input.dataset.originalPlaceholder);
+      }
+      if (input.dataset.originalAria) {
+        input.setAttribute("aria-label", translateText(input.dataset.originalAria));
+      }
+    });
+
+    document.documentElement.lang = currentLanguage;
+    document.documentElement.dir = currentLanguage === "ar" ? "rtl" : "ltr";
+  }
+
+  function addLanguageSelector() {
+    const topbar = document.querySelector(".topbar");
+    if (!topbar || document.getElementById("globexaLanguage")) return;
+
+    const select = document.createElement("select");
+    select.id = "globexaLanguage";
+    select.setAttribute("aria-label", "Choose language");
+    select.style.cssText =
+      "padding:7px 10px;border-radius:5px;border:1px solid #ffffff66;" +
+      "background:#ffffff;color:#08233f;font-weight:700;max-width:145px";
+
+    Object.entries(languages).forEach(([code, label]) => {
+      const option = document.createElement("option");
+      option.value = code;
+      option.textContent = label;
+      select.appendChild(option);
+    });
+
+    select.value = currentLanguage;
+    select.addEventListener("change", function () {
+      currentLanguage = select.value;
+      try {
+        localStorage.setItem("globexa_language", currentLanguage);
+      } catch (error) {}
+      translatePage();
+    });
+
+    topbar.appendChild(select);
+  }
+
+  try {
+    const saved = localStorage.getItem("globexa_language");
+    if (saved && languages[saved]) currentLanguage = saved;
+  } catch (error) {}
+
+  addLanguageSelector();
+  translatePage();
+
+  const observer = new MutationObserver(() => {
+    translatePage();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  console.log("GLOBEXA CODE 12 : Multilingue activé.");
+})();
+</script>
 </body>
 </html>
