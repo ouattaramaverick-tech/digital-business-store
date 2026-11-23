@@ -5028,3 +5028,140 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 22 : Affichage automatique activé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 23 : FOURNISSEURS DUBAÏ, CHINE ET TURQUIE
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  if (window.globexaCode23Loaded) return;
+  window.globexaCode23Loaded = true;
+
+  const target = document.getElementById("productList");
+  const status = document.getElementById("productStatus");
+
+  if (!target || !status) {
+    console.error("GLOBEXA CODE 23 : Catalogue introuvable.");
+    return;
+  }
+
+  const originalRenderProducts = renderProducts;
+
+  const filterBox = document.createElement("div");
+  filterBox.id = "globexa-country-filter";
+  filterBox.style.cssText =
+    "display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:15px 0;";
+
+  const label = document.createElement("label");
+  label.textContent = "Fournisseurs par pays :";
+  label.style.fontWeight = "600";
+
+  const select = document.createElement("select");
+  select.id = "globexa-country-select";
+  select.style.cssText =
+    "padding:11px;border:1px solid #d0d7e2;border-radius:8px;max-width:100%;";
+
+  [
+    ["all", "Tous les pays"],
+    ["uae", "Dubaï 🇦🇪 — Émirats arabes unis"],
+    ["china", "Chine 🇨🇳"],
+    ["turkey", "Turquie 🇹🇷"]
+  ].forEach(([value, text]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = text;
+    select.appendChild(option);
+  });
+
+  filterBox.append(label, select);
+  target.parentNode.insertBefore(filterBox, target);
+
+  function getStore(product) {
+    return Array.isArray(product.store)
+      ? product.store[0]
+      : product.store;
+  }
+
+  function normalize(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function matchesCountry(product, country) {
+    if (country === "all") return true;
+
+    const store = getStore(product) || {};
+    const location = normalize(
+      (store.country || "") + " " + (store.city || "")
+    );
+
+    if (country === "uae") {
+      return /united arab emirates|uae|emirats arabes unis|dubai|dubaï/.test(location);
+    }
+
+    if (country === "china") {
+      return /china|chine|中国/.test(location);
+    }
+
+    if (country === "turkey") {
+      return /turkey|turkiye|turquie/.test(location);
+    }
+
+    return true;
+  }
+
+  renderProducts = function(items) {
+    const selectedCountry = select.value;
+    const filtered = (items || []).filter(product =>
+      matchesCountry(product, selectedCountry)
+    );
+
+    originalRenderProducts(filtered);
+
+    if (!filtered.length && selectedCountry !== "all") {
+      status.textContent =
+        "Aucun produit publié trouvé pour ce pays pour le moment.";
+    }
+  };
+
+  loadProducts = async function(categoryId = null) {
+    status.textContent = "Chargement des produits...";
+
+    let query = db
+      .from("globexa_market_products")
+      .select(
+        "id,title,description,currency,base_price,moq,stock_quantity,images,category_id,store:globexa_stores(company_name,country,city)"
+      )
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(80);
+
+    if (categoryId) {
+      query = query.eq("category_id", categoryId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      status.textContent = "Erreur de chargement du catalogue.";
+      console.error("GLOBEXA CODE 23 :", error);
+      return;
+    }
+
+    products = data || [];
+    renderProducts(products);
+  };
+
+  select.addEventListener("change", () => {
+    renderProducts(products);
+  });
+
+  console.log(
+    "GLOBEXA CODE 23 : Filtres Dubaï, Chine et Turquie activés."
+  );
+})();
