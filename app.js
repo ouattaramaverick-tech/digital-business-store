@@ -2256,3 +2256,130 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 14 : Demandes de devis activées.");
 })();
+
+/* GLOBEXA — CODE 15 : ANNUAIRE PUBLIC DES TRANSITAIRES */
+(() => {
+  'use strict';
+
+  const db = window.globexaSupabase;
+  const anchor = document.querySelector('#fournisseurs');
+  if (!anchor || document.getElementById('globexa-forwarders')) return;
+
+  const section = document.createElement('section');
+  section.id = 'globexa-forwarders';
+  section.className = 'section';
+  section.setAttribute('aria-labelledby', 'globexa-forwarders-title');
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #globexa-forwarders{background:#fff;border:1px solid #e4eaf1;border-radius:10px;padding:20px;margin-top:22px}
+    #globexa-forwarders .gf-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    #globexa-forwarders h2{margin:0;color:#123b63;font-size:22px}
+    #globexa-forwarders .gf-intro{color:#607080;margin:7px 0 15px;line-height:1.55}
+    #globexa-forwarders .gf-search{width:100%;max-width:440px;padding:12px 14px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;box-sizing:border-box}
+    #globexa-forwarders .gf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px;margin-top:16px}
+    #globexa-forwarders .gf-card{border:1px solid #e2e8f0;border-radius:9px;padding:15px;background:#fff;min-width:0}
+    #globexa-forwarders .gf-card h3{margin:0 0 9px;color:#123b63;font-size:17px;overflow-wrap:anywhere}
+    #globexa-forwarders .gf-meta{margin:6px 0;color:#475569;line-height:1.5;overflow-wrap:anywhere}
+    #globexa-forwarders .gf-country{display:inline-block;background:#fff2e8;color:#a64b0b;border-radius:20px;padding:4px 10px;font-size:13px;font-weight:600}
+    #globexa-forwarders .gf-state{padding:13px;border-radius:8px;background:#f5f8fc;color:#475569;line-height:1.5}
+    #globexa-forwarders .gf-count{font-size:13px;color:#64748b}
+  `;
+  document.head.appendChild(style);
+
+  section.innerHTML = `
+    <div class="gf-head">
+      <div>
+        <h2 id="globexa-forwarders-title">Transitaires et transport international</h2>
+        <p class="gf-intro">Trouvez un transitaire approuvé et recherchez les entreprises par pays.</p>
+      </div>
+      <span class="gf-count" id="globexa-forwarders-count">Chargement…</span>
+    </div>
+    <input class="gf-search" id="globexa-forwarders-search"
+      type="search"
+      placeholder="Rechercher un pays (ex. Chine, Burkina Faso)…"
+      aria-label="Rechercher un transitaire par pays"
+      autocomplete="off">
+    <div class="gf-grid" id="globexa-forwarders-list" aria-live="polite">
+      <div class="gf-state">Chargement des transitaires…</div>
+    </div>
+  `;
+
+  anchor.after(section);
+
+  const searchInput = section.querySelector('#globexa-forwarders-search');
+  const list = section.querySelector('#globexa-forwarders-list');
+  const count = section.querySelector('#globexa-forwarders-count');
+  let forwarders = [];
+
+  const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+
+  const render = () => {
+    const term = searchInput.value.trim().toLocaleLowerCase();
+
+    const filtered = forwarders.filter((item) => {
+      const country = String(item.country || '').toLocaleLowerCase();
+      const company = String(item.company_name || '').toLocaleLowerCase();
+      return !term || country.includes(term) || company.includes(term);
+    });
+
+    count.textContent = `${filtered.length} transitaire${filtered.length > 1 ? 's' : ''}`;
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="gf-state">${
+        forwarders.length
+          ? 'Aucun transitaire ne correspond à cette recherche.'
+          : 'Aucun transitaire approuvé pour le moment. Les fiches apparaîtront ici après leur approbation par GLOBEXA.'
+      }</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((item) => `
+      <article class="gf-card">
+        <h3>${escapeHTML(item.company_name || 'Entreprise de transport')}</h3>
+        <p class="gf-meta">
+          <span class="gf-country">${escapeHTML(item.country || 'Pays non précisé')}</span>
+        </p>
+        ${item.contact
+          ? `<p class="gf-meta"><strong>Contact :</strong> ${escapeHTML(item.contact)}</p>`
+          : '<p class="gf-meta">Contact non renseigné</p>'}
+      </article>
+    `).join('');
+  };
+
+  searchInput.addEventListener('input', render);
+
+  const loadForwarders = async () => {
+    if (!db || typeof db.from !== 'function') {
+      count.textContent = 'Indisponible';
+      list.innerHTML = '<div class="gf-state">La connexion à la base de données est indisponible.</div>';
+      return;
+    }
+
+    const { data, error } = await db
+      .from('transitaires')
+      .select('id, company_name, country, contact')
+      .eq('status', 'approved')
+      .order('company_name', { ascending: true })
+      .limit(100);
+
+    if (error) {
+      console.error('GLOBEXA CODE 15 — erreur de chargement :', error);
+      count.textContent = 'Erreur de chargement';
+      list.innerHTML = '<div class="gf-state">Impossible de charger les transitaires pour le moment.</div>';
+      return;
+    }
+
+    forwarders = Array.isArray(data) ? data : [];
+    render();
+  };
+
+  loadForwarders();
+  console.log('GLOBEXA CODE 15 : Annuaire public des transitaires activé.');
+})();
