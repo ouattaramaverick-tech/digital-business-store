@@ -5364,3 +5364,70 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 25 : Annuaire international activé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 26 : RECHERCHE INTELLIGENTE INTERNATIONALE
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  if (window.globexaCode26Loaded) return;
+  window.globexaCode26Loaded = true;
+
+  const form = document.getElementById("searchForm");
+  const input = document.getElementById("searchInput");
+
+  if (!form || !input || typeof renderProducts !== "function") {
+    console.error("GLOBEXA CODE 26 : Recherche introuvable.");
+    return;
+  }
+
+  function normalize(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function searchProducts() {
+    const term = normalize(input.value);
+
+    if (!term) {
+      renderProducts(products);
+      return;
+    }
+
+    const results = products.filter(product => {
+      const store = Array.isArray(product.store)
+        ? product.store[0]
+        : product.store || {};
+
+      const searchable = normalize([
+        product.title,
+        product.description,
+        product.category_name,
+        store.company_name,
+        store.country,
+        store.city
+      ].join(" "));
+
+      return searchable.includes(term);
+    });
+
+    renderProducts(results);
+  }
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    searchProducts();
+  }, true);
+
+  input.addEventListener("input", searchProducts);
+
+  console.log(
+    "GLOBEXA CODE 26 : Recherche internationale activée."
+  );
+})();
