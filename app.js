@@ -6223,3 +6223,224 @@ function createOrderCard(order) {
 
   console.log("GLOBEXA CODE 66 : Gestion des remboursements chargée.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 67 : DEMANDE DE REMBOURSEMENT ACHETEUR
+   ========================================================= */
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  if (!db || window.globexaCode67Loaded) return;
+  window.globexaCode67Loaded = true;
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-buyer-refund-panel";
+  panel.hidden = true;
+  panel.style.cssText =
+    "max-width:1100px;margin:25px auto;padding:20px;" +
+    "background:#fff;border:1px solid #dce5ef;" +
+    "border-radius:12px;color:#17324d;font-family:Arial,sans-serif;";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Mes demandes de remboursement";
+
+  const intro = document.createElement("p");
+  intro.textContent =
+    "Retrouvez vos commandes payées et demandez un remboursement si nécessaire.";
+
+  const warning = document.createElement("p");
+  warning.textContent =
+    "Une demande sera examinée par l'administrateur. " +
+    "Son approbation ne signifie pas que l'argent a déjà été envoyé.";
+  warning.style.cssText =
+    "padding:12px;background:#fff4df;color:#7a4300;border-radius:8px;";
+
+  const message = document.createElement("p");
+  message.setAttribute("role", "status");
+
+  const list = document.createElement("div");
+  list.style.cssText = "display:grid;gap:14px;";
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "Actualiser mes commandes";
+
+  panel.append(heading, intro, warning, message, refresh, list);
+
+  const account = document.getElementById("compte");
+  if (account && account.parentNode) {
+    account.parentNode.insertBefore(panel, account);
+  } else {
+    document.querySelector("main")?.appendChild(panel);
+  }
+
+  function element(tag, value) {
+    const item = document.createElement(tag);
+    if (value !== undefined) item.textContent = String(value);
+    return item;
+  }
+
+  function show(text, error = false) {
+    message.textContent = text;
+    message.style.color = error ? "#b42318" : "#176534";
+  }
+
+  function money(amount, currency) {
+    return Number(amount || 0).toLocaleString("fr-FR") +
+      " " + (currency || "");
+  }
+
+  function eligible(order) {
+    return order.payment_status === "paid" &&
+      ["paid", "processing", "shipped", "delivered", "disputed"]
+        .includes(order.status) &&
+      Number(order.subtotal) > 0 &&
+      Boolean(order.payment_method) &&
+      Boolean(order.payment_reference);
+  }
+
+  function createCard(order) {
+    const card = element("article");
+    card.style.cssText =
+      "padding:16px;border:1px solid #dce5ef;" +
+      "border-radius:10px;background:#f9fbfd;";
+
+    const reference = order.id.slice(0, 8).toUpperCase();
+
+    card.append(
+      element("h3", "Commande #" + reference),
+      element("p", "Montant : " + money(order.subtotal, order.currency)),
+      element("p", "Quantité : " + order.quantity),
+      element("p", "Statut : " + order.status),
+      element("p", "Paiement : " + order.payment_status),
+      element("p", "Date : " +
+        new Date(order.created_at).toLocaleString("fr-FR"))
+    );
+
+    if (!eligible(order)) {
+      card.appendChild(element(
+        "p",
+        "Cette commande ne remplit pas actuellement les conditions de demande."
+      ));
+      return card;
+    }
+
+    const label = element("label", "Expliquez le motif de votre demande :");
+    label.style.cssText = "display:block;font-weight:600;margin-top:12px;";
+
+    const reason = document.createElement("textarea");
+    reason.rows = 4;
+    reason.maxLength = 2000;
+    reason.minLength = 10;
+    reason.placeholder =
+      "Décrivez clairement pourquoi vous demandez un remboursement.";
+    reason.required = true;
+    reason.style.cssText =
+      "box-sizing:border-box;width:100%;padding:11px;margin:8px 0;" +
+      "border:1px solid #ccd6e1;border-radius:7px;font:inherit;";
+
+    const submit = element("button", "Envoyer la demande");
+    submit.type = "button";
+    submit.style.cssText =
+      "padding:11px 16px;background:#123f75;color:white;" +
+      "border:0;border-radius:7px;font-weight:600;cursor:pointer;";
+
+    submit.addEventListener("click", async () => {
+      const text = reason.value.trim();
+
+      if (text.length < 10 || text.length > 2000) {
+        show("Le motif doit contenir entre 10 et 2000 caractères.", true);
+        return;
+      }
+
+      if (!window.confirm(
+        "Envoyer une demande de remboursement pour cette commande ?"
+      )) return;
+
+      submit.disabled = true;
+      submit.textContent = "Envoi en cours…";
+
+      const { error } = await db.rpc(
+        "globexa_request_market_refund",
+        {
+          p_order_id: order.id,
+          p_reason: text
+        }
+      );
+
+      if (error) {
+        console.error("GLOBEXA CODE 67 :", error);
+        show(error.message || "Impossible d'envoyer la demande.", true);
+        submit.disabled = false;
+        submit.textContent = "Envoyer la demande";
+        return;
+      }
+
+      show("Votre demande a bien été envoyée à l'administrateur.");
+      await loadOrders();
+    });
+
+    card.append(label, reason, submit);
+    return card;
+  }
+
+  async function loadOrders() {
+    list.replaceChildren();
+    show("Chargement de vos commandes…");
+
+    const { data: auth, error: authError } =
+      await db.auth.getUser();
+
+    if (authError || !auth?.user) {
+      show("Connectez-vous pour consulter vos commandes.", true);
+      return;
+    }
+
+    const { data, error } = await db
+      .from("globexa_market_orders")
+      .select(
+        "id,quantity,subtotal,currency,status,payment_status," +
+        "payment_method,payment_reference,created_at"
+      )
+      .eq("buyer_id", auth.user.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("GLOBEXA CODE 67 :", error);
+      show("Impossible de charger vos commandes.", true);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      show("Vous n'avez pas encore de commande.");
+      return;
+    }
+
+    show(data.length + " commande(s) trouvée(s).");
+    data.forEach(order => list.appendChild(createCard(order)));
+  }
+
+  async function initialize() {
+    panel.hidden = true;
+
+    const { data, error } = await db.auth.getUser();
+    if (error || !data?.user) return;
+
+    panel.hidden = false;
+    await loadOrders();
+  }
+
+  refresh.addEventListener("click", loadOrders);
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(initialize, 0);
+  });
+
+  initialize();
+
+  console.log(
+    "GLOBEXA CODE 67 : Demandes de remboursement acheteur chargées."
+  );
+})();
