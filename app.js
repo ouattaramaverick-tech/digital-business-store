@@ -3539,3 +3539,358 @@ startGlobexa();
     'GLOBEXA CODE 17 : Suivi détaillé des expéditions activé.'
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 18 : CENTRE DE NOTIFICATIONS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+
+  if (!db || document.getElementById("globexa-notifications")) {
+    console.error("GLOBEXA CODE 18 : Supabase indisponible ou code déjà chargé.");
+    return;
+  }
+
+  const root = document.createElement("div");
+  root.id = "globexa-notifications";
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #globexa-notifications {
+      position: fixed;
+      right: 16px;
+      bottom: 18px;
+      z-index: 99999;
+      font-family: Arial, sans-serif;
+      color: #17324d;
+    }
+    #g18-toggle {
+      border: 0;
+      border-radius: 28px;
+      padding: 13px 18px;
+      background: #123f75;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 5px 20px #0003;
+    }
+    #g18-count {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 3px 7px;
+      border-radius: 20px;
+      background: #f28c28;
+      color: white;
+    }
+    #g18-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      bottom: 58px;
+      width: min(360px, calc(100vw - 32px));
+      max-height: 70vh;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #dce5ef;
+      border-radius: 14px;
+      box-shadow: 0 8px 35px #0003;
+      padding: 15px;
+    }
+    #g18-panel.g18-open {
+      display: block;
+    }
+    .g18-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .g18-head h3 {
+      margin: 0;
+      font-size: 17px;
+    }
+    .g18-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .g18-actions button {
+      border: 1px solid #dce5ef;
+      background: #f5f8fc;
+      border-radius: 7px;
+      padding: 7px;
+      cursor: pointer;
+      color: #17324d;
+    }
+    .g18-item {
+      padding: 11px;
+      margin-bottom: 8px;
+      border: 1px solid #e1e8f0;
+      border-radius: 9px;
+      background: white;
+    }
+    .g18-item.g18-unread {
+      background: #eef5ff;
+      border-left: 4px solid #f28c28;
+    }
+    .g18-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .g18-item p {
+      margin: 4px 0;
+      font-size: 13px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .g18-item small {
+      color: #68798c;
+      font-size: 11px;
+    }
+    .g18-read {
+      margin-top: 8px;
+      border: 0;
+      background: #123f75;
+      color: white;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .g18-empty {
+      padding: 20px 8px;
+      text-align: center;
+      color: #68798c;
+      font-size: 13px;
+    }
+    .g18-error {
+      color: #b42318;
+      font-size: 13px;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const toggle = document.createElement("button");
+  toggle.id = "g18-toggle";
+  toggle.type = "button";
+  toggle.textContent = "Notifications";
+
+  const count = document.createElement("span");
+  count.id = "g18-count";
+  count.textContent = "0";
+  toggle.appendChild(count);
+
+  const panel = document.createElement("section");
+  panel.id = "g18-panel";
+
+  const head = document.createElement("div");
+  head.className = "g18-head";
+
+  const heading = document.createElement("h3");
+  heading.textContent = "Mes notifications";
+
+  const actions = document.createElement("div");
+  actions.className = "g18-actions";
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "Actualiser";
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.textContent = "Fermer";
+
+  actions.append(refresh, close);
+  head.append(heading, actions);
+
+  const list = document.createElement("div");
+  list.id = "g18-list";
+
+  const markAll = document.createElement("button");
+  markAll.type = "button";
+  markAll.className = "g18-read";
+  markAll.textContent = "Tout marquer comme lu";
+  markAll.style.display = "none";
+
+  panel.append(head, markAll, list);
+  root.append(toggle, panel);
+  document.body.appendChild(root);
+
+  let currentUserId = null;
+  let loading = false;
+
+  function showMessage(text, className = "g18-empty") {
+    list.replaceChildren();
+    const message = document.createElement("div");
+    message.className = className;
+    message.textContent = text;
+    list.appendChild(message);
+  }
+
+  function formatDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("fr-FR");
+  }
+
+  function typeLabel(type) {
+    const labels = {
+      order: "Commande",
+      payment: "Paiement",
+      shipment: "Expédition",
+      message: "Message",
+      dispute: "Litige",
+      general: "Information"
+    };
+    return labels[type] || "Notification";
+  }
+
+  async function markAsRead(notificationId) {
+    if (!currentUserId) return;
+
+    const { error } = await db
+      .from("globexa_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId)
+      .eq("user_id", currentUserId)
+      .is("read_at", null);
+
+    if (error) {
+      console.error("CODE 18 — lecture :", error);
+      alert("Impossible de modifier cette notification.");
+      return;
+    }
+
+    await loadNotifications();
+  }
+
+  function renderNotifications(rows) {
+    list.replaceChildren();
+
+    const unread = rows.filter(item => !item.read_at);
+    count.textContent = String(unread.length);
+    markAll.style.display = unread.length ? "inline-block" : "none";
+
+    if (!rows.length) {
+      showMessage("Aucune notification pour le moment.");
+      return;
+    }
+
+    rows.forEach(item => {
+      const card = document.createElement("article");
+      card.className = "g18-item" + (item.read_at ? "" : " g18-unread");
+
+      const title = document.createElement("strong");
+      title.textContent = item.title || typeLabel(item.notification_type);
+
+      const body = document.createElement("p");
+      body.textContent = item.body || "";
+
+      const type = document.createElement("small");
+      type.textContent = typeLabel(item.notification_type);
+
+      const date = document.createElement("small");
+      date.textContent = " • " + formatDate(item.created_at);
+
+      card.append(title, body, type, date);
+
+      if (!item.read_at) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "g18-read";
+        button.textContent = "Marquer comme lu";
+        button.addEventListener("click", () => markAsRead(item.id));
+        card.appendChild(button);
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  async function loadNotifications() {
+    if (loading) return;
+
+    const { data: authData, error: authError } = await db.auth.getUser();
+
+    if (authError || !authData.user) {
+      currentUserId = null;
+      count.textContent = "0";
+      markAll.style.display = "none";
+      showMessage("Connectez-vous pour consulter vos notifications.");
+      return;
+    }
+
+    currentUserId = authData.user.id;
+    loading = true;
+    showMessage("Chargement des notifications...");
+
+    try {
+      const { data, error } = await db
+        .from("globexa_notifications")
+        .select("id,user_id,notification_type,title,body,order_id,message_id,read_at,created_at")
+        .eq("user_id", currentUserId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      renderNotifications(data || []);
+    } catch (error) {
+      console.error("CODE 18 — chargement :", error);
+      showMessage(
+        "Impossible de charger les notifications. Réessayez.",
+        "g18-error"
+      );
+    } finally {
+      loading = false;
+    }
+  }
+
+  markAll.addEventListener("click", async () => {
+    if (!currentUserId) return;
+
+    markAll.disabled = true;
+
+    const { error } = await db
+      .from("globexa_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", currentUserId)
+      .is("read_at", null);
+
+    markAll.disabled = false;
+
+    if (error) {
+      console.error("CODE 18 — tout marquer comme lu :", error);
+      alert("Impossible de modifier les notifications.");
+      return;
+    }
+
+    await loadNotifications();
+  });
+
+  toggle.addEventListener("click", () => {
+    panel.classList.toggle("g18-open");
+    if (panel.classList.contains("g18-open")) {
+      loadNotifications();
+    }
+  });
+
+  refresh.addEventListener("click", loadNotifications);
+
+  close.addEventListener("click", () => {
+    panel.classList.remove("g18-open");
+  });
+
+  db.auth.onAuthStateChange(() => {
+    currentUserId = null;
+    count.textContent = "0";
+    if (panel.classList.contains("g18-open")) {
+      loadNotifications();
+    }
+  });
+
+  console.log("GLOBEXA CODE 18 : Centre de notifications activé.");
+})();
