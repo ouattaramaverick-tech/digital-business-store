@@ -5212,3 +5212,155 @@ startGlobexa();
     "GLOBEXA CODE 24 : Affichage des villes activé."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 25 : RECHERCHE DES FOURNISSEURS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  if (window.globexaCode25Loaded) return;
+  window.globexaCode25Loaded = true;
+
+  const target = document.getElementById("supplierList");
+
+  if (!target || !window.globexaSupabase) {
+    console.error("GLOBEXA CODE 25 : Annuaire indisponible.");
+    return;
+  }
+
+  const db = window.globexaSupabase;
+  let allStores = [];
+
+  const controls = document.createElement("div");
+  controls.style.cssText =
+    "display:flex;flex-wrap:wrap;gap:10px;margin:15px 0;";
+
+  const search = document.createElement("input");
+  search.type = "search";
+  search.placeholder = "Rechercher un fournisseur, une ville...";
+  search.setAttribute("aria-label", "Rechercher un fournisseur");
+  search.style.cssText =
+    "flex:1;min-width:190px;padding:12px;border:1px solid #ccd5df;border-radius:8px;";
+
+  const country = document.createElement("select");
+  country.style.cssText =
+    "flex:1;min-width:190px;padding:12px;border:1px solid #ccd5df;border-radius:8px;";
+
+  [
+    ["all", "Tous les pays"],
+    ["uae", "Dubaï 🇦🇪"],
+    ["china", "Chine 🇨🇳"],
+    ["turkey", "Turquie 🇹🇷"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    country.appendChild(option);
+  });
+
+  controls.append(search, country);
+  target.parentNode.insertBefore(controls, target);
+
+  function normalize(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function matchesStore(store) {
+    const term = normalize(search.value);
+    const location = normalize(
+      (store.country || "") + " " + (store.city || "")
+    );
+
+    const searchable = normalize(
+      (store.company_name || "") + " " +
+      (store.description || "") + " " +
+      (store.city || "") + " " +
+      (store.country || "")
+    );
+
+    if (term && !searchable.includes(term)) return false;
+
+    if (country.value === "uae") {
+      return /united arab emirates|uae|emirats arabes unis|dubai/.test(location);
+    }
+
+    if (country.value === "china") {
+      return /china|chine|中国/.test(location);
+    }
+
+    if (country.value === "turkey") {
+      return /turkey|turkiye|turquie/.test(location);
+    }
+
+    return true;
+  }
+
+  function renderDirectory() {
+    target.replaceChildren();
+
+    const results = allStores.filter(matchesStore);
+
+    if (!results.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty";
+      empty.textContent =
+        "Aucun fournisseur ne correspond à cette recherche pour le moment.";
+      target.appendChild(empty);
+      return;
+    }
+
+    results.forEach(store => {
+      const card = document.createElement("article");
+      card.className = "supplier-card";
+
+      const name = document.createElement("h3");
+      name.textContent = store.company_name || "Fournisseur GLOBEXA";
+
+      const location = document.createElement("p");
+      location.className = "muted";
+      location.textContent =
+        [store.city, store.country].filter(Boolean).join(", ") ||
+        "Localisation non renseignée";
+
+      const description = document.createElement("p");
+      description.textContent =
+        store.description || "Boutique professionnelle GLOBEXA.";
+
+      card.append(name, location, description);
+      target.appendChild(card);
+    });
+  }
+
+  loadSuppliers = async function() {
+    target.textContent = "Chargement des fournisseurs...";
+
+    const { data, error } = await db
+      .from("globexa_stores")
+      .select("id,company_name,country,city,description")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      target.textContent = "Impossible de charger les fournisseurs.";
+      console.error("GLOBEXA CODE 25 :", error);
+      return;
+    }
+
+    allStores = data || [];
+    renderDirectory();
+  };
+
+  search.addEventListener("input", renderDirectory);
+  country.addEventListener("change", renderDirectory);
+
+  loadSuppliers();
+
+  console.log("GLOBEXA CODE 25 : Annuaire international activé.");
+})();
