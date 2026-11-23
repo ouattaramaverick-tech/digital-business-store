@@ -1354,3 +1354,284 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 8 : Messagerie initialisée.");
 })();
+/* =====================================================
+   GLOBEXA — CODE 13 : GESTION DES COMMANDES FOURNISSEUR
+===================================================== */
+(function initGlobexaSupplierOrders() {
+  const db = window.globexaSupabase;
+  if (!db) {
+    console.error("CODE 13 : Supabase indisponible.");
+    return;
+  }
+
+  const panel = document.createElement("section");
+  panel.id = "globexaSupplierOrders";
+  panel.className = "section panel";
+  panel.style.cssText =
+    "background:#fff;border:1px solid #e3e8ef;border-radius:10px;padding:18px;margin:20px 0";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "Mes commandes fournisseur";
+  heading.style.color = "#0b2d52";
+
+  const description = document.createElement("p");
+  description.className = "muted";
+  description.textContent =
+    "Consultez vos commandes et mettez à jour leur avancement.";
+
+  const statusMessage = document.createElement("p");
+  statusMessage.className = "message";
+  statusMessage.textContent =
+    "Connectez-vous avec votre compte fournisseur.";
+
+  const orderList = document.createElement("div");
+  orderList.style.cssText = "display:grid;gap:14px;margin-top:15px";
+
+  const refreshButton = document.createElement("button");
+  refreshButton.type = "button";
+  refreshButton.className = "small-btn";
+  refreshButton.textContent = "Actualiser les commandes";
+  refreshButton.style.marginTop = "12px";
+
+  panel.append(heading, description, statusMessage, refreshButton, orderList);
+
+  const accountSection = document.getElementById("compte");
+  if (accountSection) {
+    accountSection.parentNode.insertBefore(panel, accountSection);
+  } else {
+    document.querySelector("main")?.appendChild(panel);
+  }
+
+  const allowedStatuses = [
+    "pending",
+    "processing",
+    "shipped",
+    "completed",
+    "cancelled"
+  ];
+
+  const statusLabels = {
+    pending: "En attente",
+    processing: "En traitement",
+    shipped: "Expédiée",
+    completed: "Terminée",
+    cancelled: "Annulée",
+    awaiting_payment: "En attente de paiement",
+    paid: "Payée",
+    delivered: "Livrée",
+    disputed: "En litige"
+  };
+
+  function showStatus(text, error = false) {
+    statusMessage.textContent = text;
+    statusMessage.style.background = error ? "#fff0ef" : "#edf5ff";
+    statusMessage.style.color = error ? "#a3261d" : "#176534";
+  }
+
+  function makeText(tag, value, className) {
+    const element = document.createElement(tag);
+    element.textContent = value;
+    if (className) element.className = className;
+    return element;
+  }
+
+  function formatMoney(amount, currency) {
+    return Number(amount || 0).toLocaleString("fr-FR") +
+      " " + (currency || "USD");
+  }
+
+  function createOrderCard(order) {
+    const card = document.createElement("article");
+    card.style.cssText =
+      "border:1px solid #e3e8ef;border-radius:9px;padding:15px;background:#fff";
+
+    const product = Array.isArray(order.product)
+      ? order.product[0]
+      : order.product;
+
+    const productName = product?.title || "Produit non disponible";
+
+    const reference = makeText(
+      "strong",
+      "Commande #" + order.id.slice(0, 8).toUpperCase()
+    );
+
+    const productTitle = makeText("h3", productName);
+    productTitle.style.cssText = "color:#0b2d52;margin:10px 0";
+
+    const quantity = makeText("p", "Quantité : " + order.quantity);
+    const unitPrice = makeText(
+      "p",
+      "Prix unitaire : " + formatMoney(order.unit_price, order.currency)
+    );
+    const total = makeText(
+      "p",
+      "Montant : " + formatMoney(
+        order.subtotal ?? Number(order.unit_price) * Number(order.quantity),
+        order.currency
+      )
+    );
+
+    const payment = makeText(
+      "p",
+      "Paiement : " + (order.payment_status || "pending")
+    );
+    payment.className = "muted";
+
+    const date = makeText(
+      "p",
+      "Date : " + new Date(order.created_at).toLocaleString("fr-FR")
+    );
+    date.className = "muted";
+
+    const currentStatus = makeText(
+      "p",
+      "Statut actuel : " +
+        (statusLabels[order.status] || order.status)
+    );
+
+    currentStatus.style.fontWeight = "700";
+
+    card.append(
+      reference,
+      productTitle,
+      quantity,
+      unitPrice,
+      total,
+      payment,
+      date,
+      currentStatus
+    );
+
+    if (
+      !allowedStatuses.includes(order.status) ||
+      order.status === "completed" ||
+      order.status === "cancelled"
+    ) {
+      const note = makeText(
+        "p",
+        "Cette commande ne peut plus être modifiée depuis cet espace."
+      );
+      note.className = "muted";
+      card.appendChild(note);
+      return card;
+    }
+
+    const label = makeText("label", "Modifier le statut");
+    label.style.cssText =
+      "display:block;font-weight:700;margin-top:12px";
+
+    const select = document.createElement("select");
+    select.style.cssText =
+      "width:100%;padding:11px;border:1px solid #ccd6e1;" +
+      "border-radius:6px;margin:8px 0";
+
+    allowedStatuses.forEach(status => {
+      const option = document.createElement("option");
+      option.value = status;
+      option.textContent = statusLabels[status];
+      select.appendChild(option);
+    });
+
+    select.value = order.status;
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.textContent = "Enregistrer le statut";
+    saveButton.style.width = "100%";
+
+    saveButton.addEventListener("click", async () => {
+      const newStatus = select.value;
+
+      if (!allowedStatuses.includes(newStatus)) {
+        showStatus("Statut non autorisé.", true);
+        return;
+      }
+
+      if (newStatus === order.status) {
+        showStatus("Aucun changement de statut.");
+        return;
+      }
+
+      saveButton.disabled = true;
+      saveButton.textContent = "Enregistrement...";
+
+      const { error } = await db.rpc(
+        "globexa_supplier_update_order_status",
+        {
+          p_order_id: order.id,
+          p_new_status: newStatus
+        }
+      );
+
+      if (error) {
+        console.error("Mise à jour commande :", error);
+        showStatus(
+          error.message || "Impossible de modifier cette commande.",
+          true
+        );
+        saveButton.disabled = false;
+        saveButton.textContent = "Enregistrer le statut";
+        return;
+      }
+
+      showStatus("Statut de la commande mis à jour avec succès.");
+      await loadSupplierOrders();
+    });
+
+    card.append(label, select, saveButton);
+    return card;
+  }
+
+  async function loadSupplierOrders() {
+    orderList.replaceChildren();
+
+    if (!currentUser) {
+      showStatus("Connectez-vous avec votre compte fournisseur.");
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+    showStatus("Chargement de vos commandes...");
+
+    const { data, error } = await db
+      .from("globexa_market_orders")
+      .select(
+        "id,product_id,quantity,unit_price,subtotal,currency,status,payment_status,created_at,product:globexa_market_products(title)"
+      )
+      .eq("supplier_id", currentUser.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      console.error("Commandes fournisseur :", error);
+      showStatus("Impossible de charger les commandes.", true);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      showStatus("Vous n'avez pas encore reçu de commande.");
+      return;
+    }
+
+    showStatus(data.length + " commande(s) trouvée(s).");
+
+    data.forEach(order => {
+      orderList.appendChild(createOrderCard(order));
+    });
+  }
+
+  refreshButton.addEventListener("click", loadSupplierOrders);
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(loadSupplierOrders, 0);
+  });
+
+  if (currentUser) {
+    loadSupplierOrders();
+  }
+
+  console.log("GLOBEXA CODE 13 : Gestion des commandes activée.");
+})();
+
