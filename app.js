@@ -1440,149 +1440,157 @@ startGlobexa();
       " " + (currency || "USD");
   }
 
-  function createOrderCard(order) {
-    const card = document.createElement("article");
-    card.style.cssText =
-      "border:1px solid #e3e8ef;border-radius:9px;padding:15px;background:#fff";
+function createOrderCard(order) {
+  const card = document.createElement("article");
+  card.style.cssText =
+    "border:1px solid #e3e8ef;border-radius:9px;padding:15px;background:#fff";
 
-    const product = Array.isArray(order.product)
-      ? order.product[0]
-      : order.product;
+  const product = Array.isArray(order.product)
+    ? order.product[0]
+    : order.product;
 
-    const productName = product?.title || "Produit non disponible";
+  const productName = product?.title || "Produit non disponible";
 
-    const reference = makeText(
-      "strong",
-      "Commande #" + order.id.slice(0, 8).toUpperCase()
-    );
+  const reference = makeText(
+    "strong",
+    "Commande #" + order.id.slice(0, 8).toUpperCase()
+  );
 
-    const productTitle = makeText("h3", productName);
-    productTitle.style.cssText = "color:#0b2d52;margin:10px 0";
+  const productTitle = makeText("h3", productName);
+  productTitle.style.cssText = "color:#0b2d52;margin:10px 0";
 
-    const quantity = makeText("p", "Quantité : " + order.quantity);
-    const unitPrice = makeText(
-      "p",
-      "Prix unitaire : " + formatMoney(order.unit_price, order.currency)
-    );
-    const total = makeText(
-      "p",
-      "Montant : " + formatMoney(
-        order.subtotal ?? Number(order.unit_price) * Number(order.quantity),
-        order.currency
-      )
-    );
+  const quantity = makeText("p", "Quantité : " + order.quantity);
 
-    const payment = makeText(
-      "p",
-      "Paiement : " + (order.payment_status || "pending")
-    );
-    payment.className = "muted";
+  const unitPrice = makeText(
+    "p",
+    "Prix unitaire : " + formatMoney(order.unit_price, order.currency)
+  );
 
-    const date = makeText(
-      "p",
-      "Date : " + new Date(order.created_at).toLocaleString("fr-FR")
-    );
-    date.className = "muted";
+  const total = makeText(
+    "p",
+    "Montant : " + formatMoney(
+      order.subtotal ?? Number(order.unit_price) * Number(order.quantity),
+      order.currency
+    )
+  );
 
-    const currentStatus = makeText(
-      "p",
-      "Statut actuel : " +
-        (statusLabels[order.status] || order.status)
-    );
+  const payment = makeText(
+    "p",
+    "Paiement : " + (order.payment_status || "pending")
+  );
+  payment.className = "muted";
 
-    currentStatus.style.fontWeight = "700";
+  const date = makeText(
+    "p",
+    "Date : " + new Date(order.created_at).toLocaleString("fr-FR")
+  );
+  date.className = "muted";
 
-    card.append(
-      reference,
-      productTitle,
-      quantity,
-      unitPrice,
-      total,
-      payment,
-      date,
-      currentStatus
-    );
+  const statusLabels = {
+    pending: "En attente",
+    awaiting_payment: "En attente de paiement",
+    paid: "Payée",
+    processing: "En traitement",
+    shipped: "Expédiée",
+    delivered: "Livrée",
+    cancelled: "Annulée",
+    disputed: "En litige"
+  };
 
-    if (
-      !allowedStatuses.includes(order.status) ||
-      order.status === "completed" ||
-      order.status === "cancelled"
-    ) {
-      const note = makeText(
-        "p",
-        "Cette commande ne peut plus être modifiée depuis cet espace."
-      );
-      note.className = "muted";
-      card.appendChild(note);
-      return card;
-    }
+  const currentStatus = makeText(
+    "p",
+    "Statut actuel : " + (statusLabels[order.status] || order.status)
+  );
+  currentStatus.style.fontWeight = "700";
 
-    const label = makeText("label", "Modifier le statut");
-    label.style.cssText =
-      "display:block;font-weight:700;margin-top:12px";
+  card.append(
+    reference,
+    productTitle,
+    quantity,
+    unitPrice,
+    total,
+    payment,
+    date,
+    currentStatus
+  );
 
-    const select = document.createElement("select");
-    select.style.cssText =
-      "width:100%;padding:11px;border:1px solid #ccd6e1;" +
-      "border-radius:6px;margin:8px 0";
+  const nextStatuses = {
+    paid: ["processing"],
+    processing: ["shipped"],
+    shipped: ["delivered"]
+  };
 
-    allowedStatuses.forEach(status => {
-      const option = document.createElement("option");
-      option.value = status;
-      option.textContent = statusLabels[status];
-      select.appendChild(option);
-    });
+  const availableStatuses = nextStatuses[order.status];
 
-    select.value = order.status;
+  if (!availableStatuses) {
+    const message = order.payment_status !== "paid"
+      ? "La commande attend la confirmation du paiement."
+      : "Cette commande ne peut plus être modifiée depuis cet espace.";
 
-    const saveButton = document.createElement("button");
-    saveButton.type = "button";
-    saveButton.textContent = "Enregistrer le statut";
-    saveButton.style.width = "100%";
-
-    saveButton.addEventListener("click", async () => {
-      const newStatus = select.value;
-
-      if (!allowedStatuses.includes(newStatus)) {
-        showStatus("Statut non autorisé.", true);
-        return;
-      }
-
-      if (newStatus === order.status) {
-        showStatus("Aucun changement de statut.");
-        return;
-      }
-
-      saveButton.disabled = true;
-      saveButton.textContent = "Enregistrement...";
-
-      const { error } = await db.rpc(
-        "globexa_supplier_update_order_status",
-        {
-          p_order_id: order.id,
-          p_new_status: newStatus
-        }
-      );
-
-      if (error) {
-        console.error("Mise à jour commande :", error);
-        showStatus(
-          error.message || "Impossible de modifier cette commande.",
-          true
-        );
-        saveButton.disabled = false;
-        saveButton.textContent = "Enregistrer le statut";
-        return;
-      }
-
-      showStatus("Statut de la commande mis à jour avec succès.");
-      await loadSupplierOrders();
-    });
-
-    card.append(label, select, saveButton);
+    const note = makeText("p", message);
+    note.className = "muted";
+    card.appendChild(note);
     return card;
   }
 
+  const label = makeText("label", "Prochaine étape");
+  label.style.cssText =
+    "display:block;font-weight:700;margin-top:12px";
+
+  const select = document.createElement("select");
+  select.style.cssText =
+    "width:100%;padding:11px;border:1px solid #ccd6e1;" +
+    "border-radius:6px;margin:8px 0";
+
+  availableStatuses.forEach(status => {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = statusLabels[status];
+    select.appendChild(option);
+  });
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Enregistrer le statut";
+  saveButton.style.width = "100%";
+
+  saveButton.addEventListener("click", async () => {
+    const newStatus = select.value;
+
+    if (!availableStatuses.includes(newStatus)) {
+      showStatus("Statut non autorisé.", true);
+      return;
+    }
+
+    saveButton.disabled = true;
+    saveButton.textContent = "Enregistrement...";
+
+    const { error } = await db.rpc(
+      "globexa_supplier_update_order_status",
+      {
+        p_order_id: order.id,
+        p_new_status: newStatus
+      }
+    );
+
+    if (error) {
+      console.error("Mise à jour commande :", error);
+      showStatus(
+        error.message || "Impossible de modifier cette commande.",
+        true
+      );
+      saveButton.disabled = false;
+      saveButton.textContent = "Enregistrer le statut";
+      return;
+    }
+
+    showStatus("Statut de la commande mis à jour avec succès.");
+    await loadSupplierOrders();
+  });
+
+  card.append(label, select, saveButton);
+  return card;
+}
   async function loadSupplierOrders() {
     orderList.replaceChildren();
 
