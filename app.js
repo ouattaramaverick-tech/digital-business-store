@@ -5971,3 +5971,255 @@ function createOrderCard(order) {
     "GLOBEXA CODE 30 : Contrôle administrateur des paiements chargé."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 66 : GESTION DES REMBOURSEMENTS
+   ========================================================= */
+(() => {
+  "use strict";
+
+  const db = window.globexaSupabase;
+  if (!db || window.globexaCode66Loaded) return;
+  window.globexaCode66Loaded = true;
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-admin-refunds";
+  panel.hidden = true;
+  panel.style.cssText =
+    "max-width:1100px;margin:28px auto;padding:20px;" +
+    "background:#fff;border:2px solid #123f75;" +
+    "border-radius:12px;color:#17324d;font-family:Arial,sans-serif;";
+
+  const title = document.createElement("h2");
+  title.textContent = "GLOBEXA — Gestion des remboursements";
+
+  const warning = document.createElement("p");
+  warning.textContent =
+    "Attention : cet écran n'envoie pas d'argent. " +
+    "Effectuez d'abord le remboursement chez le prestataire, " +
+    "puis saisissez sa référence réelle.";
+
+  warning.style.cssText =
+    "padding:12px;background:#fff4df;color:#7a4300;border-radius:8px;";
+
+  const filter = document.createElement("select");
+  filter.setAttribute("aria-label", "Filtrer les remboursements");
+
+  [
+    ["", "Toutes les demandes"],
+    ["requested", "Demandées"],
+    ["under_review", "En examen"],
+    ["approved", "Approuvées"],
+    ["processing", "En traitement"],
+    ["succeeded", "Remboursées"],
+    ["failed", "Échouées"],
+    ["rejected", "Refusées"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    filter.appendChild(option);
+  });
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "Actualiser";
+
+  const message = document.createElement("p");
+  message.setAttribute("role", "status");
+
+  const list = document.createElement("div");
+  list.style.cssText = "display:grid;gap:14px;";
+
+  panel.append(title, warning, filter, refresh, message, list);
+  document.body.appendChild(panel);
+
+  const labels = {
+    requested: "Demandée",
+    under_review: "En examen",
+    approved: "Approuvée",
+    processing: "En traitement",
+    succeeded: "Remboursée",
+    failed: "Échec",
+    rejected: "Refusée"
+  };
+
+  function el(tag, value) {
+    const item = document.createElement(tag);
+    if (value !== undefined) item.textContent = String(value);
+    return item;
+  }
+
+  function show(text, error = false) {
+    message.textContent = text;
+    message.style.color = error ? "#b42318" : "#176534";
+  }
+
+  function makeButton(label, callback, color = "#123f75") {
+    const b = el("button", label);
+    b.type = "button";
+    b.style.cssText =
+      "padding:9px 13px;border:0;border-radius:7px;" +
+      "background:" + color + ";color:white;font-weight:600;cursor:pointer;";
+    b.addEventListener("click", callback);
+    return b;
+  }
+
+  async function execute(name, args) {
+    show("Traitement en cours…");
+    const { data, error } = await db.rpc(name, args);
+
+    if (error) {
+      console.error("CODE66 :", error);
+      show(error.message || "Opération impossible.", true);
+      return false;
+    }
+
+    await load();
+    return true;
+  }
+
+  function addCard(item) {
+    const card = el("article");
+    card.style.cssText =
+      "padding:16px;border:1px solid #dce5ef;" +
+      "border-radius:10px;background:#f9fbfd;";
+
+    [
+      ["h3", "Demande : " + (labels[item.refund_status] || item.refund_status)],
+      ["p", "Montant : " + Number(item.amount).toLocaleString("fr-FR") + " " + item.currency],
+      ["p", "Commande : " + item.order_id],
+      ["p", "Acheteur : " + item.buyer_id],
+      ["p", "Fournisseur : " + item.supplier_id],
+      ["p", "Paiement initial : " + item.original_payment_provider],
+      ["p", "Référence initiale : " + item.original_payment_reference],
+      ["p", "Motif : " + item.reason],
+      ["p", "Note : " + (item.admin_note || item.failure_reason || "Aucune")]
+    ].forEach(([tag, value]) => card.appendChild(el(tag, value)));
+
+    const actions = el("div");
+    actions.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;";
+
+    if (["requested", "under_review"].includes(item.refund_status)) {
+      actions.appendChild(makeButton("Prendre en examen", async () => {
+        const note = window.prompt("Note facultative :", "");
+        if (note === null) return;
+
+        await execute("globexa_admin_review_market_refund", {
+          p_refund_id: item.refund_id,
+          p_decision: "review",
+          p_admin_note: note
+        });
+      }));
+
+      actions.appendChild(makeButton("Approuver", async () => {
+        if (!window.confirm("Approuver cette demande ?")) return;
+        const note = window.prompt("Note facultative :", "");
+        if (note === null) return;
+
+        await execute("globexa_admin_review_market_refund", {
+          p_refund_id: item.refund_id,
+          p_decision: "approve",
+          p_admin_note: note
+        });
+      }, "#176534"));
+
+      actions.appendChild(makeButton("Refuser", async () => {
+        const note = window.prompt("Motif obligatoire du refus :");
+        if (note === null) return;
+
+        await execute("globexa_admin_review_market_refund", {
+          p_refund_id: item.refund_id,
+          p_decision: "reject",
+          p_admin_note: note
+        });
+      }, "#a12b2b"));
+    }
+
+    if (item.refund_status === "approved") {
+      actions.appendChild(makeButton(
+        "Confirmer remboursement réussi",
+        async () => {
+          const reference = window.prompt(
+            "Référence réelle fournie par le prestataire :"
+          );
+          if (reference === null) return;
+
+          const note = window.prompt("Note facultative :", "");
+          if (note === null) return;
+
+          await execute("globexa_admin_finalize_market_refund", {
+            p_refund_id: item.refund_id,
+            p_result: "succeeded",
+            p_provider_refund_reference: reference,
+            p_admin_note: note
+          });
+        },
+        "#176534"
+      ));
+
+      actions.appendChild(makeButton("Enregistrer un échec", async () => {
+        const reason = window.prompt("Expliquez l'échec du remboursement :");
+        if (reason === null) return;
+
+        await execute("globexa_admin_finalize_market_refund", {
+          p_refund_id: item.refund_id,
+          p_result: "failed",
+          p_provider_refund_reference: null,
+          p_admin_note: reason
+        });
+      }, "#a12b2b"));
+    }
+
+    if (actions.childNodes.length) card.appendChild(actions);
+    list.appendChild(card);
+  }
+
+  async function load() {
+    list.replaceChildren();
+    show("Chargement des demandes…");
+
+    const { data, error } = await db.rpc(
+      "globexa_admin_market_refund_list",
+      { p_status: filter.value || null }
+    );
+
+    if (error) {
+      console.error("CODE66 :", error);
+      show(error.message || "Impossible de charger les demandes.", true);
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      show("Aucune demande pour ce filtre.");
+      return;
+    }
+
+    show(data.length + " demande(s) affichée(s).");
+    data.forEach(addCard);
+  }
+
+  async function initialize() {
+    panel.hidden = true;
+
+    const { data, error } = await db.auth.getUser();
+    if (error || !data?.user) return;
+
+    const admin = await db.rpc("is_globexa_admin");
+    if (admin.error || admin.data !== true) return;
+
+    panel.hidden = false;
+    await load();
+  }
+
+  filter.addEventListener("change", load);
+  refresh.addEventListener("click", load);
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(initialize, 0);
+  });
+
+  initialize();
+
+  console.log("GLOBEXA CODE 66 : Gestion des remboursements chargée.");
+})();
