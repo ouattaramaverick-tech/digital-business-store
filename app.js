@@ -5431,3 +5431,256 @@ startGlobexa();
     "GLOBEXA CODE 26 : Recherche internationale activée."
   );
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 27 : FAVORIS DES ACHETEURS
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  if (window.globexaCode27Loaded) return;
+  window.globexaCode27Loaded = true;
+
+  const db = window.globexaSupabase;
+  const productList = document.getElementById("productList");
+  const productSection = document.getElementById("produits");
+
+  if (!db || !productList || !productSection) {
+    console.error("GLOBEXA CODE 27 : Catalogue indisponible.");
+    return;
+  }
+
+  let user = null;
+  let favoriteIds = new Set();
+  let displayedProducts = [];
+
+  const panel = document.createElement("section");
+  panel.id = "globexa-favorites";
+  panel.className = "section";
+  panel.style.cssText =
+    "margin:20px 0;padding:18px;background:#fff;" +
+    "border:1px solid #e3e8ef;border-radius:10px;";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "❤️ Mes produits favoris";
+
+  const message = document.createElement("p");
+  message.className = "muted";
+  message.textContent = "Connectez-vous pour retrouver vos favoris.";
+
+  const list = document.createElement("div");
+  list.style.cssText = "display:grid;gap:10px;";
+
+  panel.append(heading, message, list);
+  productSection.insertAdjacentElement("afterend", panel);
+
+  function showMessage(text, error = false) {
+    message.textContent = text;
+    message.style.color = error ? "#b42318" : "#176534";
+  }
+
+  function decorateProducts(items) {
+    displayedProducts = items || [];
+
+    const cards = productList.querySelectorAll(".product-card");
+
+    displayedProducts.forEach((product, index) => {
+      const card = cards[index];
+      const info = card?.querySelector(".product-info");
+
+      if (!info || info.querySelector(".g27-favorite")) return;
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "g27-favorite";
+      button.style.cssText =
+        "width:100%;margin-top:8px;padding:10px;" +
+        "border:1px solid #e3e8ef;border-radius:7px;" +
+        "background:#fff;cursor:pointer;";
+
+      function updateButton() {
+        const saved = favoriteIds.has(product.id);
+        button.textContent = saved
+          ? "❤️ Retirer des favoris"
+          : "♡ Ajouter aux favoris";
+      }
+
+      updateButton();
+
+      button.addEventListener("click", async () => {
+        if (!user) {
+          showMessage("Connectez-vous pour enregistrer vos favoris.", true);
+          return;
+        }
+
+        button.disabled = true;
+
+        if (favoriteIds.has(product.id)) {
+          const { error } = await db
+            .from("globexa_favorites")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("product_id", product.id);
+
+          if (error) {
+            showMessage("Impossible de retirer ce favori.", true);
+            console.error("CODE 27 :", error);
+            button.disabled = false;
+            return;
+          }
+
+          favoriteIds.delete(product.id);
+          showMessage("Produit retiré de vos favoris.");
+        } else {
+          const { error } = await db
+            .from("globexa_favorites")
+            .insert({
+              user_id: user.id,
+              product_id: product.id
+            });
+
+          if (error) {
+            showMessage("Impossible d'ajouter ce favori.", true);
+            console.error("CODE 27 :", error);
+            button.disabled = false;
+            return;
+          }
+
+          favoriteIds.add(product.id);
+          showMessage("Produit ajouté à vos favoris.");
+        }
+
+        updateButton();
+        button.disabled = false;
+        renderFavorites();
+      });
+
+      info.appendChild(button);
+    });
+  }
+
+  async function renderFavorites() {
+    list.replaceChildren();
+
+    if (!user) {
+      showMessage("Connectez-vous pour retrouver vos favoris.");
+      return;
+    }
+
+    showMessage("Chargement de vos favoris...");
+
+    const { data, error } = await db
+      .from("globexa_favorites")
+      .select(
+        "product_id,product:globexa_market_products(id,title,base_price,currency,status)"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      showMessage("Impossible de charger vos favoris.", true);
+      console.error("CODE 27 :", error);
+      return;
+    }
+
+    favoriteIds = new Set((data || []).map(item => item.product_id));
+
+    const available = (data || []).filter(item => {
+      const product = Array.isArray(item.product)
+        ? item.product[0]
+        : item.product;
+
+      return product && product.status === "published";
+    });
+
+    if (!available.length) {
+      showMessage("Vous n'avez pas encore de produit favori.");
+    } else {
+      showMessage(available.length + " produit(s) dans vos favoris.");
+
+      available.forEach(item => {
+        const product = Array.isArray(item.product)
+          ? item.product[0]
+          : item.product;
+
+        const row = document.createElement("div");
+        row.style.cssText =
+          "display:flex;justify-content:space-between;" +
+          "align-items:center;gap:10px;padding:12px;" +
+          "border:1px solid #e3e8ef;border-radius:8px;";
+
+        const details = document.createElement("div");
+
+        const name = document.createElement("strong");
+        name.textContent = product.title || "Produit";
+
+        const price = document.createElement("p");
+        price.className = "muted";
+        price.textContent =
+          Number(product.base_price || 0).toLocaleString("fr-FR") +
+          " " + (product.currency || "USD");
+
+        details.append(name, price);
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "Retirer";
+        remove.addEventListener("click", async () => {
+          remove.disabled = true;
+
+          const { error: deleteError } = await db
+            .from("globexa_favorites")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("product_id", product.id);
+
+          if (deleteError) {
+            showMessage("Impossible de retirer ce favori.", true);
+            remove.disabled = false;
+            return;
+          }
+
+          favoriteIds.delete(product.id);
+          decorateProducts(displayedProducts);
+          await renderFavorites();
+        });
+
+        row.append(details, remove);
+        list.appendChild(row);
+      });
+    }
+
+    decorateProducts(displayedProducts);
+  }
+
+  const previousRender = renderProducts;
+
+  renderProducts = function(items) {
+    previousRender(items);
+    decorateProducts(items);
+  };
+
+  async function initializeFavorites() {
+    const { data } = await db.auth.getUser();
+    user = data?.user || null;
+
+    favoriteIds.clear();
+
+    if (user) {
+      await renderFavorites();
+    } else {
+      list.replaceChildren();
+      showMessage("Connectez-vous pour retrouver vos favoris.");
+      decorateProducts(displayedProducts);
+    }
+  }
+
+  db.auth.onAuthStateChange(() => {
+    setTimeout(initializeFavorites, 0);
+  });
+
+  initializeFavorites();
+
+  console.log("GLOBEXA CODE 27 : Favoris activés.");
+})();
