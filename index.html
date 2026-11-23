@@ -124,6 +124,34 @@ footer{margin-top:35px;background:#08233f;color:white;padding:30px 5%;line-heigh
 <div class="product-grid" id="productList"></div>
 </section>
 
+
+<!-- CODE 6 — ESPACE REELS GLOBEXA -->
+<section class="section" id="reels" style="background:white;border:1px solid #e1e7ef;border-radius:10px;padding:18px;margin-top:22px">
+  <div class="section-heading">
+    <h2>GLOBEXA REELS</h2>
+    <span class="muted">Découvrez les produits en vidéo</span>
+  </div>
+
+  <div id="reelUploadPanel" class="panel" hidden style="margin-bottom:18px">
+    <h3>Publier une vidéo produit</h3>
+    <form id="reelUploadForm" class="form-box">
+      <label>Description de la vidéo
+        <input id="reelCaption" type="text" maxlength="500" placeholder="Présentez votre produit...">
+      </label>
+      <label>Choisir une vidéo
+        <input id="reelVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" required>
+      </label>
+      <p class="muted">MP4, WebM ou MOV — maximum 100 Mo et 90 secondes.</p>
+      <button id="reelUploadButton" type="submit">Envoyer ma vidéo</button>
+    </form>
+    <p id="reelUploadMessage" class="message" hidden></p>
+  </div>
+
+  <p id="reelLoginNotice" class="muted">Connectez-vous comme fournisseur pour envoyer une vidéo.</p>
+  <div id="reelFeed" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:15px">
+    <p class="muted">Chargement des vidéos...</p>
+  </div>
+</section>
 <section class="section supplier-section" id="fournisseurs">
 <div class="section-heading"><h2>Fournisseurs vérifiés et boutiques</h2></div>
 <div class="supplier-grid" id="supplierList"></div>
