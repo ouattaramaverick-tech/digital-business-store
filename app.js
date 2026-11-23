@@ -4979,3 +4979,52 @@ startGlobexa();
 
   console.log("GLOBEXA CODE 21 : Moyens de réception fournisseurs chargé.");
 })();
+
+/* =========================================================
+   GLOBEXA — CODE 22 : AFFICHAGE APPROBATION AUTOMATIQUE
+   ========================================================= */
+
+(() => {
+  "use strict";
+
+  const root = document.getElementById("globexa-supplier-payouts");
+
+  if (!root || root.dataset.code22 === "loaded") return;
+  root.dataset.code22 = "loaded";
+
+  const notice = root.querySelector("p.g21-muted");
+  const submit = root.querySelector('button[type="submit"]');
+
+  if (submit) {
+    submit.textContent = "Ajouter mon moyen de réception";
+  }
+
+  if (notice) {
+    const updateNotice = () => {
+      if (
+        notice.textContent.includes("attend l'approbation") ||
+        notice.textContent.includes("vérifiées avant")
+      ) {
+        notice.textContent =
+          "Votre moyen autorisé est approuvé automatiquement après son enregistrement.";
+      }
+    };
+
+    updateNotice();
+
+    const observer = new MutationObserver(updateNotice);
+    observer.observe(notice, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+  }
+
+  const intro = root.querySelector("p");
+  if (intro) {
+    intro.textContent =
+      "Ajoutez un moyen de réception autorisé. Son approbation est automatique.";
+  }
+
+  console.log("GLOBEXA CODE 22 : Affichage automatique activé.");
+})();
