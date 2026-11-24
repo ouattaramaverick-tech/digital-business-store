@@ -1499,7 +1499,9 @@ await initializeSession();
       loadProducts(),
       loadSuppliers(),
       loadReels(),
-      loadCart()
+loadCart(),
+loadOrders()
+   
     ]);
 
     console.log("GLOBEXA : application initialisée.");
