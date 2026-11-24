@@ -207,16 +207,28 @@
         <div id="loggedOut" class="auth-grid">
           <div class="panel">
             <h3>Se connecter</h3>
+            
             <form id="loginForm" class="form-box">
               <label for="loginEmail">Adresse e-mail</label>
               <input id="loginEmail" type="email" required autocomplete="email">
+
               <label for="loginPassword">Mot de passe</label>
               <input id="loginPassword" type="password" required
                 minlength="8" autocomplete="current-password">
+
               <button id="loginButton" type="submit">Se connecter</button>
             </form>
-          </div>
 
+            <div class="auth-help-actions">
+              <button id="resendConfirmationButton" type="button">
+                Renvoyer l'e-mail de confirmation
+              </button>
+
+              <button id="forgotPasswordButton" type="button">
+                Mot de passe oublié ?
+              </button>
+            </div>
+         </div>
           <div class="panel">
             <h3>Créer un compte</h3>
             <form id="signupForm" class="form-box">
