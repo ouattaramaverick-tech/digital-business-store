@@ -1415,8 +1415,9 @@ async function initializeGlobexa() {
     setupEvents();
 
     await ensureSupabaseClient();
-    await initializeSession();
-
+supabaseClient.auth.onAuthStateChange(handleAuthStateChange);
+await initializeSession();
+   
     await Promise.all([
       loadCategories(),
       loadProducts(),
