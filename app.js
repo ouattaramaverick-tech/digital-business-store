@@ -434,7 +434,8 @@ function handleAuthStateChange(event, session) {
   setTimeout(async () => {
     await loadProfile();
     showAccount();
-    await loadCart();
+    await loadOrders();
+     await loadCart();
   }, 0);
 }
 /* 7. DÉCONNEXION */
