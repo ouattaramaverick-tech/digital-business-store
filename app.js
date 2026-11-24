@@ -453,9 +453,11 @@ async function logoutUser() {
   state.orders = [];
    state.cart = [];
 
-   renderOrders();
-  showAccount();
-  renderCart();
+   showAccount();
+renderCart();
+renderOrders();
+  
+  
 
   message("authMessage", "Tu es maintenant déconnecté.");
 }
