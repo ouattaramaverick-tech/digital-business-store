@@ -323,6 +323,135 @@ async function loginUser(event) {
   }
 }
 
+
+/* RÉCUPÉRATION DU COMPTE */
+
+function getAuthRedirectUrl() {
+  return window.location.origin + window.location.pathname;
+}
+
+async function resendSignupConfirmation() {
+  hideMessage("authMessage");
+
+  const email =
+    $("loginEmail")?.value.trim() ||
+    $("signupEmail")?.value.trim() ||
+    "";
+
+  if (!email) {
+    message("authMessage", "Entre ton adresse e-mail.", "error");
+    $("loginEmail")?.focus();
+    return;
+  }
+
+  const button = $("resendConfirmationButton");
+  setButtonLoading(button, true, "Renvoyer l'e-mail de confirmation");
+
+  try {
+    const { error } = await supabaseClient.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: getAuthRedirectUrl() }
+    });
+
+    if (error) throw error;
+
+    message("authMessage", "Demande envoyée. Vérifie ta boîte e-mail et utilise le dernier message reçu.");
+  } catch (error) {
+    console.error("Renvoi confirmation :", error);
+    message("authMessage", error.message || "Impossible de renvoyer l'e-mail.", "error");
+  } finally {
+    setButtonLoading(button, false, "Renvoyer l'e-mail de confirmation");
+  }
+}
+
+async function sendPasswordReset() {
+  hideMessage("authMessage");
+
+  const email = $("loginEmail")?.value.trim();
+
+  if (!email) {
+    message("authMessage", "Entre ton adresse e-mail dans le champ de connexion.", "error");
+    $("loginEmail")?.focus();
+    return;
+  }
+
+  const button = $("forgotPasswordButton");
+  setButtonLoading(button, true, "Mot de passe oublié ?");
+
+  try {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: getAuthRedirectUrl()
+    });
+
+    if (error) throw error;
+
+    message("authMessage", "Si cette adresse correspond à un compte, un e-mail de réinitialisation vient d'être envoyé.");
+  } catch (error) {
+    console.error("Réinitialisation :", error);
+    message("authMessage", error.message || "Impossible d'envoyer le lien.", "error");
+  } finally {
+    setButtonLoading(button, false, "Mot de passe oublié ?");
+  }
+}
+
+async function updateRecoveredPassword(event) {
+  event.preventDefault();
+  hideMessage("authMessage");
+
+  const password = $("recoveryPassword")?.value || "";
+  const confirmation = $("recoveryPasswordConfirm")?.value || "";
+
+  if (password.length < 8) {
+    message("authMessage", "Le mot de passe doit contenir au moins 8 caractères.", "error");
+    return;
+  }
+
+  if (password !== confirmation) {
+    message("authMessage", "Les deux mots de passe ne correspondent pas.", "error");
+    return;
+  }
+
+  const button = $("recoveryPasswordButton");
+  setButtonLoading(button, true, "Enregistrer le nouveau mot de passe");
+
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ password });
+
+    if (error) throw error;
+
+    $("passwordRecoveryForm")?.reset();
+    $("passwordRecoveryPanel").hidden = true;
+
+    message("authMessage", "Ton mot de passe a été modifié. Tu peux maintenant te connecter.");
+  } catch (error) {
+    console.error("Modification du mot de passe :", error);
+    message("authMessage", error.message || "Impossible de modifier le mot de passe.", "error");
+  } finally {
+    setButtonLoading(button, false, "Enregistrer le nouveau mot de passe");
+  }
+}
+
+function handleAuthStateChange(event, session) {
+  state.user = session?.user || null;
+
+  if (event === "PASSWORD_RECOVERY") {
+    $("passwordRecoveryPanel").hidden = false;
+    $("passwordRecoveryPanel").scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    message("authMessage", "Lien valide. Choisis ton nouveau mot de passe.");
+    return;
+  }
+
+  setTimeout(async () => {
+    await loadProfile();
+    showAccount();
+    await loadCart();
+  }, 0);
+}
 /* 7. DÉCONNEXION */
 
 async function logoutUser() {
@@ -1098,7 +1227,22 @@ async function uploadReel(event) {
   const file = $("reelVideoFile")?.files?.[0];
   const caption = $("reelCaption")?.value.trim() || "";
 
-  if (!file) {
+ 
+  $("resendConfirmationButton")?.addEventListener(
+    "click",
+    resendSignupConfirmation
+  );
+
+  $("forgotPasswordButton")?.addEventListener(
+    "click",
+    sendPasswordReset
+  );
+
+  $("passwordRecoveryForm")?.addEventListener(
+    "submit",
+    updateRecoveredPassword
+  );
+ if (!file) {
     message("reelUploadMessage", "Choisis une vidéo.", "error");
     return;
   }
