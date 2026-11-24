@@ -1,0 +1,388 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b70">
+  <meta name="description" content="GLOBEXA — Marketplace internationale pour acheter, vendre, trouver des fournisseurs et organiser vos expéditions.">
+  <title>GLOBEXA — Marketplace internationale</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="app">
+
+    <div class="topbar">
+      <span>Bienvenue sur GLOBEXA</span>
+      <div class="topbar-right">
+        <a href="#seller-center">Devenir fournisseur</a>
+        <a href="#help">Centre d'aide</a>
+        <select id="globexaLanguage" aria-label="Choisir la langue">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ar">العربية</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+    </div>
+
+    <header class="header">
+      <a class="logo" href="#home" aria-label="GLOBEXA Accueil">
+        GLOB<span>EXA</span>
+      </a>
+
+      <form class="search" id="searchForm">
+        <input id="searchInput" type="search"
+          placeholder="Que recherchez-vous aujourd'hui ?"
+          aria-label="Rechercher un produit ou fournisseur">
+        <select id="searchType" aria-label="Type de recherche">
+          <option value="products">Produits</option>
+          <option value="suppliers">Fournisseurs</option>
+        </select>
+        <button type="submit">Rechercher</button>
+      </form>
+
+      <div class="header-actions">
+        <a href="#account" class="header-action">Mon compte</a>
+        <a href="#messages" class="header-action">Messages</a>
+        <a href="#cart" class="header-action">
+          Panier <b id="cartCount">0</b>
+        </a>
+      </div>
+    </header>
+
+    <nav class="main-nav" aria-label="Navigation principale">
+      <div class="nav-inner">
+        <a href="#categories">☰ Catégories</a>
+        <a href="#home">Accueil</a>
+        <a href="#products">Produits</a>
+        <a href="#new-products">Nouveautés</a>
+        <a href="#popular-products">Populaires</a>
+        <a href="#suppliers">Fournisseurs</a>
+        <a href="#reels">GLOBEXA Reels</a>
+        <a href="#logistics">Logistique</a>
+      </div>
+    </nav>
+
+    <main id="home">
+
+      <section class="home-layout">
+        <aside class="category-panel" id="categories">
+          <h2>Toutes les catégories</h2>
+          <div id="categoryList">
+            <p class="loading-text">Chargement des catégories...</p>
+          </div>
+        </aside>
+
+        <section class="hero-banner">
+          <div class="hero-content">
+            <span class="hero-label">GLOBEXA INTERNATIONAL</span>
+            <h1>Le commerce mondial à portée de main</h1>
+            <p>
+              Achetez, vendez, trouvez des fournisseurs,
+              négociez vos achats et organisez vos expéditions
+              partout dans le monde.
+            </p>
+            <a href="#products" class="primary-button">
+              Découvrir les produits
+            </a>
+          </div>
+          <div class="hero-image-area">
+            <div class="hero-image-placeholder">GLOBEXA</div>
+          </div>
+        </section>
+
+        <aside class="welcome-panel">
+          <div class="welcome-card">
+            <h3>Bienvenue sur GLOBEXA</h3>
+            <p>Connectez-vous pour accéder à votre espace commercial.</p>
+            <a href="#account">Se connecter</a>
+          </div>
+          <div class="welcome-card supplier-welcome">
+            <h3>Vous êtes fournisseur ?</h3>
+            <p>Présentez vos produits et trouvez de nouveaux clients.</p>
+            <a href="#seller-center">Créer une boutique</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="quick-services">
+        <a href="#products" class="quick-service">Acheter des produits</a>
+        <a href="#suppliers" class="quick-service">Trouver des fournisseurs</a>
+        <a href="#reels" class="quick-service">Voir les vidéos</a>
+        <a href="#logistics" class="quick-service">Transport international</a>
+        <a href="#rfq" class="quick-service">Demander un devis</a>
+      </section>
+
+      <section class="section product-section" id="products">
+        <div class="section-heading">
+          <div>
+            <h2>Produits recommandés</h2>
+            <p>Découvrez les produits de nos fournisseurs.</p>
+          </div>
+          <span id="productStatus" class="muted">Chargement...</span>
+        </div>
+        <div class="product-grid" id="productList">
+          <p class="loading-text">Chargement des produits...</p>
+        </div>
+      </section>
+
+      <section class="section product-section" id="new-products">
+        <div class="section-heading">
+          <div>
+            <h2>Dernières nouveautés</h2>
+            <p>Les produits récemment ajoutés.</p>
+          </div>
+        </div>
+        <div class="product-grid" id="newProductList"></div>
+      </section>
+
+      <section class="section product-section" id="popular-products">
+        <div class="section-heading">
+          <div>
+            <h2>Produits populaires</h2>
+            <p>Les produits à découvrir sur GLOBEXA.</p>
+          </div>
+        </div>
+        <div class="product-grid" id="popularProductList"></div>
+      </section>
+
+      <section class="section reels-section" id="reels">
+        <div class="section-heading">
+          <div>
+            <h2>GLOBEXA REELS</h2>
+            <p>Découvrez les produits en vidéos courtes.</p>
+          </div>
+        </div>
+
+        <div id="reelUploadPanel" class="panel" hidden>
+          <h3>Publier une vidéo produit</h3>
+          <form id="reelUploadForm" class="form-box">
+            <label for="reelCaption">Description</label>
+            <input id="reelCaption" type="text" maxlength="500"
+              placeholder="Présentez votre produit...">
+            <label for="reelVideoFile">Choisir une vidéo</label>
+            <input id="reelVideoFile" type="file"
+              accept="video/mp4,video/webm,video/quicktime" required>
+            <p class="muted">MP4, WebM ou MOV — maximum 100 Mo.</p>
+            <button id="reelUploadButton" type="submit">Publier la vidéo</button>
+          </form>
+          <p id="reelUploadMessage" class="message" hidden></p>
+        </div>
+
+        <p id="reelLoginNotice" class="muted">
+          Connectez-vous comme fournisseur pour publier une vidéo.
+        </p>
+        <div id="reelFeed" class="reel-grid">
+          <p class="loading-text">Chargement des vidéos...</p>
+        </div>
+      </section>
+
+      <section class="section supplier-section" id="suppliers">
+        <div class="section-heading">
+          <div>
+            <h2>Fournisseurs et boutiques</h2>
+            <p>Découvrez les entreprises présentes sur GLOBEXA.</p>
+          </div>
+        </div>
+        <div class="supplier-grid" id="supplierList">
+          <p class="loading-text">Chargement des fournisseurs...</p>
+        </div>
+      </section>
+
+      <section class="section account-section" id="account">
+        <div class="section-heading">
+          <div>
+            <h2>Mon compte GLOBEXA</h2>
+            <p>Connectez-vous ou créez votre compte.</p>
+          </div>
+        </div>
+
+        <div id="loggedOut" class="auth-grid">
+          <div class="panel">
+            <h3>Se connecter</h3>
+            <form id="loginForm" class="form-box">
+              <label for="loginEmail">Adresse e-mail</label>
+              <input id="loginEmail" type="email" required autocomplete="email">
+              <label for="loginPassword">Mot de passe</label>
+              <input id="loginPassword" type="password" required
+                minlength="8" autocomplete="current-password">
+              <button id="loginButton" type="submit">Se connecter</button>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h3>Créer un compte</h3>
+            <form id="signupForm" class="form-box">
+              <label for="signupName">Nom complet</label>
+              <input id="signupName" required maxlength="100" autocomplete="name">
+              <label for="signupCountry">Pays</label>
+              <input id="signupCountry" maxlength="80" autocomplete="country-name">
+              <label for="signupEmail">Adresse e-mail</label>
+              <input id="signupEmail" type="email" required autocomplete="email">
+              <label for="signupPassword">Mot de passe</label>
+              <input id="signupPassword" type="password" required
+                minlength="8" autocomplete="new-password">
+              <button id="signupButton" type="submit">Créer mon compte</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="loggedIn" class="panel" hidden>
+          <h3>Votre espace personnel</h3>
+          <p id="welcomeText"></p>
+          <button id="logoutButton" type="button">Se déconnecter</button>
+        </div>
+        <div id="authMessage" class="message" hidden aria-live="polite"></div>
+      </section>
+
+      <section class="section" id="seller-center">
+        <div class="section-heading">
+          <div>
+            <h2>Espace fournisseur</h2>
+            <p>Gérez votre boutique, vos produits et vos commandes.</p>
+          </div>
+        </div>
+        <div id="sellerDashboard" class="dashboard-grid">
+          <p class="muted">Connectez-vous avec votre compte fournisseur.</p>
+        </div>
+      </section>
+
+      <section class="section" id="messages">
+        <div class="section-heading">
+          <div>
+            <h2>Messages et négociations</h2>
+            <p>Discutez avec les acheteurs et les fournisseurs.</p>
+          </div>
+        </div>
+        <div id="conversationList"></div>
+        <div id="messagePanel"></div>
+      </section>
+
+      <section class="section" id="rfq">
+        <div class="section-heading">
+          <div>
+            <h2>Demandes de devis</h2>
+            <p>Décrivez vos besoins et recevez des offres de fournisseurs.</p>
+          </div>
+        </div>
+        <div id="rfqContent"></div>
+      </section>
+
+      <section class="section cart-section" id="cart">
+        <div class="section-heading">
+          <div>
+            <h2>Mon panier</h2>
+            <p>Retrouvez les produits que vous souhaitez commander.</p>
+          </div>
+        </div>
+        <p id="cartMessage" class="muted">
+          Connectez-vous pour utiliser votre panier.
+        </p>
+        <div id="cartItems"></div>
+        <div id="cartTotal"></div>
+        <button id="checkoutButton" type="button" disabled>
+          Passer la commande
+        </button>
+      </section>
+
+      <section class="section" id="orders">
+        <div class="section-heading">
+          <div>
+            <h2>Mes commandes</h2>
+            <p>Consultez vos achats et leur état d'avancement.</p>
+          </div>
+        </div>
+        <div id="orderList"></div>
+      </section>
+
+      <section class="section" id="logistics">
+        <div class="section-heading">
+          <div>
+            <h2>Transport et logistique</h2>
+            <p>Trouvez des transitaires et suivez vos expéditions.</p>
+          </div>
+        </div>
+        <div id="logisticsList"></div>
+      </section>
+
+      <section class="section" id="finance">
+        <div class="section-heading">
+          <div>
+            <h2>Commissions et paiements</h2>
+            <p>Consultez les opérations financières autorisées selon votre rôle.</p>
+          </div>
+        </div>
+        <div id="financeContent"></div>
+      </section>
+
+      <section class="section" id="admin">
+        <div class="section-heading">
+          <div>
+            <h2>Administration GLOBEXA</h2>
+            <p>Gestion sécurisée réservée aux administrateurs autorisés.</p>
+          </div>
+        </div>
+        <div id="adminDashboard"></div>
+      </section>
+
+      <section class="section" id="help">
+        <div class="section-heading">
+          <div>
+            <h2>Centre d'aide</h2>
+            <p>Assistance et informations sur GLOBEXA.</p>
+          </div>
+        </div>
+        <div id="helpContent"></div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <div class="footer-brand">
+        <a class="logo footer-logo" href="#home">GLOB<span>EXA</span></a>
+        <p>La marketplace internationale pour acheter, vendre et expédier.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#products">Produits</a>
+        <a href="#suppliers">Fournisseurs</a>
+        <a href="#logistics">Logistique</a>
+        <a href="#help">Aide</a>
+        <a href="#account">Mon compte</a>
+      </div>
+      <div class="footer-bottom">
+        © 2026 GLOBEXA — Tous droits réservés.
+      </div>
+    </footer>
+
+    <nav class="mobile-bottom-nav" aria-label="Navigation mobile">
+      <a href="#home">Accueil</a>
+      <a href="#reels">Reels</a>
+      <a href="#messages">Messages</a>
+      <a href="#cart">Panier</a>
+      <a href="#account">Compte</a>
+    </nav>
+
+    <div id="productDetailModal" class="product-modal"
+      hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="product-modal-content">
+        <button id="closeProductDetail" type="button"
+          class="modal-close" aria-label="Fermer">✕</button>
+        <div id="productDetailContent"></div>
+      </div>
+    </div>
+
+    <div id="globexaToast" class="toast" hidden aria-live="polite"></div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
