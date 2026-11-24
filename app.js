@@ -851,7 +851,57 @@ async function loadCart() {
   renderCart();
 }
 
-async function addToCart(productId) {
+/* 13 BIS. HISTORIQUE DES COMMANDES */
+
+async function loadOrders() {
+  const container = $("orderList");
+
+  if (!state.user) {
+    state.orders = [];
+    renderOrders();
+    return;
+  }
+
+  if (container) {
+    container.innerHTML = "<p>Chargement des commandes...</p>";
+  }
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("globexa_market_orders")
+      .select(`
+        id,
+        product_id,
+        quantity,
+        unit_price,
+        subtotal,
+        currency,
+        status,
+        payment_status,
+        created_at,
+        commission_amount,
+        supplier_amount,
+        globexa_market_products (
+          title
+        )
+      `)
+      .eq("buyer_id", state.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    state.orders = data || [];
+    renderOrders();
+
+  } catch (error) {
+    console.error("Chargement des commandes :", error);
+
+    if (container) {
+      container.innerHTML =
+        "<p>Impossible de charger les commandes.</p>";
+    }
+  }
+                                     }async function addToCart(productId) {
   if (!state.user) {
     message(
       "cartMessage",
