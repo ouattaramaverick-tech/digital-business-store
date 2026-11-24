@@ -1506,8 +1506,9 @@ await initializeSession();
       loadReels(),
       loadCart(),
       loadOrders(),
-      loadLogistics(),
-      loadFinance()
+            loadLogistics(),
+      loadFinance(),
+      loadAdmin()
     ]);  
      
     console.log("GLOBEXA : application initialisée.");
