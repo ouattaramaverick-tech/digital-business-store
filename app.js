@@ -1137,7 +1137,8 @@ async function checkout() {
 
     if (error) throw error;
 
-    await loadCart();
+    await loadOrders();
+     await loadCart();
 
     message(
       "cartMessage",
