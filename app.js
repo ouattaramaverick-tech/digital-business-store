@@ -1425,16 +1425,6 @@ async function initializeGlobexa() {
       loadCart()
     ]);
 
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      state.user = session?.user || null;
-
-      setTimeout(async () => {
-        await loadProfile();
-        showAccount();
-        await loadCart();
-      }, 0);
-    });
-
     console.log("GLOBEXA : application initialisée.");
 
   } catch (error) {
