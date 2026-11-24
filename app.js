@@ -239,7 +239,25 @@ async function registerUser(event) {
       showAccount();
       await loadCart();
 
-      message("authMessage", "Ton compte a été créé avec succès.");
+      
+        <div id="passwordRecoveryPanel" class="panel" hidden>
+          <h3>Choisir un nouveau mot de passe</h3>
+
+          <form id="passwordRecoveryForm" class="form-box">
+            <label for="recoveryPassword">Nouveau mot de passe</label>
+            <input id="recoveryPassword" type="password" required minlength="8" autocomplete="new-password">
+
+            <label for="recoveryPasswordConfirm">Confirmer le mot de passe</label>
+            <input id="recoveryPasswordConfirm" type="password" required minlength="8" autocomplete="new-password">
+
+            <button id="recoveryPasswordButton" type="submit">
+              Enregistrer le nouveau mot de passe
+            </button>
+          </form>
+        </div>
+
+        <div id="authMessage" class="message" hidden aria-live="polite"></div>
+
     } else {
       message(
         "authMessage",
