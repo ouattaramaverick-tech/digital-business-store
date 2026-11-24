@@ -92,8 +92,9 @@ const state = {
   profile: null,
   products: [],
   categories: [],
-  stores: [],
+    stores: [],
   cart: [],
+  orders: [],
   reels: [],
   selectedProduct: null,
   loading: false
