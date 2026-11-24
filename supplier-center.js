@@ -431,3 +431,362 @@ if (document.readyState === "loading") {
 }
 
 console.log("GLOBEXA CODE 6 chargé.");
+/* GLOBEXA — CORRECTIFS DES BOUTONS ET TABLEAUX DE BORD */
+(function () {
+  "use strict";
+
+  function moveSupplierPanel() {
+    const panel = document.getElementById("globexaSupplierCenter");
+    const dashboard = document.getElementById("sellerDashboard");
+
+    if (panel && dashboard && panel.parentElement !== dashboard) {
+      dashboard.replaceChildren(panel);
+    }
+  }
+
+  async function createStore(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const button = form.querySelector("button");
+    const feedback = document.getElementById("gxStoreMessage");
+
+    const company = String(data.get("company_name") || "").trim();
+    const country = String(data.get("country") || "").trim();
+
+    if (!supplierCenterState.user || company.length < 2 || !country) {
+      feedback.textContent = "Connexion, nom de boutique et pays obligatoires.";
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Création en cours...";
+
+    try {
+      const slug = company
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        + "-" + crypto.randomUUID().slice(0, 8);
+
+      const { error } = await supplierCenterClient
+        .from("globexa_stores")
+        .insert({
+          owner_id: supplierCenterState.user.id,
+          company_name: company,
+          slug: slug,
+          country: country,
+          city: String(data.get("city") || "").trim() || null,
+          description: String(data.get("description") || "").trim() || null,
+          status: "pending",
+          verification_status: "pending"
+        });
+
+      if (error) throw error;
+
+      feedback.textContent =
+        "Boutique créée. Elle attend la validation de GLOBEXA.";
+
+      await window.loadSupplierCenter();
+      moveSupplierPanel();
+
+    } catch (error) {
+      feedback.textContent = error.message || "Création impossible.";
+      button.disabled = false;
+      button.textContent = "Créer ma boutique";
+    }
+  }
+
+  async function createProduct(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const button = form.querySelector("button");
+    const feedback = document.getElementById("gxProductMessage");
+
+    const title = String(data.get("title") || "").trim();
+    const price = Number(data.get("price"));
+    const stock = Number(data.get("stock"));
+    const moq = Number(data.get("moq"));
+    const currency = String(data.get("currency") || "USD");
+
+    if (!supplierCenterState.store ||
+        supplierCenterState.store.status !== "active") {
+      feedback.textContent =
+        "Votre boutique doit être activée avant d'ajouter des produits.";
+      return;
+    }
+
+    if (
+      title.length < 2 ||
+      !Number.isFinite(price) ||
+      price <= 0 ||
+      !Number.isInteger(stock) ||
+      stock < 0 ||
+      !Number.isInteger(moq) ||
+      moq < 1
+    ) {
+      feedback.textContent = "Vérifiez les informations du produit.";
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Enregistrement...";
+
+    try {
+      const { error } = await supplierCenterClient
+        .from("globexa_market_products")
+        .insert({
+          store_id: supplierCenterState.store.id,
+          title: title,
+          description: String(data.get("description") || "").trim() || null,
+          base_price: price,
+          currency: currency,
+          stock_quantity: stock,
+          moq: moq,
+          country_of_origin:
+            String(data.get("origin") || "").trim() || null,
+          status: "pending"
+        });
+
+      if (error) throw error;
+
+      feedback.textContent =
+        "Produit envoyé. Il attend la validation avant publication.";
+
+      form.reset();
+      await window.loadSupplierCenter();
+      moveSupplierPanel();
+
+    } catch (error) {
+      feedback.textContent = error.message || "Ajout impossible.";
+      button.disabled = false;
+      button.textContent = "Envoyer le produit";
+    }
+  }
+
+  async function updateSupplierOrder(button) {
+    button.disabled = true;
+
+    try {
+      const { error } = await supplierCenterClient.rpc(
+        "globexa_supplier_update_order_status",
+        {
+          p_order_id: button.dataset.orderId,
+          p_new_status: button.dataset.nextStatus
+        }
+      );
+
+      if (error) throw error;
+
+      await window.loadSupplierCenter();
+      moveSupplierPanel();
+
+    } catch (error) {
+      alert(error.message || "Mise à jour impossible.");
+      button.disabled = false;
+    }
+  }
+
+  function addSupplierButtons() {
+    moveSupplierPanel();
+
+    const content = document.getElementById("supplierCenterContent");
+    if (!content) return;
+
+    const store = supplierCenterState.store;
+
+    if (!store) {
+      if (document.getElementById("gxStoreForm")) return;
+
+      const form = document.createElement("form");
+      form.id = "gxStoreForm";
+      form.className = "supplier-card form-box";
+
+      form.innerHTML = `
+        <h3>Créer ma boutique</h3>
+
+        <label>Nom de la boutique *</label>
+        <input name="company_name" required minlength="2" maxlength="120">
+
+        <label>Pays *</label>
+        <input name="country" required maxlength="80">
+
+        <label>Ville</label>
+        <input name="city" maxlength="80">
+
+        <label>Description</label>
+        <textarea name="description" maxlength="1500"></textarea>
+
+        <button type="submit">Créer ma boutique</button>
+        <p id="gxStoreMessage" role="status"></p>
+      `;
+
+      content.appendChild(form);
+      form.addEventListener("submit", createStore);
+      return;
+    }
+
+    if (store.status === "active" &&
+        !document.getElementById("gxProductForm")) {
+
+      const form = document.createElement("form");
+      form.id = "gxProductForm";
+      form.className = "supplier-card form-box";
+
+      form.innerHTML = `
+        <h3>Ajouter un produit</h3>
+
+        <label>Nom du produit *</label>
+        <input name="title" required minlength="2">
+
+        <label>Description</label>
+        <textarea name="description"></textarea>
+
+        <label>Prix *</label>
+        <input name="price" type="number" min="0.01" step="0.01" required>
+
+        <label>Devise</label>
+        <select name="currency">
+          <option>USD</option>
+          <option>EUR</option>
+          <option>XOF</option>
+          <option>CNY</option>
+        </select>
+
+        <label>Stock *</label>
+        <input name="stock" type="number" min="0" step="1" required>
+
+        <label>Quantité minimale *</label>
+        <input name="moq" type="number" min="1" step="1" value="1" required>
+
+        <label>Pays d'origine</label>
+        <input name="origin">
+
+        <button type="submit">Envoyer le produit</button>
+        <p id="gxProductMessage" role="status"></p>
+      `;
+
+      content.appendChild(form);
+      form.addEventListener("submit", createProduct);
+    }
+
+    const tables = Array.from(content.querySelectorAll("table"));
+    const orderTable = tables.find(table =>
+      table.textContent.includes("Paiement")
+    );
+
+    if (orderTable && !orderTable.dataset.actionsAdded) {
+      const heading = orderTable.querySelector("thead tr");
+
+      if (heading) {
+        const th = document.createElement("th");
+        th.textContent = "Action";
+        heading.appendChild(th);
+      }
+
+      Array.from(orderTable.querySelectorAll("tbody tr"))
+        .forEach((row, index) => {
+          const order = supplierCenterState.orders[index];
+
+          const next = order
+            ? order.status === "paid" ? "processing"
+            : order.status === "processing" ? "shipped"
+            : order.status === "shipped" ? "delivered"
+            : null
+            : null;
+
+          const cell = document.createElement("td");
+
+          if (next) {
+            const button = document.createElement("button");
+            button.type = "button";
+
+            button.textContent =
+              next === "processing" ? "Préparer"
+              : next === "shipped" ? "Expédiée"
+              : "Livrée";
+
+            button.dataset.orderId = order.id;
+            button.dataset.nextStatus = next;
+
+            button.addEventListener("click", () =>
+              updateSupplierOrder(button)
+            );
+
+            cell.appendChild(button);
+          } else {
+            cell.textContent = "—";
+          }
+
+          row.appendChild(cell);
+        });
+
+      orderTable.dataset.actionsAdded = "true";
+    }
+  }
+
+  const originalRender = window.renderSupplierCenter;
+
+  if (typeof originalRender === "function") {
+    window.renderSupplierCenter = function () {
+      originalRender();
+      addSupplierButtons();
+    };
+  }
+
+  /* Correction du formulaire des comptes de réception fournisseur.
+     La politique Supabase exige ces deux valeurs. */
+  document.addEventListener("submit", async function (event) {
+    const form = event.target;
+
+    if (form.id !== "globexaSupplierPayoutForm") return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const data = new FormData(form);
+    const message = document.getElementById("financeSupplierMessage");
+    const button = form.querySelector("button");
+
+    try {
+      const { data: auth, error: authError } =
+        await supabaseClient.auth.getUser();
+
+      if (authError) throw authError;
+      if (!auth.user) throw new Error("Connexion obligatoire.");
+
+      button.disabled = true;
+
+      const { error } = await supabaseClient
+        .from("globexa_supplier_payout_methods")
+        .insert({
+          supplier_user_id: auth.user.id,
+          method_code: String(data.get("method_code") || ""),
+          account_holder: String(data.get("account_holder") || "").trim(),
+          account_reference: String(data.get("account_reference") || "").trim(),
+          bank_name: String(data.get("bank_name") || "").trim() || null,
+          country: String(data.get("country") || "").trim() || null,
+          currency: String(data.get("currency") || "").trim().toUpperCase() || null,
+          status: "approved",
+          approved_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      message.textContent = "Compte de réception enregistré.";
+      await window.loadFinance();
+
+    } catch (error) {
+      message.textContent = error.message || "Enregistrement impossible.";
+      button.disabled = false;
+    }
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", moveSupplierPanel);
+
+  console.log("GLOBEXA : correctifs fournisseur chargés.");
+})();
