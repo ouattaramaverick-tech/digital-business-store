@@ -450,7 +450,8 @@ async function logoutUser() {
 
   state.user = null;
   state.profile = null;
-  state.cart = [];
+  state.orders = [];
+   state.cart = [];
 
   showAccount();
   renderCart();
