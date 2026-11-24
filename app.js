@@ -1357,6 +1357,21 @@ function setupEvents() {
   $("loginForm")?.addEventListener("submit", loginUser);
   $("signupForm")?.addEventListener("submit", registerUser);
 
+  $("resendConfirmationButton")?.addEventListener(
+    "click",
+    resendSignupConfirmation
+  );
+
+  $("forgotPasswordButton")?.addEventListener(
+    "click",
+    sendPasswordReset
+  );
+
+  $("passwordRecoveryForm")?.addEventListener(
+    "submit",
+    updateRecoveredPassword
+  );
+
   $("logoutButton")?.addEventListener("click", logoutUser);
 
   $("closeProductDetail")?.addEventListener("click", closeProduct);
