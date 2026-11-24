@@ -1227,21 +1227,6 @@ async function uploadReel(event) {
   const file = $("reelVideoFile")?.files?.[0];
   const caption = $("reelCaption")?.value.trim() || "";
 
- 
-  $("resendConfirmationButton")?.addEventListener(
-    "click",
-    resendSignupConfirmation
-  );
-
-  $("forgotPasswordButton")?.addEventListener(
-    "click",
-    sendPasswordReset
-  );
-
-  $("passwordRecoveryForm")?.addEventListener(
-    "submit",
-    updateRecoveredPassword
-  );
  if (!file) {
     message("reelUploadMessage", "Choisis une vidéo.", "error");
     return;
