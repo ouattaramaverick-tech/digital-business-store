@@ -12,14 +12,76 @@
 const SUPABASE_URL = "https://xlxkiyihagoupsajwmze.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6";
 
-if (!window.supabase) {
-  throw new Error("La bibliothèque Supabase n'est pas chargée.");
+let supabaseClient = null;
+let supabaseLoadPromise = null;
+
+function createSupabaseClientIfReady() {
+  if (
+    !supabaseClient &&
+    window.supabase &&
+    typeof window.supabase.createClient === "function"
+  ) {
+    supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+  }
+
+  return supabaseClient;
 }
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+function ensureSupabaseClient() {
+  const client = createSupabaseClientIfReady();
+  if (client) return Promise.resolve(client);
+  if (supabaseLoadPromise) return supabaseLoadPromise;
+
+  supabaseLoadPromise = new Promise((resolve, reject) => {
+    const sources = [
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2"
+    ];
+
+    function loadSource(index) {
+      const ready = createSupabaseClientIfReady();
+
+      if (ready) {
+        resolve(ready);
+        return;
+      }
+
+      if (index >= sources.length) {
+        reject(new Error(
+          "Service indisponible. Vérifie Internet et réessaie."
+        ));
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = sources[index];
+      script.async = true;
+
+      script.onload = () => {
+        const loaded = createSupabaseClientIfReady();
+        if (loaded) resolve(loaded);
+        else loadSource(index + 1);
+      };
+
+      script.onerror = () => {
+        script.remove();
+        loadSource(index + 1);
+      };
+
+      document.head.appendChild(script);
+    }
+
+    loadSource(0);
+  }).catch(error => {
+    supabaseLoadPromise = null;
+    throw error;
+  });
+
+  return supabaseLoadPromise;
+}
 
 /* 2. ÉTAT DE L'APPLICATION */
 
@@ -1128,10 +1190,10 @@ function setupLanguage() {
   if (!selector) return;
 
   const savedLanguage = localStorage.getItem("globexa-language");
+    setupEvents();
 
-  if (savedLanguage) {
-    selector.value = savedLanguage;
-  }
+    await ensureSupabaseClient();
+    await initializeSession();
 
   selector.addEventListener("change", () => {
     localStorage.setItem("globexa-language", selector.value);
