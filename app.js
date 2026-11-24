@@ -901,7 +901,47 @@ async function loadOrders() {
         "<p>Impossible de charger les commandes.</p>";
     }
   }
-                                     }async function addToCart(productId) {
+                                     }
+
+function renderOrders() {
+  const container = $("orderList");
+  if (!container) return;
+
+  if (!state.user) {
+    container.innerHTML = "<p>Connecte-toi pour voir tes commandes.</p>";
+    return;
+  }
+
+  if (!state.orders.length) {
+    container.innerHTML = "<p>Tu n'as pas encore de commande.</p>";
+    return;
+  }
+
+  container.innerHTML = state.orders.map(order => {
+    const product = order.globexa_market_products;
+    const title = product?.title || "Produit";
+    const total = Number(
+      order.subtotal ||
+      Number(order.unit_price) * Number(order.quantity)
+    );
+
+    const date = new Date(order.created_at).toLocaleDateString("fr-FR");
+
+    return `
+      <article class="order-card">
+        <h3>${escapeHTML(title)}</h3>
+        <p>Commande : ${escapeHTML(order.id.slice(0, 8))}</p>
+        <p>Quantité : ${Number(order.quantity)}</p>
+        <p>Total : ${formatPrice(total, order.currency)}</p>
+        <p>Statut : ${escapeHTML(order.status)}</p>
+        <p>Paiement : ${escapeHTML(order.payment_status)}</p>
+        <p>Date : ${escapeHTML(date)}</p>
+      </article>
+    `;
+  }).join("");
+}
+
+async function addToCart(productId) {
   if (!state.user) {
     message(
       "cartMessage",
