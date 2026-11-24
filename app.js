@@ -1499,14 +1499,16 @@ async function initializeGlobexa() {
 supabaseClient.auth.onAuthStateChange(handleAuthStateChange);
 await initializeSession();
    
-    await Promise.all([
+        await Promise.all([
       loadCategories(),
       loadProducts(),
       loadSuppliers(),
       loadReels(),
-loadCart(),
-loadOrders()
-   
+      loadCart(),
+      loadOrders(),
+      loadLogistics()
+    ]);
+
     ]);
 
     console.log("GLOBEXA : application initialisée.");
