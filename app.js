@@ -1190,10 +1190,7 @@ function setupLanguage() {
   if (!selector) return;
 
   const savedLanguage = localStorage.getItem("globexa-language");
-    setupEvents();
-
-    await ensureSupabaseClient();
-    await initializeSession();
+  if (savedLanguage) selector.value = savedLanguage;    
 
   selector.addEventListener("change", () => {
     localStorage.setItem("globexa-language", selector.value);
@@ -1255,9 +1252,10 @@ async function initializeGlobexa() {
     setupEvents();
 
     await initializeSession();
+    setupEvents();
 
-    await Promise.all([
-      loadCategories(),
+    await ensureSupabaseClient();
+    await initializeSession();
       loadProducts(),
       loadSuppliers(),
       loadReels(),
