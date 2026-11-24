@@ -1243,6 +1243,7 @@ async function initializeSession() {
 
 /* 21. DÉMARRAGE COMPLET */
 
+
 async function initializeGlobexa() {
   if (state.loading) return;
 
@@ -1251,11 +1252,11 @@ async function initializeGlobexa() {
   try {
     setupEvents();
 
-    await initializeSession();
-    setupEvents();
-
     await ensureSupabaseClient();
     await initializeSession();
+
+    await Promise.all([
+      loadCategories(),
       loadProducts(),
       loadSuppliers(),
       loadReels(),
@@ -1286,6 +1287,7 @@ async function initializeGlobexa() {
     state.loading = false;
   }
 }
+
 
 /* 22. LANCEMENT */
 
