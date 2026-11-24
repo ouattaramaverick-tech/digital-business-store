@@ -453,6 +453,7 @@ async function logoutUser() {
   state.orders = [];
    state.cart = [];
 
+   renderOrders();
   showAccount();
   renderCart();
 
