@@ -977,7 +977,29 @@
           "Impossible de charger les candidatures : " +
           transitaires.error.message;
       } else {
-        transitaireElement.innerHTML =
+              if (!shipmentElement) {
+        console.error("Panneau adminShipmentList introuvable.");
+      } else if (paidOrders.error) {
+        shipmentElement.textContent =
+          "Impossible de charger les commandes : " +
+          paidOrders.error.message;
+      } else if (shipments.error) {
+        shipmentElement.textContent =
+          "Impossible de charger les expéditions : " +
+          shipments.error.message;
+      } else if (approvedTransitaires.error) {
+        shipmentElement.textContent =
+          "Impossible de charger les transitaires : " +
+          approvedTransitaires.error.message;
+      } else {
+        shipmentElement.innerHTML =
+          adminRenderShipmentManagement(
+            paidOrders.data || [],
+            shipments.data || [],
+            approvedTransitaires.data || []
+          );
+              }
+          transitaireElement.innerHTML =
           adminRenderTransitaires(transitaires.data);
       }
 
