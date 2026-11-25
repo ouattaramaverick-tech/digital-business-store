@@ -591,8 +591,12 @@
         "adminRefundList"
       );
 
-      const storeElement = document.getElementById(
+            const storeElement = document.getElementById(
         "adminStoreList"
+      );
+
+      const productElement = document.getElementById(
+        "adminProductList"
       );
 
       if (stores.error) {
@@ -602,6 +606,25 @@
       } else {
         storeElement.innerHTML =
           adminRenderStores(stores.data);
+      }
+
+      if (products.error) {
+        productElement.textContent =
+          "Impossible de charger les produits : " +
+          products.error.message;
+      } else if (allStores.error) {
+        productElement.textContent =
+          "Impossible de charger les boutiques des produits.";
+      } else {
+        const storeNames = new Map(
+          (allStores.data || []).map(store => [
+            store.id,
+            store.company_name
+          ])
+        );
+
+        productElement.innerHTML =
+          adminRenderProducts(products.data, storeNames);
       }
 
       if (payments.error) {
