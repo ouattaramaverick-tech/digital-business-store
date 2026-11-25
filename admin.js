@@ -532,6 +532,10 @@
   <h3>Boutiques à valider</h3>
   <div id="adminStoreList">Chargement...</div>
 </section>
+<section class="admin-section">
+  <h3>Produits à valider</h3>
+  <div id="adminProductList">Chargement...</div>
+</section>
 <div id="adminMessage" role="status"></div>
 
           <section class="admin-section">
