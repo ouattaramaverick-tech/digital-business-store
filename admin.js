@@ -111,7 +111,34 @@
     `).join("");
   }
 
-  function adminRenderRefunds(rows) {
+  function adminRenderStores(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return "<p>Aucune boutique en attente de validation.</p>";
+  }
+
+  return rows.map(store => `
+    <article class="admin-card">
+      <h4>${adminEscape(store.company_name)}</h4>
+      <p>Pays : ${adminEscape(store.country)}</p>
+      <p>Ville : ${adminEscape(store.city || "Non précisée")}</p>
+      <p>Statut : ${adminEscape(store.status)}</p>
+      <p>Vérification : ${adminEscape(store.verification_status)}</p>
+
+      <button type="button"
+        data-admin-action="approve-store"
+        data-id="${adminEscape(store.id)}">
+        Valider la boutique
+      </button>
+
+      <button type="button"
+        data-admin-action="reject-store"
+        data-id="${adminEscape(store.id)}">
+        Refuser la boutique
+      </button>
+    </article>
+  `).join("");
+  }
+   function adminRenderRefunds(rows) {
     if (!Array.isArray(rows) || rows.length === 0) {
       return "<p>Aucune demande de remboursement.</p>";
     }
