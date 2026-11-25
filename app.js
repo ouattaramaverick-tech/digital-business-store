@@ -574,9 +574,17 @@ async function loadProducts(categoryId = null, search = "") {
     query = query.eq("category_id", categoryId);
   }
 
-  if (search) {
-    query = query.ilike("title", "%" + search + "%");
-  }
+  
+if (search) {
+  const safeSearch = search
+    .replace(/[%_]/g, "\\$&")
+    .replace(/,/g, " ")
+    .replace(/[()]/g, " ");
+
+  query = query.or(
+    `title.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`
+  );
+}
 
   const { data, error } = await query;
 
