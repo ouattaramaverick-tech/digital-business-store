@@ -306,7 +306,51 @@
       await loadAdmin();
       return;
                }
-    let result;
+       if (
+      action === "approve-product" ||
+      action === "reject-product"
+    ) {
+      const approved = action === "approve-product";
+
+      if (!confirm(
+        approved
+          ? "Confirmer la validation de ce produit ?"
+          : "Confirmer le refus de ce produit ?"
+      )) return;
+
+      const productResult = await supabaseClient
+        .from("globexa_market_products")
+        .update({
+          status: approved ? "published" : "rejected"
+        })
+        .eq("id", refundId)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+
+      if (productResult.error) {
+        throw productResult.error;
+      }
+
+      if (!productResult.data) {
+        adminMessage(
+          "Produit introuvable ou déjà traité.",
+          "error"
+        );
+        return;
+      }
+
+      adminMessage(
+        approved
+          ? "Produit validé avec succès."
+          : "Produit refusé.",
+        "success"
+      );
+
+      await loadAdmin();
+      return;
+       }
+     let result;
     let parameters;
 
     if (action === "review" ||
