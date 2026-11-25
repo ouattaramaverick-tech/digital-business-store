@@ -972,12 +972,17 @@
            const shipmentElement = document.getElementById(
         "adminShipmentList"
       );
-       if (transitaires.error) {
+       
+      if (transitaires.error) {
         transitaireElement.textContent =
           "Impossible de charger les candidatures : " +
           transitaires.error.message;
       } else {
-              if (!shipmentElement) {
+        transitaireElement.innerHTML =
+          adminRenderTransitaires(transitaires.data || []);
+      }
+
+      if (!shipmentElement) {
         console.error("Panneau adminShipmentList introuvable.");
       } else if (paidOrders.error) {
         shipmentElement.textContent =
@@ -998,9 +1003,6 @@
             shipments.data || [],
             approvedTransitaires.data || []
           );
-              }
-          transitaireElement.innerHTML =
-          adminRenderTransitaires(transitaires.data);
       }
 
       if (stores.error) {
