@@ -647,6 +647,14 @@ console.log("GLOBEXA CODE 6 chargé.");
         <label>Nom du produit *</label>
         <input name="title" required minlength="2">
 
+              <label>Photo du produit *</label>
+        <input
+          type="file"
+          name="product_image"
+          accept="image/jpeg,image/png,image/webp"
+          required
+        >
+        <small>JPG, PNG ou WebP — maximum 5 Mo.</small>
         <label>Description</label>
         <textarea name="description"></textarea>
 
