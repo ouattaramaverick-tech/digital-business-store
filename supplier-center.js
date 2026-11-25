@@ -240,6 +240,7 @@ async function loadSupplierCenter() {
   renderSupplierCenter();
   window.globexaAddSupplierButtons?.();
 }
+window.loadSupplierCenter = loadSupplierCenter;
 
 /* 3. AFFICHER LE TABLEAU DE BORD */
 
