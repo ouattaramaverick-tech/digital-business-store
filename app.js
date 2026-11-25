@@ -700,6 +700,7 @@ function renderPopularProducts() {
 
 /* 10. RECHERCHE */
 
+
 async function setupSearch() {
   const form = $("searchForm");
   if (!form) return;
@@ -712,11 +713,19 @@ async function setupSearch() {
 
     if (type === "suppliers") {
       await loadSuppliers(search);
-      $("suppliers")?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      await loadProducts(null, search);
-      $("products")?.scrollIntoView({ behavior: "smooth" });
+      $("suppliers")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+      return;
     }
+
+    await loadProducts(null, search);
+
+    $("products")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   });
 }
 
