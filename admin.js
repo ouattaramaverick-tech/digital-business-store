@@ -138,7 +138,57 @@
     </article>
   `).join("");
   }
-   function adminRenderRefunds(rows) {
+  
+  function adminRenderProducts(rows, storeNames) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return "<p>Aucun produit en attente de validation.</p>";
+    }
+
+    return rows.map(product => `
+      <article class="admin-card">
+        <h4>${adminEscape(product.title)}</h4>
+
+        <p>
+          Boutique :
+          ${adminEscape(
+            storeNames.get(product.store_id) || "Boutique inconnue"
+          )}
+        </p>
+
+        <p>
+          Description :
+          ${adminEscape(product.description || "Non précisée")}
+        </p>
+
+        <p>
+          Prix :
+          ${adminEscape(
+            adminMoney(product.base_price, product.currency)
+          )}
+        </p>
+
+        <p>
+          Stock :
+          ${adminEscape(product.stock_quantity)}
+        </p>
+
+        <p>Statut : En attente</p>
+
+        <button type="button"
+          data-admin-action="approve-product"
+          data-id="${adminEscape(product.id)}">
+          Valider le produit
+        </button>
+
+        <button type="button"
+          data-admin-action="reject-product"
+          data-id="${adminEscape(product.id)}">
+          Refuser le produit
+        </button>
+      </article>
+    `).join("");
+  }
+ function adminRenderRefunds(rows) {
     if (!Array.isArray(rows) || rows.length === 0) {
       return "<p>Aucune demande de remboursement.</p>";
     }
