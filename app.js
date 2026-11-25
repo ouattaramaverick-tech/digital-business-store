@@ -908,7 +908,8 @@ async function loadCart() {
   renderCart();
 }
 
-/* 13 BIS. HISTORIQUE DES COMMANDES */
+
+/* 13 BIS. HISTORIQUE DES COMMANDES ET SUIVI */
 
 async function loadOrders() {
   const container = $("orderList");
@@ -947,7 +948,77 @@ async function loadOrders() {
 
     if (error) throw error;
 
-    state.orders = data || [];
+    const orders = data || [];
+    const orderIds = orders.map(order => order.id);
+
+    let shipments = [];
+    let events = [];
+    let trackingError = false;
+
+    if (orderIds.length) {
+      try {
+        const shipmentResult = await supabaseClient
+          .from("globexa_shipments")
+          .select(`
+            id,
+            order_id,
+            carrier,
+            tracking_number,
+            origin,
+            destination,
+            status,
+            estimated_delivery,
+            created_at
+          `)
+          .in("order_id", orderIds);
+
+        if (shipmentResult.error) throw shipmentResult.error;
+
+        shipments = shipmentResult.data || [];
+
+        const shipmentIds = shipments.map(item => item.id);
+
+        if (shipmentIds.length) {
+          const eventResult = await supabaseClient
+            .from("globexa_tracking_events")
+            .select(`
+              id,
+              shipment_id,
+              event_status,
+              location,
+              details,
+              occurred_at
+            `)
+            .in("shipment_id", shipmentIds)
+            .order("occurred_at", { ascending: false });
+
+          if (eventResult.error) throw eventResult.error;
+
+          events = eventResult.data || [];
+        }
+      } catch (error) {
+        console.error("Chargement du suivi :", error);
+        trackingError = true;
+      }
+    }
+
+    state.orders = orders.map(order => {
+      const shipment = shipments.find(
+        item => item.order_id === order.id
+      ) || null;
+
+      const trackingEvents = shipment
+        ? events.filter(event => event.shipment_id === shipment.id)
+        : [];
+
+      return {
+        ...order,
+        globexaShipment: shipment,
+        globexaTrackingEvents: trackingEvents,
+        trackingError
+      };
+    });
+
     renderOrders();
 
   } catch (error) {
@@ -958,41 +1029,191 @@ async function loadOrders() {
         "<p>Impossible de charger les commandes.</p>";
     }
   }
-                                     }
+}
 
 function renderOrders() {
   const container = $("orderList");
   if (!container) return;
 
   if (!state.user) {
-    container.innerHTML = "<p>Connecte-toi pour voir tes commandes.</p>";
+    container.innerHTML =
+      "<p>Connecte-toi pour voir tes commandes.</p>";
     return;
   }
 
   if (!state.orders.length) {
-    container.innerHTML = "<p>Tu n'as pas encore de commande.</p>";
+    container.innerHTML =
+      "<p>Tu n'as pas encore de commande.</p>";
     return;
+  }
+
+  const shipmentStatuses = {
+    preparing: "En préparation",
+    in_transit: "En transit",
+    customs: "En douane",
+    delivered: "Livré",
+    exception: "Incident"
+  };
+
+  const eventStatuses = {
+    preparing: "En préparation",
+    in_transit: "En transit",
+    customs: "En douane",
+    delivered: "Livré",
+    exception: "Incident"
+  };
+
+  function displayDate(value) {
+    if (!value) return "Non renseignée";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Date indisponible";
+    }
+
+    return date.toLocaleDateString("fr-FR");
   }
 
   container.innerHTML = state.orders.map(order => {
     const product = order.globexa_market_products;
     const title = product?.title || "Produit";
+
     const total = Number(
       order.subtotal ||
       Number(order.unit_price) * Number(order.quantity)
     );
 
-    const date = new Date(order.created_at).toLocaleDateString("fr-FR");
+    const date = displayDate(order.created_at);
+    const shipment = order.globexaShipment;
+    const events = order.globexaTrackingEvents || [];
+
+    let trackingHTML = "";
+
+    if (order.trackingError) {
+      trackingHTML = `
+        <div class="order-tracking">
+          <h4>Suivi de livraison</h4>
+          <p>Le suivi est temporairement indisponible.</p>
+        </div>
+      `;
+    } else if (!shipment) {
+      trackingHTML = `
+        <div class="order-tracking">
+          <h4>Suivi de livraison</h4>
+          <p>Expédition pas encore créée.</p>
+        </div>
+      `;
+    } else {
+      const status =
+        shipmentStatuses[shipment.status] || "Statut inconnu";
+
+      trackingHTML = `
+        <div class="order-tracking"
+          style="
+            margin-top:15px;
+            padding:14px;
+            border:1px solid #dbe3ef;
+            border-radius:10px;
+          ">
+
+          <h4>Suivi de livraison</h4>
+
+          <p>
+            Transporteur :
+            ${escapeHTML(shipment.carrier || "À déterminer")}
+          </p>
+
+          <p>
+            Numéro de suivi :
+            <strong>
+              ${escapeHTML(
+                shipment.tracking_number || "Non disponible"
+              )}
+            </strong>
+          </p>
+
+          <p>
+            Départ :
+            ${escapeHTML(shipment.origin || "Non renseigné")}
+          </p>
+
+          <p>
+            Destination :
+            ${escapeHTML(shipment.destination || "Non renseignée")}
+          </p>
+
+          <p>
+            Statut :
+            <strong>${escapeHTML(status)}</strong>
+          </p>
+
+          <p>
+            Livraison estimée :
+            ${escapeHTML(displayDate(shipment.estimated_delivery))}
+          </p>
+
+          <h4>Historique de livraison</h4>
+
+          ${
+            events.length
+              ? events.map(event => {
+                  const eventStatus =
+                    eventStatuses[event.event_status] ||
+                    "Mise à jour";
+
+                  return `
+                    <div style="
+                      border-left:3px solid #f97316;
+                      padding:8px 12px;
+                      margin:10px 0;
+                    ">
+                      <strong>
+                        ${escapeHTML(eventStatus)}
+                      </strong>
+
+                      <p>
+                        ${escapeHTML(
+                          event.location || "Lieu non renseigné"
+                        )}
+                      </p>
+
+                      <p>
+                        ${escapeHTML(event.details || "")}
+                      </p>
+
+                      <small>
+                        ${escapeHTML(displayDate(event.occurred_at))}
+                      </small>
+                    </div>
+                  `;
+                }).join("")
+              : "<p>Aucune mise à jour pour le moment.</p>"
+          }
+        </div>
+      `;
+    }
 
     return `
       <article class="order-card">
         <h3>${escapeHTML(title)}</h3>
-        <p>Commande : ${escapeHTML(order.id.slice(0, 8))}</p>
+
+        <p>
+          Commande :
+          ${escapeHTML(order.id.slice(0, 8))}
+        </p>
+
         <p>Quantité : ${Number(order.quantity)}</p>
+
         <p>Total : ${formatPrice(total, order.currency)}</p>
+
         <p>Statut : ${escapeHTML(order.status)}</p>
+
         <p>Paiement : ${escapeHTML(order.payment_status)}</p>
+
         <p>Date : ${escapeHTML(date)}</p>
+
+        ${trackingHTML}
       </article>
     `;
   }).join("");
