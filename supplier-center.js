@@ -442,9 +442,8 @@ function renderSupplierCenter() {
     </button>
   `;
 
-  document.getElementById("supplierCenterRefresh")
+    document.getElementById("supplierCenterRefresh")
     ?.addEventListener("click", loadSupplierCenter);
-}
 
   const detailsButton = document.getElementById(
     "supplierStoreDetailsButton"
@@ -463,6 +462,7 @@ function renderSupplierCenter() {
       ? "Voir les détails de mon entreprise"
       : "Masquer les détails";
   });
+}
 /* 4. DÉMARRAGE */
 
 function startGlobexaSupplierCenter() {
