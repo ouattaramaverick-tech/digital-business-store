@@ -777,6 +777,7 @@ function closeProduct() {
 
 /* 12. FOURNISSEURS */
 
+
 async function loadSuppliers(search = "") {
   const container = $("supplierList");
   if (!container) return;
@@ -787,6 +788,7 @@ async function loadSuppliers(search = "") {
     .from("globexa_stores")
     .select(`
       id,
+      owner_id,
       company_name,
       country,
       city,
@@ -830,8 +832,24 @@ async function loadSuppliers(search = "") {
       <p>${escapeHTML(store.city || "")} ${escapeHTML(store.country || "")}</p>
 
       <p>${escapeHTML(store.description || "")}</p>
+
+      ${state.user && state.user.id === store.owner_id ? `
+        <button type="button" data-open-supplier>
+          Ouvrir mon espace fournisseur
+        </button>
+      ` : ""}
     </article>
   `).join("");
+
+  container.querySelectorAll("[data-open-supplier]")
+    .forEach(button => {
+      button.addEventListener("click", async () => {
+        document.getElementById("seller-center")
+          ?.scrollIntoView({ behavior: "smooth" });
+
+        await window.loadSupplierCenter?.();
+      });
+    });
 }
 
 /* 13. PANIER */
