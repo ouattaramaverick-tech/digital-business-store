@@ -420,7 +420,7 @@ function renderSupplierCenter() {
 
 function startGlobexaSupplierCenter() {
   if (!document.body) return;
-  loadSupplierCenter();
+  initializeSupplierClient();
 }
 
 if (document.readyState === "loading") {
