@@ -843,54 +843,6 @@ async function createProduct(event) {
     };
   }
 
-  /* Correction du formulaire des comptes de réception fournisseur.
-     La politique Supabase exige ces deux valeurs. */
-  document.addEventListener("submit", async function (event) {
-    const form = event.target;
-
-    if (form.id !== "globexaSupplierPayoutForm") return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    const data = new FormData(form);
-    const message = document.getElementById("financeSupplierMessage");
-    const button = form.querySelector("button");
-
-    try {
-      const { data: auth, error: authError } =
-        await supabaseClient.auth.getUser();
-
-      if (authError) throw authError;
-      if (!auth.user) throw new Error("Connexion obligatoire.");
-
-      button.disabled = true;
-
-      const { error } = await supabaseClient
-        .from("globexa_supplier_payout_methods")
-        .insert({
-          supplier_user_id: auth.user.id,
-          method_code: String(data.get("method_code") || ""),
-          account_holder: String(data.get("account_holder") || "").trim(),
-          account_reference: String(data.get("account_reference") || "").trim(),
-          bank_name: String(data.get("bank_name") || "").trim() || null,
-          country: String(data.get("country") || "").trim() || null,
-          currency: String(data.get("currency") || "").trim().toUpperCase() || null,
-          status: "approved",
-          approved_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      message.textContent = "Compte de réception enregistré.";
-      await window.loadFinance();
-
-    } catch (error) {
-      message.textContent = error.message || "Enregistrement impossible.";
-      button.disabled = false;
-    }
-  }, true);
-
   document.addEventListener("DOMContentLoaded", moveSupplierPanel);
 
   console.log("GLOBEXA : correctifs fournisseur chargés.");
