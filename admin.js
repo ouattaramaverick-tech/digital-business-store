@@ -889,13 +889,17 @@
         </div>
       `;
 
+      
       const [
         payments,
         refunds,
         stores,
         products,
         allStores,
-        transitaires
+        transitaires,
+        paidOrders,
+        shipments,
+        approvedTransitaires
       ] = await Promise.all([
         supabaseClient.rpc(
           "globexa_admin_payment_readiness"
@@ -921,7 +925,28 @@
           .from("transitaires")
           .select("id,company_name,country,contact,status,created_at")
           .eq("status", "pending")
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: true }),
+
+        // COMMANDES PAYEES
+        supabaseClient
+          .from("globexa_market_orders")
+          .select("id,buyer_id,supplier_id,quantity,unit_price,subtotal,currency,payment_status,status,created_at")
+          .eq("payment_status", "paid")
+          .in("status", ["paid", "processing", "shipped"])
+          .order("created_at", { ascending: false }),
+
+        // HISTORIQUE DES EXPEDITIONS
+        supabaseClient
+          .from("globexa_shipments")
+          .select("id,order_id,carrier,tracking_number,origin,destination,status,estimated_delivery,transitaire_id,created_at")
+          .order("created_at", { ascending: false }),
+
+        // TRANSITAIRES APPROUVES
+        supabaseClient
+          .from("transitaires")
+          .select("id,company_name,country,status")
+          .eq("status", "approved")
+          .order("company_name", { ascending: true })
       ]);
 
       const paymentElement = document.getElementById(
