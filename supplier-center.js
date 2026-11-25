@@ -236,6 +236,7 @@ async function loadSupplierCenter() {
     : "Aucune boutique n'est encore associée à votre compte.";
 
   renderSupplierCenter();
+  window.globexaAddSupplierButtons?.();
 }
 
 /* 3. AFFICHER LE TABLEAU DE BORD */
