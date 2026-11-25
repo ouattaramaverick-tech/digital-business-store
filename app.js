@@ -1526,9 +1526,8 @@ await initializeSession();
   }
 }
 
-
+window.loadCart = loadCart;
 /* 22. LANCEMENT */
-
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeGlobexa);
 } else {
