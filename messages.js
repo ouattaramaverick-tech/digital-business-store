@@ -724,7 +724,9 @@
           </p>
           <p>Destination : ${escapeHTML(rfq.destination_country || "Non précisée")}</p>
           ${activeStore && rfq.buyer_id !== currentUser.id ? `
-            <form class="gx-form gx-quote-form" data-rfq-id="${escapeHTML(rfq.id)}">
+            <form class="gx-form gx-quote-form"
+  data-rfq-id="${escapeHTML(rfq.id)}"
+  data-currency="${escapeHTML(rfq.currency || "USD")}">
               <input name="unit_price" type="number" min="0" step="0.01"
                 placeholder="Ton prix unitaire" required>
               <input name="quote_quantity" type="number" min="1" step="1"
@@ -780,7 +782,7 @@
           rfq_id: form.dataset.rfqId,
           supplier_id: currentUser.id,
           unit_price: unitPrice,
-          currency: "USD",
+          currency: form.dataset.currency || "USD",
           quantity,
           lead_time_days: Number.isInteger(leadTime) && leadTime > 0
             ? leadTime
