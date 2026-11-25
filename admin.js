@@ -434,7 +434,11 @@
             Accès administrateur vérifié par Supabase.
           </p>
 
-          <div id="adminMessage" role="status"></div>
+         <section class="admin-section">
+  <h3>Boutiques à valider</h3>
+  <div id="adminStoreList">Chargement...</div>
+</section>
+<div id="adminMessage" role="status"></div>
 
           <section class="admin-section">
             <h3>Configuration des paiements</h3>
