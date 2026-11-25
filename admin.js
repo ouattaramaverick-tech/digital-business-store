@@ -456,14 +456,19 @@
         </div>
       `;
 
-      const [payments, refunds] = await Promise.all([
+            const [payments, refunds, stores] = await Promise.all([
         supabaseClient.rpc(
           "globexa_admin_payment_readiness"
         ),
         supabaseClient.rpc(
           "globexa_admin_market_refund_list",
           { p_status: null }
-        )
+        ),
+        supabaseClient
+          .from("globexa_stores")
+          .select("id,company_name,country,city,status,verification_status")
+          .eq("status", "pending")
+          .order("created_at", { ascending: true })
       ]);
 
       const paymentElement = document.getElementById(
@@ -473,6 +478,19 @@
       const refundElement = document.getElementById(
         "adminRefundList"
       );
+
+      const storeElement = document.getElementById(
+        "adminStoreList"
+      );
+
+      if (stores.error) {
+        storeElement.textContent =
+          "Impossible de charger les boutiques : " +
+          stores.error.message;
+      } else {
+        storeElement.innerHTML =
+          adminRenderStores(stores.data);
+      }
 
       if (payments.error) {
         paymentElement.textContent =
