@@ -446,6 +446,23 @@ function renderSupplierCenter() {
     ?.addEventListener("click", loadSupplierCenter);
 }
 
+  const detailsButton = document.getElementById(
+    "supplierStoreDetailsButton"
+  );
+
+  const detailsPanel = document.getElementById(
+    "supplierStoreDetails"
+  );
+
+  detailsButton?.addEventListener("click", () => {
+    if (!detailsPanel) return;
+
+    detailsPanel.hidden = !detailsPanel.hidden;
+
+    detailsButton.textContent = detailsPanel.hidden
+      ? "Voir les détails de mon entreprise"
+      : "Masquer les détails";
+  });
 /* 4. DÉMARRAGE */
 
 function startGlobexaSupplierCenter() {
