@@ -716,7 +716,89 @@
       }
     });
 
-    root.dataset.eventsReady = "true";
+        // ENREGISTREMENT DES EXPEDITIONS GLOBEXA
+    root.addEventListener("submit", async event => {
+      const form = event.target.closest(
+        "[data-admin-shipment-form]"
+      );
+
+      if (!form) return;
+
+      event.preventDefault();
+
+      const orderId = form.dataset.orderId;
+      const formData = new FormData(form);
+
+      const transitaireId = String(
+        formData.get("transitaire_id") || ""
+      ).trim();
+
+      if (!transitaireId) {
+        adminMessage(
+          "Choisis un transitaire approuvé.",
+          "error"
+        );
+        return;
+      }
+
+      if (!confirm(
+        "Confirmer la création ou la mise à jour de cette expédition ?"
+      )) return;
+
+      const submitButton = form.querySelector(
+        'button[type="submit"]'
+      );
+
+      if (submitButton) submitButton.disabled = true;
+
+      try {
+        const result = await supabaseClient.rpc(
+          "globexa_admin_manage_shipment",
+          {
+            p_order_id: orderId,
+            p_transitaire_id: transitaireId,
+            p_carrier: String(
+              formData.get("carrier") || ""
+            ).trim() || null,
+            p_tracking_number: String(
+              formData.get("tracking_number") || ""
+            ).trim() || null,
+            p_origin: String(
+              formData.get("origin") || ""
+            ).trim() || null,
+            p_destination: String(
+              formData.get("destination") || ""
+            ).trim() || null,
+            p_estimated_delivery: String(
+              formData.get("estimated_delivery") || ""
+            ).trim() || null
+          }
+        );
+
+        if (result.error) throw result.error;
+
+        adminMessage(
+          "Expédition enregistrée avec succès.",
+          "success"
+        );
+
+        await loadAdmin();
+
+      } catch (error) {
+        console.error(
+          "Erreur enregistrement expédition :",
+          error
+        );
+
+        adminMessage(
+          error.message || "Impossible d'enregistrer l'expédition.",
+          "error"
+        );
+
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+     root.dataset.eventsReady = "true";
   }
 
   async function loadAdmin() {
