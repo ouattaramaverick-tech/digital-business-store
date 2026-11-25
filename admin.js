@@ -858,7 +858,15 @@
             <div id="adminTransitaireList">Chargement...</div>
           </section>
 
-          <section class="admin-section">
+         <section class="admin-section">
+  <h3>🚚 Gestion des expéditions</h3>
+  <p>
+    Créer les expéditions des commandes payées
+    et attribuer les transitaires approuvés.
+  </p>
+  <div id="adminShipmentList">Chargement...</div>
+</section>
+<section class="admin-section">
             <h3>Produits à valider</h3>
             <div id="adminProductList">Chargement...</div>
           </section>
