@@ -554,7 +554,13 @@
         </div>
       `;
 
-            const [payments, refunds, stores] = await Promise.all([
+                  const [
+        payments,
+        refunds,
+        stores,
+        products,
+        allStores
+      ] = await Promise.all([
         supabaseClient.rpc(
           "globexa_admin_payment_readiness"
         ),
@@ -566,7 +572,15 @@
           .from("globexa_stores")
           .select("id,company_name,country,city,status,verification_status")
           .eq("status", "pending")
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: true }),
+        supabaseClient
+          .from("globexa_market_products")
+          .select("id,store_id,title,description,base_price,currency,stock_quantity,status,created_at")
+          .eq("status", "pending")
+          .order("created_at", { ascending: true }),
+        supabaseClient
+          .from("globexa_stores")
+          .select("id,company_name")
       ]);
 
       const paymentElement = document.getElementById(
