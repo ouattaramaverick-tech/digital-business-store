@@ -144,11 +144,18 @@ function createSupplierCenter() {
 async function loadSupplierCenter() {
   createSupplierCenter();
 
-  const message = document.getElementById("supplierCenterMessage");
-  const content = document.getElementById("supplierCenterContent");
+  const panel = document.getElementById("globexaSupplierCenter");
+  const dashboard = document.getElementById("sellerDashboard");
 
-  const { data: authData, error: authError } =
-    await supplierCenterClient.auth.getUser();
+  if (panel && dashboard && panel.parentElement !== dashboard) {
+    dashboard.replaceChildren(panel);
+  }
+
+  if (!supplierCenterClient) {
+    supplierCenterClient = await window.globexaGetSupabaseClient();
+  }
+
+  const message = document.getElementById("supplierCenterMessage");
 
   if (authError || !authData.user) {
     message.textContent =
