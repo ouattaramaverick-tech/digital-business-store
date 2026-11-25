@@ -969,7 +969,10 @@
         "adminTransitaireList"
       );
 
-      if (transitaires.error) {
+           const shipmentElement = document.getElementById(
+        "adminShipmentList"
+      );
+       if (transitaires.error) {
         transitaireElement.textContent =
           "Impossible de charger les candidatures : " +
           transitaires.error.message;
