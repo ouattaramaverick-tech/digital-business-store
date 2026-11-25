@@ -631,8 +631,6 @@ async function createProduct(event) {
   }
 }
 
-    button.disabled = true;
-
       async function updateSupplierOrder(button) {
     button.disabled = true;
 
@@ -653,6 +651,8 @@ async function createProduct(event) {
     } catch (error) {
       alert(error.message || "Mise à jour impossible.");
       button.disabled = false;
+    }
+      }
 
   function addSupplierButtons() {
     moveSupplierPanel();
