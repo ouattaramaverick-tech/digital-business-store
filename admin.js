@@ -56,19 +56,28 @@
     element.dataset.type = type;
   }
 
-  function adminStatus(status) {
-    const labels = {
-      requested: "Nouvelle demande",
-      under_review: "En examen",
-      approved: "Approuvée",
-      rejected: "Rejetée",
-      processing: "En traitement",
-      succeeded: "Terminée",
-      failed: "Échec"
-    };
+ function adminStatus(status) {
+  const labels = {
+    requested: "Nouvelle demande",
+    under_review: "En examen",
+    approved: "Approuvée",
+    rejected: "Rejetée",
+    processing: "En traitement",
+    succeeded: "Terminée",
+    failed: "Échec",
 
-    return labels[status] || status || "Inconnu";
-  }
+    paid: "Payée",
+    preparing: "En préparation",
+    in_transit: "En transit",
+    customs: "En douane",
+    shipped: "Expédiée",
+    delivered: "Livrée",
+    exception: "Problème de livraison",
+    cancelled: "Annulée"
+  };
+
+  return labels[status] || status || "Inconnu";
+ } 
 
   function adminInstallAuthListener() {
     if (adminAuthListenerInstalled) return;
