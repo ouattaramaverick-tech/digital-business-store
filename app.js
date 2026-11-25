@@ -83,6 +83,10 @@ function ensureSupabaseClient() {
   return supabaseLoadPromise;
 }
 
+window.globexaGetSupabaseClient = async function () {
+  await ensureSupabaseClient();
+  return supabaseClient;
+};
 /* 2. ÉTAT DE L'APPLICATION */
 
 const $ = (id) => document.getElementById(id);
