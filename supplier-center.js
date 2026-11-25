@@ -729,7 +729,8 @@ console.log("GLOBEXA CODE 6 chargé.");
     }
   }
 
-  const originalRender = window.renderSupplierCenter;
+ window.globexaAddSupplierButtons = addSupplierButtons; 
+   const originalRender = window.renderSupplierCenter;
 
   if (typeof originalRender === "function") {
     window.renderSupplierCenter = function () {
