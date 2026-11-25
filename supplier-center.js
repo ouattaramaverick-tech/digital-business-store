@@ -141,6 +141,7 @@ function createSupplierCenter() {
 
 /* 2. CHARGER LES INFORMATIONS */
 
+
 async function loadSupplierCenter() {
   createSupplierCenter();
 
@@ -156,6 +157,10 @@ async function loadSupplierCenter() {
   }
 
   const message = document.getElementById("supplierCenterMessage");
+  const content = document.getElementById("supplierCenterContent");
+
+  const { data: authData, error: authError } =
+    await supplierCenterClient.auth.getUser();
 
   if (authError || !authData.user) {
     message.textContent =
@@ -165,6 +170,7 @@ async function loadSupplierCenter() {
   }
 
   supplierCenterState.user = authData.user;
+
 
   const userId = authData.user.id;
 
