@@ -327,7 +327,7 @@ function renderSupplierCenter() {
       </div>
     </div>
 
-    <div class="supplier-card">
+        <div class="supplier-card">
       <h3>Ma boutique</h3>
       <p><strong>${supplierText(store.company_name)}</strong></p>
       <p>Ville : ${supplierText(store.city || "Non précisée")}</p>
@@ -336,6 +336,22 @@ function renderSupplierCenter() {
       <p>Vérification : ${supplierText(
         store.verification_status || "Non précisée"
       )}</p>
+
+      <button
+        type="button"
+        class="supplier-refresh"
+        id="supplierStoreDetailsButton">
+        Voir les détails de mon entreprise
+      </button>
+
+      <div id="supplierStoreDetails" hidden>
+        <hr>
+        <p><strong>Description :</strong></p>
+        <p>${supplierText(store.description || "Aucune description enregistrée.")}</p>
+        <p><strong>Adresse :</strong> ${supplierText(store.address || "Non précisée")}</p>
+        <p><strong>Téléphone :</strong> ${supplierText(store.phone || "Non précisé")}</p>
+        <p><strong>Identifiant boutique :</strong> ${supplierText(store.slug || "Non précisé")}</p>
+      </div>
     </div>
 
     <br>
