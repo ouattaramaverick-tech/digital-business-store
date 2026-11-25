@@ -166,7 +166,180 @@
     `).join("");
   }
 
-  function adminRenderProducts(rows, storeNames) {
+   function adminRenderShipmentManagement(
+    orders,
+    shipments,
+    transitaires
+  ) {
+    const orderRows = Array.isArray(orders) ? orders : [];
+    const shipmentRows = Array.isArray(shipments) ? shipments : [];
+    const transitaireRows = Array.isArray(transitaires)
+      ? transitaires
+      : [];
+
+    const shipmentByOrder = new Map(
+      shipmentRows.map(item => [item.order_id, item])
+    );
+
+    let orderHTML = "";
+
+    if (orderRows.length === 0) {
+      orderHTML =
+        "<p>Aucune commande payée en attente de gestion logistique.</p>";
+    } else {
+      orderHTML = orderRows.map(order => {
+        const shipment = shipmentByOrder.get(order.id);
+        const amount = order.subtotal ??
+          Number(order.unit_price || 0) * Number(order.quantity || 0);
+
+        const options = transitaireRows.map(item => `
+          <option
+            value="${adminEscape(item.id)}"
+            ${shipment?.transitaire_id === item.id ? "selected" : ""}
+          >
+            ${adminEscape(item.company_name)}
+            — ${adminEscape(item.country || "Pays non précisé")}
+          </option>
+        `).join("");
+
+        const transitaireSelect = transitaireRows.length
+          ? `
+            <label>Transitaire approuvé</label>
+            <select name="transitaire_id" required>
+              <option value="">Choisir un transitaire</option>
+              ${options}
+            </select>
+          `
+          : `
+            <p>
+              Aucun transitaire approuvé.
+              Valide d'abord une candidature.
+            </p>
+          `;
+
+        return `
+          <article class="admin-card">
+            <h4>Commande ${adminEscape(order.id.slice(0, 8))}</h4>
+
+            <p>
+              Quantité :
+              ${adminEscape(order.quantity)}
+            </p>
+
+            <p>
+              Montant :
+              ${adminEscape(adminMoney(amount, order.currency))}
+            </p>
+
+            <p>
+              Acheteur :
+              ${adminEscape(order.buyer_id.slice(0, 8))}
+            </p>
+
+            <p>
+              Fournisseur :
+              ${adminEscape(order.supplier_id.slice(0, 8))}
+            </p>
+
+            <p>
+              État du paiement :
+              ${adminEscape(order.payment_status)}
+            </p>
+
+            <p>
+              Expédition :
+              ${shipment
+                ? adminEscape(adminStatus(shipment.status))
+                : "Pas encore créée"}
+            </p>
+
+            <form
+              data-admin-shipment-form
+              data-order-id="${adminEscape(order.id)}"
+              class="admin-shipment-form"
+            >
+              ${transitaireSelect}
+
+              <label>Transporteur</label>
+              <input
+                type="text"
+                name="carrier"
+                maxlength="120"
+                value="${adminEscape(shipment?.carrier || "")}"
+                placeholder="Nom du transporteur"
+              >
+
+              <label>Numéro de suivi</label>
+              <input
+                type="text"
+                name="tracking_number"
+                maxlength="160"
+                value="${adminEscape(shipment?.tracking_number || "")}"
+                placeholder="Numéro de suivi"
+              >
+
+              <label>Lieu de départ</label>
+              <input
+                type="text"
+                name="origin"
+                maxlength="200"
+                value="${adminEscape(shipment?.origin || "")}"
+                placeholder="Ville ou pays de départ"
+              >
+
+              <label>Destination</label>
+              <input
+                type="text"
+                name="destination"
+                maxlength="200"
+                value="${adminEscape(shipment?.destination || "")}"
+                placeholder="Ville ou pays de destination"
+              >
+
+              <label>Date estimée de livraison</label>
+              <input
+                type="date"
+                name="estimated_delivery"
+                value="${adminEscape(shipment?.estimated_delivery || "")}"
+              >
+
+              <button
+                type="submit"
+                ${transitaireRows.length ? "" : "disabled"}
+              >
+                ${shipment
+                  ? "Mettre à jour l'expédition"
+                  : "Créer et attribuer l'expédition"}
+              </button>
+            </form>
+          </article>
+        `;
+      }).join("");
+    }
+
+    const historyHTML = shipmentRows.length
+      ? shipmentRows.map(item => `
+          <article class="admin-card">
+            <h4>Expédition ${adminEscape(item.id.slice(0, 8))}</h4>
+            <p>Commande : ${adminEscape(item.order_id.slice(0, 8))}</p>
+            <p>Transporteur : ${adminEscape(item.carrier || "Non renseigné")}</p>
+            <p>Suivi : ${adminEscape(item.tracking_number || "Non renseigné")}</p>
+            <p>Statut : ${adminEscape(adminStatus(item.status))}</p>
+          </article>
+        `).join("")
+      : "<p>Aucune expédition enregistrée.</p>";
+
+    return `
+      <div>
+        <h4>Commandes payées à expédier</h4>
+        ${orderHTML}
+
+        <h4>Historique des expéditions</h4>
+        ${historyHTML}
+      </div>
+    `;
+   }
+   function adminRenderProducts(rows, storeNames) {
     if (!Array.isArray(rows) || rows.length === 0) {
       return "<p>Aucun produit en attente de validation.</p>";
     }
