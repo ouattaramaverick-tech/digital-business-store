@@ -215,7 +215,47 @@
 
   async function adminAction(action, refundId) {
     if (!refundId) return;
+    if (
+      action === "approve-store" ||
+      action === "reject-store"
+    ) {
+      const approved = action === "approve-store";
 
+      if (!confirm(
+        approved
+          ? "Confirmer la validation de cette boutique ?"
+          : "Confirmer le refus de cette boutique ?"
+      )) return;
+
+      const result = await supabaseClient
+        .from("globexa_stores")
+        .update(
+          approved
+            ? {
+                status: "active",
+                verification_status: "verified"
+              }
+            : {
+                status: "suspended",
+                verification_status: "rejected"
+              }
+        )
+        .eq("id", refundId)
+        .select("id")
+        .single();
+
+      if (result.error) throw result.error;
+
+      adminMessage(
+        approved
+          ? "Boutique validée avec succès."
+          : "Boutique refusée.",
+        "success"
+      );
+
+      await loadAdmin();
+      return;
+               }
     let result;
     let parameters;
 
