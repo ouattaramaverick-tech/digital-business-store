@@ -417,6 +417,7 @@ async function updateRecoveredPassword(event) {
   }
 }
 
+
 function handleAuthStateChange(event, session) {
   state.user = session?.user || null;
 
@@ -435,7 +436,19 @@ function handleAuthStateChange(event, session) {
     await loadProfile();
     showAccount();
     await loadOrders();
-     await loadCart();
+    await loadCart();
+
+    // Actualiser les espaces après connexion ou déconnexion.
+    // INITIAL_SESSION est déjà traité au démarrage de l'application.
+    if (event !== "INITIAL_SESSION") {
+      await Promise.allSettled([
+        window.loadSupplierCenter?.(),
+        window.globexaMessages?.reload?.(),
+        window.loadFinance?.(),
+        window.loadLogistics?.(),
+        window.loadAdmin?.()
+      ]);
+    }
   }, 0);
 }
 /* 7. DÉCONNEXION */
