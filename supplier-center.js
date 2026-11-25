@@ -6,10 +6,12 @@
    CENTRE FOURNISSEUR
    ========================================== */
 
-const supplierCenterClient = window.supabase.createClient(
-  "https://xlxkiyihagoupsajwmze.supabase.co",
-  "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6"
-);
+let supplierCenterClient = null;
+
+async function initializeSupplierClient() {
+  supplierCenterClient = await window.globexaGetSupabaseClient();
+  await loadSupplierCenter();
+}
 
 const supplierCenterState = {
   user: null,
