@@ -653,10 +653,6 @@ async function createProduct(event) {
     } catch (error) {
       alert(error.message || "Mise à jour impossible.");
       button.disabled = false;
-    }
-      }   
-    }
-  }
 
   function addSupplierButtons() {
     moveSupplierPanel();
