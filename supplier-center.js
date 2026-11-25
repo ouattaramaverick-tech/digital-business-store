@@ -633,6 +633,9 @@ async function createProduct(event) {
 
     button.disabled = true;
 
+      async function updateSupplierOrder(button) {
+    button.disabled = true;
+
     try {
       const { error } = await supplierCenterClient.rpc(
         "globexa_supplier_update_order_status",
@@ -650,6 +653,8 @@ async function createProduct(event) {
     } catch (error) {
       alert(error.message || "Mise à jour impossible.");
       button.disabled = false;
+    }
+      }   
     }
   }
 
