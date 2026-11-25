@@ -6,10 +6,7 @@
    FICHE DÉTAILLÉE DES PRODUITS
    ========================================== */
 
-const productDetailClient = window.supabase.createClient(
-  "https://xlxkiyihagoupsajwmze.supabase.co",
-  "sb_publishable_3W39fAVPXUDlkCb8Gnzovw_dolfa7P6"
-);
+let productDetailClient = null;
 
 const productDetailState = {
   product: null,
@@ -52,7 +49,19 @@ async function showGlobexaProductDetail(productId) {
   modal.hidden = false;
   content.innerHTML = "<p>Chargement des informations du produit...</p>";
 
-  const { data: product, error } = await productDetailClient
+    try {
+    if (typeof window.globexaGetSupabaseClient !== "function") {
+      throw new Error("Connexion Supabase non disponible.");
+    }
+
+    productDetailClient = await window.globexaGetSupabaseClient();
+  } catch (error) {
+    console.error("Connexion fiche produit :", error);
+    content.innerHTML =
+      "<p>Connexion impossible. Vérifie Internet et réessaie.</p>";
+    return;
+    }
+   const { data: product, error } = await productDetailClient
     .from("globexa_market_products")
     .select(`
       id,
