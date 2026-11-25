@@ -503,76 +503,121 @@ console.log("GLOBEXA CODE 6 chargé.");
     }
   }
 
-  async function createProduct(event) {
-    event.preventDefault();
+  
+async function createProduct(event) {
+  event.preventDefault();
 
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const button = form.querySelector("button");
-    const feedback = document.getElementById("gxProductMessage");
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const button = form.querySelector("button");
+  const feedback = document.getElementById("gxProductMessage");
 
-    const title = String(data.get("title") || "").trim();
-    const price = Number(data.get("price"));
-    const stock = Number(data.get("stock"));
-    const moq = Number(data.get("moq"));
-    const currency = String(data.get("currency") || "USD");
+  const title = String(data.get("title") || "").trim();
+  const price = Number(data.get("price"));
+  const stock = Number(data.get("stock"));
+  const moq = Number(data.get("moq"));
+  const currency = String(data.get("currency") || "USD");
+  const imageFile = data.get("product_image");
 
-    if (!supplierCenterState.store ||
-        supplierCenterState.store.status !== "active") {
-      feedback.textContent =
-        "Votre boutique doit être activée avant d'ajouter des produits.";
-      return;
-    }
-
-    if (
-      title.length < 2 ||
-      !Number.isFinite(price) ||
-      price <= 0 ||
-      !Number.isInteger(stock) ||
-      stock < 0 ||
-      !Number.isInteger(moq) ||
-      moq < 1
-    ) {
-      feedback.textContent = "Vérifiez les informations du produit.";
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = "Enregistrement...";
-
-    try {
-      const { error } = await supplierCenterClient
-        .from("globexa_market_products")
-        .insert({
-          store_id: supplierCenterState.store.id,
-          title: title,
-          description: String(data.get("description") || "").trim() || null,
-          base_price: price,
-          currency: currency,
-          stock_quantity: stock,
-          moq: moq,
-          country_of_origin:
-            String(data.get("origin") || "").trim() || null,
-          status: "pending"
-        });
-
-      if (error) throw error;
-
-      feedback.textContent =
-        "Produit envoyé. Il attend la validation avant publication.";
-
-      form.reset();
-      await window.loadSupplierCenter();
-      moveSupplierPanel();
-
-    } catch (error) {
-      feedback.textContent = error.message || "Ajout impossible.";
-      button.disabled = false;
-      button.textContent = "Envoyer le produit";
-    }
+  if (!supplierCenterState.store ||
+      supplierCenterState.store.status !== "active") {
+    feedback.textContent =
+      "Votre boutique doit être activée avant d'ajouter des produits.";
+    return;
   }
 
-  async function updateSupplierOrder(button) {
+  if (
+    title.length < 2 ||
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isInteger(stock) ||
+    stock < 0 ||
+    !Number.isInteger(moq) ||
+    moq < 1
+  ) {
+    feedback.textContent = "Vérifiez les informations du produit.";
+    return;
+  }
+
+  const allowedTypes = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+  };
+
+  if (!imageFile || !allowedTypes[imageFile.type]) {
+    feedback.textContent = "Choisissez une photo JPG, PNG ou WebP.";
+    return;
+  }
+
+  if (imageFile.size > 5 * 1024 * 1024) {
+    feedback.textContent = "La photo ne doit pas dépasser 5 Mo.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Envoi de la photo...";
+
+  try {
+    const extension = allowedTypes[imageFile.type];
+    const imagePath =
+      supplierCenterState.user.id + "/" +
+      crypto.randomUUID() + "." + extension;
+
+    const { error: uploadError } =
+      await supplierCenterClient.storage
+        .from("globexa-product-images")
+        .upload(imagePath, imageFile, {
+          contentType: imageFile.type,
+          upsert: false
+        });
+
+    if (uploadError) throw uploadError;
+
+    const { data: imageData } =
+      supplierCenterClient.storage
+        .from("globexa-product-images")
+        .getPublicUrl(imagePath);
+
+    const imageUrl = imageData.publicUrl;
+
+    button.textContent = "Enregistrement du produit...";
+
+    const { error } = await supplierCenterClient
+      .from("globexa_market_products")
+      .insert({
+        store_id: supplierCenterState.store.id,
+        title: title,
+        description:
+          String(data.get("description") || "").trim() || null,
+        base_price: price,
+        currency: currency,
+        stock_quantity: stock,
+        moq: moq,
+        country_of_origin:
+          String(data.get("origin") || "").trim() || null,
+        images: [imageUrl],
+        status: "pending"
+      });
+
+    if (error) throw error;
+
+    feedback.textContent =
+      "Produit et photo envoyés. En attente de validation.";
+
+    form.reset();
+    await window.loadSupplierCenter();
+    moveSupplierPanel();
+
+  } catch (error) {
+    console.error("GLOBEXA - Erreur ajout produit :", error);
+    feedback.textContent =
+      error.message || "Erreur pendant l'ajout du produit.";
+    button.disabled = false;
+    button.textContent = "Envoyer le produit";
+  }
+}
+
     button.disabled = true;
 
     try {
