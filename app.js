@@ -1820,7 +1820,39 @@ await initializeSession();
       loadAdmin()
     ]);  
      
-    console.log("GLOBEXA : application initialisée.");
+   
+    // RETOUR YIRIWA PAY : vérifier le statut réel de la commande
+    const yiriwaParams = new URLSearchParams(window.location.search);
+    const yiriwaStatus = yiriwaParams.get("payment");
+    const yiriwaOrderId = yiriwaParams.get("order");
+
+    if (
+      ["return", "cancel"].includes(yiriwaStatus) &&
+      yiriwaOrderId
+    ) {
+      const returnedOrder = state.orders.find(
+        order => order.id === yiriwaOrderId
+      );
+
+      if (returnedOrder?.payment_status === "paid") {
+        message("cartMessage", "Paiement confirmé. Merci pour votre commande !");
+      } else if (yiriwaStatus === "cancel") {
+        message("cartMessage", "Paiement annulé. Votre commande reste en attente.");
+      } else {
+        message("cartMessage", "Retour du paiement reçu. Nous attendons la confirmation de Yiriwa Pay.");
+      }
+
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("payment");
+      cleanUrl.searchParams.delete("order");
+
+      window.history.replaceState(
+        {},
+        document.title,
+        cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
+      );
+    }
+ console.log("GLOBEXA : application initialisée.");
 
   } catch (error) {
     console.error("Initialisation GLOBEXA :", error);
