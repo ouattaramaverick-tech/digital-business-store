@@ -1211,7 +1211,24 @@ function renderOrders() {
 
         <p>Paiement : ${escapeHTML(order.payment_status)}</p>
 
-        <p>Date : ${escapeHTML(date)}</p>
+      
+        ${
+          order.payment_status === "pending" &&
+          order.currency === "XOF" &&
+          ["pending", "awaiting_payment"].includes(order.status)
+            ? `
+              <button
+                type="button"
+                class="yiriwa-pay-button"
+                data-order-id="${escapeHTML(order.id)}"
+              >
+                Payer avec Yiriwa Pay
+              </button>
+            `
+            : ""
+        }
+
+<p>Date : ${escapeHTML(date)}</p>
 
         ${trackingHTML}
       </article>
