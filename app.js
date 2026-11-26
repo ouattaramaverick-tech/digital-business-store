@@ -1729,6 +1729,18 @@ function setupEvents() {
 
   $("checkoutButton")?.addEventListener("click", checkout);
 
+  $("orderList")?.addEventListener("click", event => {
+    const button = event.target.closest(".yiriwa-pay-button");
+
+    if (!button) return;
+
+    const orderId = button.dataset.orderId;
+
+    if (!orderId) return;
+
+    payWithYiriwaPay(orderId, button);
+  });
+
   $("reelUploadForm")?.addEventListener("submit", uploadReel);
 
   $("productDetailModal")?.addEventListener("click", event => {
