@@ -1219,6 +1219,68 @@ function renderOrders() {
   }).join("");
 }
 
+
+/* PAIEMENT YIRIWA PAY — MODE TEST */
+
+async function payWithYiriwaPay(orderId, button) {
+  if (!state.user || !supabaseClient) {
+    message("cartMessage", "Connecte-toi avant de payer.", "error");
+    return;
+  }
+
+  setButtonLoading(button, true, "Payer avec Yiriwa Pay");
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const accessToken = sessionData.session?.access_token;
+
+    if (!accessToken) {
+      throw new Error("Session expirée. Reconnecte-toi.");
+    }
+
+    const storageKey = "globexa-payment-" + orderId;
+    let idempotencyKey = localStorage.getItem(storageKey);
+
+    if (!idempotencyKey) {
+      idempotencyKey = crypto.randomUUID();
+      localStorage.setItem(storageKey, idempotencyKey);
+    }
+
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/globexa-yiriwapay/create",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + accessToken
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          idempotency_key: idempotencyKey
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success || !result.checkout_url) {
+      throw new Error(result.error || "Impossible de créer le paiement.");
+    }
+
+    window.location.assign(result.checkout_url);
+
+  } catch (error) {
+    console.error("Paiement Yiriwa Pay :", error);
+    message("cartMessage", error.message || "Erreur de paiement.", "error");
+    setButtonLoading(button, false, "Payer avec Yiriwa Pay");
+  }
+}
+
 async function addToCart(productId) {
   if (!state.user) {
     message(
