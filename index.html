@@ -261,6 +261,36 @@
         </div>
       </div>
 
+      
+      <div id="passwordRecoveryPanel" class="panel" hidden>
+        <h3>Créer un nouveau mot de passe</h3>
+        <form id="passwordRecoveryForm" class="form-box">
+          <label for="recoveryPassword">Nouveau mot de passe</label>
+          <input
+            id="recoveryPassword"
+            type="password"
+            minlength="8"
+            autocomplete="new-password"
+            required
+          >
+
+          <label for="recoveryPasswordConfirm">
+            Confirmer le nouveau mot de passe
+          </label>
+          <input
+            id="recoveryPasswordConfirm"
+            type="password"
+            minlength="8"
+            autocomplete="new-password"
+            required
+          >
+
+          <button id="recoveryPasswordButton" type="submit">
+            Enregistrer le nouveau mot de passe
+          </button>
+        </form>
+      </div>
+
       <div id="loggedIn" class="panel" hidden>
         <h3>Votre espace personnel</h3>
         <p id="welcomeText"></p>
