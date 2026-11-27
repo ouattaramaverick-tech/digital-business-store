@@ -428,7 +428,8 @@ function renderSupplierForm() {
                   <h2>Tableau des commissions administrateur</h2>
                   <p>Commission GLOBEXA : 6 %</p>
                   ${renderAdminSummary(summary)}
-                </section>
+               ${renderAdminCommissionMethods(adminCommissionMethods)}
+               </section>
 
                 <section>
                   <h2>Demander un retrait administrateur</h2>
