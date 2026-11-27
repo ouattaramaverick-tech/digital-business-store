@@ -519,10 +519,11 @@
                             ${adminCommissionMethods.filter(function (method) {
                               return method.is_active;
                             }).map(function (method) {
-                              const labels = {
+                                                            const labels = {
                                 mobile_money: "Mobile Money",
                                 wave: "Wave",
-                                visa: "Visa"
+                                visa: "Visa",
+                                YiriwaPay: "Yiriwa Pay"
                               };
                               return `
                                 <option value="${financeEscape(method.id)}"
