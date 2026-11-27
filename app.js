@@ -928,7 +928,10 @@ async function toggleFavorite(productId) {
     }
 
     await loadFavorites();
-
+renderProducts();
+renderNewProducts();
+renderPopularProducts();
+     
   } catch (error) {
     console.error("Gestion des favoris :", error);
     message(
