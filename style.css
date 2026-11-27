@@ -1217,13 +1217,21 @@ td button,
     font-size: 12px;
   }
 
-  .header-actions {
-    margin-left: auto;
-    gap: 9px;
+    .header-actions {
+    order: 2;
+    flex-basis: 100%;
+    width: 100%;
+    margin-left: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 4px;
   }
 
   .header-action {
     font-size: 11px;
+    white-space: nowrap;
+  }
   }
 
   .main-nav {
