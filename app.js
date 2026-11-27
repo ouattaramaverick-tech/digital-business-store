@@ -174,7 +174,8 @@ function showAccount() {
 
  
   
-  // Accès direct à l'espace fournisseur
+  
+  // ACCÈS DIRECT À L'ESPACE FOURNISSEUR
   if (loggedIn && state.user) {
     let supplierButton = $("openSupplierDashboard");
 
@@ -185,58 +186,58 @@ function showAccount() {
       supplierButton.className = "supplier-refresh";
       supplierButton.textContent = "Ouvrir mon espace fournisseur";
 
-      const logoutButton = $("logoutButton");
-
-      if (logoutButton) {
-        loggedIn.insertBefore(supplierButton, logoutButton);
-      } else {
-        loggedIn.appendChild(supplierButton);
-      }
+      loggedIn.insertBefore(
+        supplierButton,
+        $("logoutButton") || null
+      );
     }
 
-    supplierButton.onclick = async () => {
-      const target = $("seller-center");
-
-      if (target) {
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-      }
+    // Événement de clic
+    supplierButton.onclick = async function (event) {
+      event.preventDefault();
+      event.stopPropagation();
 
       supplierButton.disabled = true;
-      supplierButton.textContent = "Ouverture en cours...";
+      supplierButton.textContent = "Chargement...";
 
       try {
-        if (typeof window.loadSupplierCenter !== "function") {
-          throw new Error("Le module fournisseur n'est pas chargé. Rechargez la page.");
+        const loader = window.loadSupplierCenter;
+
+        if (typeof loader !== "function") {
+          throw new Error("Le module fournisseur n'est pas chargé.");
         }
 
-        await window.loadSupplierCenter();
+        await loader();
 
         const panel = $("globexaSupplierCenter");
         const dashboard = $("sellerDashboard");
 
-        if (panel && dashboard && panel.parentElement !== dashboard) {
+        if (!panel) {
+          throw new Error("Le tableau de bord fournisseur est introuvable.");
+        }
+
+        if (dashboard && panel.parentElement !== dashboard) {
           dashboard.replaceChildren(panel);
         }
 
-        if (panel) {
-          panel.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
-        }
+        $("seller-center")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        panel.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
 
       } catch (error) {
-        console.error("GLOBEXA fournisseur :", error);
+        console.error("Erreur espace fournisseur :", error);
 
         message(
           "authMessage",
-          error?.message || "Impossible d'ouvrir l'espace fournisseur.",
+          error.message || "Impossible d'ouvrir votre espace fournisseur.",
           "error"
         );
-
       } finally {
         supplierButton.disabled = false;
         supplierButton.textContent = "Ouvrir mon espace fournisseur";
