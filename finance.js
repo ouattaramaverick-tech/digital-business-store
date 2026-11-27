@@ -557,7 +557,58 @@ function renderSupplierForm() {
       });
     }
 
-    const supplierForm = document.getElementById(
+        document.querySelectorAll("[data-commission-method-id]").forEach(
+      function (button) {
+        button.addEventListener("click", async function () {
+          if (button.disabled) return;
+
+          const methodId = button.dataset.commissionMethodId;
+          const isActive = button.dataset.commissionMethodActive === "true";
+          const newStatus = !isActive;
+
+          const confirmed = window.confirm(
+            newStatus
+              ? "Voulez-vous activer ce moyen de réception ?"
+              : "Voulez-vous désactiver ce moyen de réception ?"
+          );
+
+          if (!confirmed) return;
+
+          button.disabled = true;
+          button.textContent = "Modification...";
+
+          try {
+            const result = await supabaseClient.rpc(
+              "globexa_admin_set_commission_method_status",
+              {
+                p_method_id: methodId,
+                p_is_active: newStatus
+              }
+            );
+
+            if (result.error) throw result.error;
+
+            await loadFinance();
+
+          } catch (error) {
+            const message = document.getElementById(
+              "financeCommissionMethodsMessage"
+            );
+
+            if (message) {
+              message.innerHTML = financeMessage(
+                error.message || "Impossible de modifier ce moyen.",
+                "error"
+              );
+            }
+
+            button.disabled = false;
+            button.textContent = isActive ? "Désactiver" : "Activer";
+          }
+        });
+      }
+    );
+     const supplierForm = document.getElementById(
       "globexaSupplierPayoutForm"
     );
 
