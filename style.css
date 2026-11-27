@@ -1992,3 +1992,75 @@ body.menu-open {
     max-height: calc(100dvh - 150px) !important;
   }
 }
+
+
+/* GLOBEXA — CORRECTION LARGEUR SUR TOUS LES TELEPHONES */
+
+@media (max-width: 700px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  main,
+  main > *,
+  .section,
+  .panel,
+  .admin-panel,
+  .admin-section,
+  .gx-box,
+  .gx-chat-window {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  main {
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .section,
+  .panel,
+  .admin-panel,
+  .admin-section {
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+  }
+
+  .product-grid,
+  .supplier-grid,
+  .reel-grid,
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-heading {
+    flex-wrap: wrap;
+  }
+
+  .supplier-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
