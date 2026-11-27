@@ -98,7 +98,8 @@ const state = {
   categories: [],
     stores: [],
   cart: [],
-  orders: [],
+  favorites: [],
+   orders: [],
   reels: [],
   selectedProduct: null,
   loading: false
