@@ -659,7 +659,12 @@ function attachProductEvents(container) {
     });
   });
 
-  container.querySelectorAll("[data-add]").forEach(button => {
+   container.querySelectorAll("[data-favorite]").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleFavorite(button.dataset.favorite);
+    });
+  });
+   container.querySelectorAll("[data-add]").forEach(button => {
     button.addEventListener("click", () => {
       addToCart(button.dataset.add);
     });
