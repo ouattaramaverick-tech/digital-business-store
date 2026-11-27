@@ -568,28 +568,27 @@
     }
   }
 
-  function setupFinanceEvents() {
-    const adminForm = document.getElementById(
-      "globexaAdminPayoutForm"
-    );
-
-    if (adminForm) {
-      adminForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-
-        const message = document.getElementById("financeAdminMessage");
-        const button = adminForm.querySelector("button");
-        const currency = String(
-          new FormData(adminForm).get("currency") || ""
+          const formData = new FormData(adminForm);
+        const methodId = String(formData.get("method_id") || "");
+        const selectedMethod = adminForm.querySelector(
+          'select[name="method_id"] option:checked'
         );
+        const currency = String(selectedMethod?.dataset.currency || "");
 
         button.disabled = true;
         button.textContent = "Demande en cours...";
 
         try {
+          if (!methodId || !currency) {
+            throw new Error("Choisis un moyen de réception actif.");
+          }
+
           const result = await supabaseClient.rpc(
             "globexa_admin_request_payout",
-            { p_currency: currency }
+            {
+              p_currency: currency,
+              p_method_id: methodId
+            }
           );
 
           if (result.error) throw result.error;
@@ -598,6 +597,18 @@
             "Demande de retrait créée. Elle est en attente de traitement.",
             "success"
           );
+
+          await loadFinance();
+
+        } catch (error) {
+          message.innerHTML = financeMessage(
+            error.message || "Impossible de demander ce retrait.",
+            "error"
+          );
+
+          button.disabled = false;
+          button.textContent = "Demander le retrait";
+             }
 
           await loadFinance();
 
