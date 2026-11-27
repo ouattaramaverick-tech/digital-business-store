@@ -373,7 +373,7 @@ function renderSupplierForm() {
       let summary = [];
       let commissions = [];
       let history = [];
-
+      let adminCommissionMethods = [];
       const summaryResult = await supabaseClient.rpc(
         "globexa_admin_payout_summary"
       );
@@ -381,7 +381,13 @@ function renderSupplierForm() {
       if (!summaryResult.error) {
         adminMode = true;
         summary = summaryResult.data || [];
+        const adminMethodsResult = await supabaseClient.rpc(
+          "globexa_admin_list_commission_methods"
+        );
 
+        if (adminMethodsResult.error) throw adminMethodsResult.error;
+
+        adminCommissionMethods = adminMethodsResult.data || [];
         const commissionResult = await supabaseClient
           .from("globexa_market_commissions")
           .select(`
