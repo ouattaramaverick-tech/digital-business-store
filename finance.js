@@ -262,15 +262,13 @@
   }
 
   
-  function renderAdminCommissionMethods(rows) {
+    function renderAdminCommissionMethods(rows) {
     const methods = {
-          const methods = {
       mobile_money: "Mobile Money",
       wave: "Wave",
       visa: "Visa",
       YiriwaPay: "Yiriwa Pay"
     };
-
     const list = rows.length
       ? rows.map(function (item) {
           return `
