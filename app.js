@@ -1937,6 +1937,7 @@ function setupEvents() {
    
   setupSearch();
   setupLanguage();
+setupPageNavigation();
 }
 
 /* 20. SESSION SUPABASE */
