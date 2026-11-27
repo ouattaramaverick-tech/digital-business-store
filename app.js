@@ -617,7 +617,9 @@ if (search) {
 
 function createProductCard(product) {
   const image = getProductImage(product);
-
+const isFavorite = state.favorites.some(
+  favorite => favorite.id === product.id
+);   
   return `
     <article class="product-card globexa-product-card">
       <button
@@ -640,7 +642,7 @@ function createProductCard(product) {
             <button
         type="button"
         data-favorite="${escapeHTML(product.id)}">
-        ♡ Ajouter aux favoris
+        ${isFavorite ? "♥ Retirer des favoris" : "♡ Ajouter aux favoris"}
       </button>
 
       <button
