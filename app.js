@@ -473,7 +473,8 @@ async function logoutUser() {
    state.cart = [];
 
    showAccount();
-renderCart();
+await loadFavorites();
+   renderCart();
 renderOrders();
   
   
