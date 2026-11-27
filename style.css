@@ -1346,7 +1346,12 @@ td button,
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
-
+#favorites .globexa-product-card button[data-favorite] {
+  width: calc(100% - 22px);
+  margin: 8px 11px 11px;
+  padding: 8px 5px;
+  font-size: 11px;
+}
   .product-card img,
   .globexa-product-card img {
     height: 140px;
