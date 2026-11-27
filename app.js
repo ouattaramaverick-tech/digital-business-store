@@ -172,7 +172,57 @@ function showAccount() {
     $("welcomeText").textContent = "Bienvenue " + name;
   }
 
-  updateReelAccess();
+ 
+  // Accès direct à l'espace fournisseur
+  if (loggedIn && state.user) {
+    let supplierButton = $("openSupplierDashboard");
+
+    if (!supplierButton) {
+      supplierButton = document.createElement("button");
+      supplierButton.id = "openSupplierDashboard";
+      supplierButton.type = "button";
+      supplierButton.textContent = "Ouvrir mon espace fournisseur";
+      supplierButton.className = "supplier-refresh";
+
+      const logoutButton = $("logoutButton");
+
+      if (logoutButton) {
+        loggedIn.insertBefore(supplierButton, logoutButton);
+      } else {
+        loggedIn.appendChild(supplierButton);
+      }
+
+      supplierButton.addEventListener("click", async () => {
+        $("seller-center")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        supplierButton.disabled = true;
+        supplierButton.textContent = "Ouverture en cours...";
+
+        try {
+          if (typeof window.loadSupplierCenter !== "function") {
+            throw new Error("Espace fournisseur indisponible. Actualisez la page.");
+          }
+
+          await window.loadSupplierCenter();
+        } catch (error) {
+          console.error(error);
+          message(
+            "authMessage",
+            error.message || "Impossible d'ouvrir l'espace fournisseur.",
+            "error"
+          );
+        } finally {
+          supplierButton.disabled = false;
+          supplierButton.textContent = "Ouvrir mon espace fournisseur";
+        }
+      });
+    }
+  }
+
+updateReelAccess();
 }
 
 async function loadProfile() {
