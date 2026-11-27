@@ -473,6 +473,7 @@
                   <p>Commission GLOBEXA : 6 %</p>
                   ${renderAdminSummary(summary)}
                ${renderAdminCommissionMethods(adminCommissionMethods)}
+               ${renderAdminCommissionMethodForm()}
                </section>
 
                 <section>
