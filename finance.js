@@ -309,10 +309,11 @@
           <select name="method_code" required
             style="width:100%;padding:10px;margin:7px 0 12px">
             <option value="">Choisir</option>
-            <option value="mobile_money">Mobile Money</option>
+                        <option value="mobile_money">Mobile Money</option>
             <option value="wave">Wave</option>
             <option value="visa">Visa</option>
-          </select>
+            <option value="YiriwaPay">Yiriwa Pay</option>
+           </select>
 
           <label>Nom du titulaire</label>
           <input name="account_holder" required minlength="2"
