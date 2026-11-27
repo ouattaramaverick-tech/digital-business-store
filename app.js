@@ -1940,6 +1940,61 @@ function setupEvents() {
 setupPageNavigation();
 }
 
+
+/* NAVIGATION DES PAGES GLOBEXA */
+
+function setupPageNavigation() {
+  const pageIds = [
+    "products",
+    "new-products",
+    "popular-products",
+    "favorites",
+    "reels",
+    "suppliers",
+    "account",
+    "seller-center",
+    "messages",
+    "rfq",
+    "cart",
+    "orders",
+    "logistics",
+    "finance",
+    "admin",
+    "help"
+  ];
+
+  function showCurrentPage() {
+    let page = window.location.hash.replace("#", "");
+
+    if (!page || page === "home" || page === "searchForm") {
+      page = "home";
+    } else if (
+      page !== "categories" &&
+      !pageIds.includes(page)
+    ) {
+      page = "home";
+    }
+
+    document.body.dataset.page = page;
+
+    const menu = document.getElementById("mainNavigation");
+    const button = document.getElementById("mobileMenuButton");
+
+    menu?.classList.remove("is-open");
+    button?.setAttribute("aria-expanded", "false");
+
+    if (button) {
+      button.textContent = "☰";
+      button.setAttribute("aria-label", "Ouvrir le menu");
+    }
+
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", showCurrentPage);
+  showCurrentPage();
+}
+
 /* 20. SESSION SUPABASE */
 
 async function initializeSession() {
