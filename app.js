@@ -1910,6 +1910,7 @@ async function initializeSession() {
 
   await loadProfile();
   showAccount();
+await loadFavorites();
 }
 
 /* 21. DÉMARRAGE COMPLET */
