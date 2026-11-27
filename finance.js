@@ -241,7 +241,44 @@
     }).join("");
   }
 
-  function renderSupplierForm() {
+  
+  function renderAdminCommissionMethods(rows) {
+    const methods = {
+      mobile_money: "Mobile Money",
+      wave: "Wave",
+      visa: "Visa"
+    };
+
+    const list = rows.length
+      ? rows.map(function (item) {
+          return `
+            <article style="padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px">
+              <strong>${financeEscape(methods[item.method_code] || item.method_code)}</strong>
+              <p>Titulaire : ${financeEscape(item.account_holder)}</p>
+              <p>Compte : ${financeEscape(item.account_reference)}</p>
+              <p>Pays : ${financeEscape(item.country)}</p>
+              <p>Devise : ${financeEscape(item.currency)}</p>
+              <p>Statut : ${item.is_active ? "Actif" : "Désactivé"}</p>
+              <button type="button"
+                data-commission-method-id="${financeEscape(item.id)}"
+                data-commission-method-active="${item.is_active ? "true" : "false"}"
+                style="${financeButton()}">
+                ${item.is_active ? "Désactiver" : "Activer"}
+              </button>
+            </article>
+          `;
+        }).join("")
+      : "<p>Aucun moyen de réception enregistré.</p>";
+
+    return `
+      <section>
+        <h2>Mes moyens de réception des commissions</h2>
+        ${list}
+        <div id="financeCommissionMethodsMessage"></div>
+      </section>
+    `;
+  }
+function renderSupplierForm() {
     return `
       <form id="globexaSupplierPayoutForm">
 
