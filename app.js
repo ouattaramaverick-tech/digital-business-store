@@ -635,6 +635,12 @@ function createProductCard(product) {
         <p>Stock : ${Number(product.stock_quantity || 0)}</p>
       </button>
 
+            <button
+        type="button"
+        data-favorite="${escapeHTML(product.id)}">
+        ♡ Ajouter aux favoris
+      </button>
+
       <button
         type="button"
         data-add="${escapeHTML(product.id)}">
