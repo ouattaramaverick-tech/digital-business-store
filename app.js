@@ -1875,33 +1875,66 @@ function setupEvents() {
     }
   });
 
-    // MENU MOBILE GLOBEXA
+    
+  // MENU MOBILE GLOBEXA
   const menuButton = $("mobileMenuButton");
   const navigation = $("mainNavigation");
 
   if (menuButton && navigation) {
-    menuButton.addEventListener("click", () => {
-      const isOpen = navigation.classList.toggle("is-open");
+    function closeNavigation() {
+      navigation.classList.remove("is-open");
+      menuButton.setAttribute("aria-expanded", "false");
+      menuButton.setAttribute("aria-label", "Ouvrir le menu");
+      menuButton.textContent = "☰";
+    }
 
-      menuButton.setAttribute("aria-expanded", String(isOpen));
-      menuButton.setAttribute(
-        "aria-label",
-        isOpen ? "Fermer le menu" : "Ouvrir le menu"
+    menuButton.addEventListener("click", () => {
+      const isOpen = navigation.classList.contains("is-open");
+
+      if (isOpen) {
+        closeNavigation();
+        return;
+      }
+
+      const rect = menuButton.getBoundingClientRect();
+      const top = Math.min(rect.bottom + 8, window.innerHeight - 180);
+      const left = Math.max(
+        12,
+        Math.min(rect.left, window.innerWidth - 332)
       );
 
-      menuButton.textContent = isOpen ? "✕" : "☰";
+      navigation.style.top = `${top}px`;
+      navigation.style.left = `${left}px`;
+      navigation.style.maxHeight =
+        `${Math.max(180, window.innerHeight - top - 85)}px`;
+
+      navigation.classList.add("is-open");
+      menuButton.setAttribute("aria-expanded", "true");
+      menuButton.setAttribute("aria-label", "Fermer le menu");
+      menuButton.textContent = "✕";
     });
 
     navigation.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => {
-        navigation.classList.remove("is-open");
-        menuButton.setAttribute("aria-expanded", "false");
-        menuButton.setAttribute("aria-label", "Ouvrir le menu");
-        menuButton.textContent = "☰";
-      });
+      link.addEventListener("click", closeNavigation);
+    });
+
+    document.addEventListener("click", event => {
+      if (
+        navigation.classList.contains("is-open") &&
+        !navigation.contains(event.target) &&
+        !menuButton.contains(event.target)
+      ) {
+        closeNavigation();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeNavigation();
+      }
     });
   }
-
+   
   setupSearch();
   setupLanguage();
 }
