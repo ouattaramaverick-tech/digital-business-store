@@ -883,6 +883,57 @@ async function loadSuppliers(search = "") {
 
 /* FAVORIS GLOBEXA */
 
+async function toggleFavorite(productId) {
+  if (!state.user) {
+    message(
+      "favoritesMessage",
+      "Connectez-vous pour ajouter des favoris.",
+      "error"
+    );
+    $("account")?.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+
+  try {
+    const { data: existing, error: searchError } = await supabaseClient
+      .from("globexa_favorites")
+      .select("product_id")
+      .eq("user_id", state.user.id)
+      .eq("product_id", productId)
+      .maybeSingle();
+
+    if (searchError) throw searchError;
+
+    if (existing) {
+      const { error } = await supabaseClient
+        .from("globexa_favorites")
+        .delete()
+        .eq("user_id", state.user.id)
+        .eq("product_id", productId);
+
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseClient
+        .from("globexa_favorites")
+        .insert({
+          user_id: state.user.id,
+          product_id: productId
+        });
+
+      if (error) throw error;
+    }
+
+    await loadFavorites();
+
+  } catch (error) {
+    console.error("Gestion des favoris :", error);
+    message(
+      "favoritesMessage",
+      error.message || "Impossible de modifier ce favori.",
+      "error"
+    );
+  }
+                }
 async function loadFavorites() {
   const container = $("favoriteProductList");
   const info = $("favoritesMessage");
