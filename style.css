@@ -1495,41 +1495,63 @@ td button,
   }
 }
 
-/* GLOBEXA — ACCUEIL SIMPLE ET DEGAGE */
 
-/* Garder uniquement les éléments utiles à l'accueil */
+/* GLOBEXA — PAGES SEPAREES */
+
+/* Cacher les pages non sélectionnées */
+main > .home-layout,
+main > .section {
+  display: none !important;
+}
+
+/* Page d'accueil */
+body[data-page="home"] main > .home-layout {
+  display: grid !important;
+}
+
+body[data-page="home"] main > #products,
+body[data-page="home"] main > #new-products,
+body[data-page="home"] main > #popular-products {
+  display: block !important;
+}
+
+/* Page catégories */
+body[data-page="categories"] main > .home-layout {
+  display: grid !important;
+}
+
+/* Pages individuelles */
+body[data-page="products"] main > #products,
+body[data-page="new-products"] main > #new-products,
+body[data-page="popular-products"] main > #popular-products,
+body[data-page="favorites"] main > #favorites,
+body[data-page="reels"] main > #reels,
+body[data-page="suppliers"] main > #suppliers,
+body[data-page="account"] main > #account,
+body[data-page="seller-center"] main > #seller-center,
+body[data-page="messages"] main > #messages,
+body[data-page="rfq"] main > #rfq,
+body[data-page="cart"] main > #cart,
+body[data-page="orders"] main > #orders,
+body[data-page="logistics"] main > #logistics,
+body[data-page="finance"] main > #finance,
+body[data-page="admin"] main > #admin,
+body[data-page="help"] main > #help {
+  display: block !important;
+}
+
+/* Nettoyage de l'accueil */
 .welcome-panel,
 .quick-services {
   display: none !important;
 }
 
-/* Donner plus de place à la bannière */
-.home-layout {
-  grid-template-columns: 230px minmax(0, 1fr);
-}
-
-/* Cacher les espaces secondaires au démarrage */
-
-main > .section:not(#products):not(#new-products):not(#popular-products):not(:target) {
-  display: none;
-}
-
-/* Afficher l'espace choisi quand on touche son option */
-main > .section:target {
-  display: block;
-}
-
-/* Conserver les produits sur l'accueil */
-#products,
-#new-products,
-#popular-products {
-  display: block;
-}
-
 /* Adaptation mobile */
 @media (max-width: 700px) {
-  .home-layout {
-    display: flex;
+  body[data-page="home"] .home-layout,
+  body[data-page="categories"] .home-layout {
+    display: flex !important;
     flex-direction: column;
   }
 }
+
