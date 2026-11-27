@@ -849,8 +849,8 @@
 
           if (reference.length < 3) return;
 
-          const confirmed = window.confirm(
-            "Confirmez uniquement si le paiement Yiriwa Pay a réellement été effectué. Continuer ?"
+                    const confirmed = window.confirm(
+            "Confirme uniquement si le transfert vers le compte sélectionné a réellement été effectué. Continuer ?"
           );
 
           if (!confirmed) return;
