@@ -602,7 +602,67 @@
       });
     }
 
-        document.querySelectorAll("[data-commission-method-id]").forEach(
+          const commissionMethodForm = document.getElementById(
+      "globexaAdminCommissionMethodForm"
+    );
+
+    if (commissionMethodForm) {
+      commissionMethodForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const button = commissionMethodForm.querySelector(
+          'button[type="submit"]'
+        );
+        const message = document.getElementById(
+          "financeAdminCommissionFormMessage"
+        );
+        const formData = new FormData(commissionMethodForm);
+
+        button.disabled = true;
+        button.textContent = "Enregistrement...";
+
+        try {
+          const result = await supabaseClient.rpc(
+            "globexa_admin_add_commission_method",
+            {
+              p_method_code: formData.get("method_code"),
+              p_account_holder: String(
+                formData.get("account_holder") || ""
+              ).trim(),
+              p_account_reference: String(
+                formData.get("account_reference") || ""
+              ).trim(),
+              p_country: String(
+                formData.get("country") || "BF"
+              ).trim(),
+              p_currency: String(
+                formData.get("currency") || "XOF"
+              ).trim().toUpperCase()
+            }
+          );
+
+          if (result.error) throw result.error;
+
+          message.innerHTML = financeMessage(
+            "Moyen de réception enregistré avec succès.",
+            "success"
+          );
+
+          commissionMethodForm.reset();
+          await loadFinance();
+
+        } catch (error) {
+          message.innerHTML = financeMessage(
+            error.message || "Impossible d'enregistrer ce moyen.",
+            "error"
+          );
+
+          button.disabled = false;
+          button.textContent = "Enregistrer";
+        }
+      });
+    }
+     document.querySelectorAll("[data-commission-method-id]").forEach(
       function (button) {
         button.addEventListener("click", async function () {
           if (button.disabled) return;
