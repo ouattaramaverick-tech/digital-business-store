@@ -1881,8 +1881,25 @@ function setupEvents() {
   const navigation = $("mainNavigation");
 
   if (menuButton && navigation) {
-    function closeNavigation() {
-      navigation.classList.remove("is-open");
+    
+function closeNavigation() {
+  const scrollY = Math.abs(
+    parseInt(document.body.style.top || "0", 10)
+  );
+
+  navigation.classList.remove("is-open");
+  document.body.classList.remove("menu-open");
+
+  document.body.style.top = "";
+  menuButton.setAttribute("aria-expanded", "false");
+  menuButton.setAttribute("aria-label", "Ouvrir le menu");
+  menuButton.textContent = "☰";
+
+  window.scrollTo(0, scrollY);
+} 
+     document.body.style.top = `-${window.scrollY}px`;
+document.body.classList.add("menu-open");
+    navigation.classList.remove("is-open");
       menuButton.setAttribute("aria-expanded", "false");
       menuButton.setAttribute("aria-label", "Ouvrir le menu");
       menuButton.textContent = "☰";
