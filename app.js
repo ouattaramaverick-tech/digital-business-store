@@ -196,7 +196,10 @@ function showAccount() {
     supplierButton.onclick = async function (event) {
       event.preventDefault();
       event.stopPropagation();
-
+      document.body.dataset.page = "seller-center";
+      if (window.location.hash !== "#seller-center") {
+        window.location.hash = "seller-center";
+      }
       supplierButton.disabled = true;
       supplierButton.textContent = "Chargement...";
 
