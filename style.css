@@ -1494,3 +1494,41 @@ td button,
     grid-template-columns: 1fr;
   }
 }
+
+/* GLOBEXA — ACCUEIL SIMPLE ET DEGAGE */
+
+/* Garder uniquement les éléments utiles à l'accueil */
+.welcome-panel,
+.quick-services {
+  display: none !important;
+}
+
+/* Donner plus de place à la bannière */
+.home-layout {
+  grid-template-columns: 230px minmax(0, 1fr);
+}
+
+/* Cacher les espaces secondaires au démarrage */
+main > .section:not(#products):not(#new-products):not(#popular-products) {
+  display: none;
+}
+
+/* Afficher l'espace choisi quand on touche son option */
+main > .section:target {
+  display: block;
+}
+
+/* Conserver les produits sur l'accueil */
+#products,
+#new-products,
+#popular-products {
+  display: block;
+}
+
+/* Adaptation mobile */
+@media (max-width: 700px) {
+  .home-layout {
+    display: flex;
+    flex-direction: column;
+  }
+}
