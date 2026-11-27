@@ -1509,7 +1509,8 @@ td button,
 }
 
 /* Cacher les espaces secondaires au démarrage */
-main > .section:not(#products):not(#new-products):not(#popular-products) {
+
+main > .section:not(#products):not(#new-products):not(#popular-products):not(:target) {
   display: none;
 }
 
