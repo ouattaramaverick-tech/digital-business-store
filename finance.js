@@ -164,6 +164,7 @@
     }).join("");
   }
 
+  
   function renderPayoutHistory(rows) {
     if (!rows.length) {
       return "<p>Aucun retrait enregistré.</p>";
@@ -172,6 +173,13 @@
     return rows.map(function (item) {
       const pending = item.status === "pending";
 
+      const labels = {
+        mobile_money: "Mobile Money",
+        wave: "Wave",
+        visa: "Visa",
+        YiriwaPay: "Yiriwa Pay"
+      };
+
       return `
         <article style="
           border:1px solid #e2e8f0;
@@ -179,9 +187,20 @@
           padding:13px;
           margin:12px 0;
         ">
-          <p><strong>Mode :</strong> Yiriwa Pay</p>
+          <p><strong>Mode :</strong>
+            ${financeEscape(labels[item.provider] || item.provider || "Non précisé")}
+          </p>
           <p><strong>Montant :</strong>
             ${financeMoney(item.amount, item.currency)}
+          </p>
+          <p><strong>Titulaire :</strong>
+            ${financeEscape(item.recipient_account_holder || "Non renseigné")}
+          </p>
+          <p><strong>Compte :</strong>
+            ${financeEscape(item.recipient_account_reference || "Non renseigné")}
+          </p>
+          <p><strong>Pays :</strong>
+            ${financeEscape(item.recipient_country || "Non renseigné")}
           </p>
           <p><strong>Statut :</strong> ${financeEscape(item.status)}</p>
           <p><strong>Demande :</strong> ${financeDate(item.requested_at)}</p>
@@ -194,7 +213,7 @@
               ? `
                 <form class="financeConfirmPayout"
                   data-payout-id="${financeEscape(item.id)}">
-                  <label>Référence du paiement Yiriwa Pay réellement effectué</label>
+                  <label>Référence du transfert réellement effectué</label>
                   <input
                     name="external_reference"
                     required
@@ -204,7 +223,7 @@
                     style="width:100%;padding:10px;margin:8px 0"
                   >
                   <button type="submit" style="${financeButton()}">
-                    Confirmer après paiement réel
+                    Confirmer après transfert réel
                   </button>
                 </form>
               `
@@ -214,6 +233,7 @@
       `;
     }).join("");
   }
+
 
   function renderSupplierMethods(rows) {
     if (!rows.length) {
