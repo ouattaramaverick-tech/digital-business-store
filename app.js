@@ -1879,30 +1879,22 @@ function setupEvents() {
   // MENU MOBILE GLOBEXA
   const menuButton = $("mobileMenuButton");
   const navigation = $("mainNavigation");
+  let savedScrollY = 0;
 
   if (menuButton && navigation) {
-    
-function closeNavigation() {
-  const scrollY = Math.abs(
-    parseInt(document.body.style.top || "0", 10)
-  );
+    function closeNavigation() {
+      navigation.classList.remove("is-open");
+      document.body.classList.remove("menu-open");
 
-  navigation.classList.remove("is-open");
-  document.body.classList.remove("menu-open");
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
 
-  document.body.style.top = "";
-  menuButton.setAttribute("aria-expanded", "false");
-  menuButton.setAttribute("aria-label", "Ouvrir le menu");
-  menuButton.textContent = "☰";
-
-  window.scrollTo(0, scrollY);
-} 
-     document.body.style.top = `-${window.scrollY}px`;
-document.body.classList.add("menu-open");
-    navigation.classList.remove("is-open");
       menuButton.setAttribute("aria-expanded", "false");
       menuButton.setAttribute("aria-label", "Ouvrir le menu");
       menuButton.textContent = "☰";
+
+      window.scrollTo(0, savedScrollY);
     }
 
     menuButton.addEventListener("click", () => {
@@ -1912,6 +1904,13 @@ document.body.classList.add("menu-open");
         closeNavigation();
         return;
       }
+
+      savedScrollY = window.scrollY;
+
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.width = "100%";
+      document.body.classList.add("menu-open");
 
       const rect = menuButton.getBoundingClientRect();
       const top = Math.min(rect.bottom + 8, window.innerHeight - 180);
@@ -1951,6 +1950,7 @@ document.body.classList.add("menu-open");
       }
     });
   }
+
    
   setupSearch();
   setupLanguage();
