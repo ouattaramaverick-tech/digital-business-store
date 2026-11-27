@@ -173,6 +173,7 @@ function showAccount() {
   }
 
  
+  
   // Accès direct à l'espace fournisseur
   if (loggedIn && state.user) {
     let supplierButton = $("openSupplierDashboard");
@@ -181,8 +182,8 @@ function showAccount() {
       supplierButton = document.createElement("button");
       supplierButton.id = "openSupplierDashboard";
       supplierButton.type = "button";
-      supplierButton.textContent = "Ouvrir mon espace fournisseur";
       supplierButton.className = "supplier-refresh";
+      supplierButton.textContent = "Ouvrir mon espace fournisseur";
 
       const logoutButton = $("logoutButton");
 
@@ -191,36 +192,58 @@ function showAccount() {
       } else {
         loggedIn.appendChild(supplierButton);
       }
+    }
 
-      supplierButton.addEventListener("click", async () => {
-        $("seller-center")?.scrollIntoView({
+    supplierButton.onclick = async () => {
+      const target = $("seller-center");
+
+      if (target) {
+        target.scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
+      }
 
-        supplierButton.disabled = true;
-        supplierButton.textContent = "Ouverture en cours...";
+      supplierButton.disabled = true;
+      supplierButton.textContent = "Ouverture en cours...";
 
-        try {
-          if (typeof window.loadSupplierCenter !== "function") {
-            throw new Error("Espace fournisseur indisponible. Actualisez la page.");
-          }
-
-          await window.loadSupplierCenter();
-        } catch (error) {
-          console.error(error);
-          message(
-            "authMessage",
-            error.message || "Impossible d'ouvrir l'espace fournisseur.",
-            "error"
-          );
-        } finally {
-          supplierButton.disabled = false;
-          supplierButton.textContent = "Ouvrir mon espace fournisseur";
+      try {
+        if (typeof window.loadSupplierCenter !== "function") {
+          throw new Error("Le module fournisseur n'est pas chargé. Rechargez la page.");
         }
-      });
-    }
+
+        await window.loadSupplierCenter();
+
+        const panel = $("globexaSupplierCenter");
+        const dashboard = $("sellerDashboard");
+
+        if (panel && dashboard && panel.parentElement !== dashboard) {
+          dashboard.replaceChildren(panel);
+        }
+
+        if (panel) {
+          panel.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+        }
+
+      } catch (error) {
+        console.error("GLOBEXA fournisseur :", error);
+
+        message(
+          "authMessage",
+          error?.message || "Impossible d'ouvrir l'espace fournisseur.",
+          "error"
+        );
+
+      } finally {
+        supplierButton.disabled = false;
+        supplierButton.textContent = "Ouvrir mon espace fournisseur";
+      }
+    };
   }
+
 
 updateReelAccess();
 }
