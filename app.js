@@ -641,7 +641,8 @@ const isFavorite = state.favorites.some(
 
             <button
         type="button"
-        data-favorite="${escapeHTML(product.id)}">
+        data-favorite="${escapeHTML(product.id)}"
+aria-pressed="${isFavorite ? "true" : "false"}">
         ${isFavorite ? "♥ Retirer des favoris" : "♡ Ajouter aux favoris"}
       </button>
 
