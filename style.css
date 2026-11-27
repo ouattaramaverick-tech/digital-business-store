@@ -1779,3 +1779,124 @@ body[data-page="home"] .globexa-product-card button {
     padding: 15px;
   }
 }
+
+
+/* =====================================
+   GLOBEXA — CARTES PRODUITS PREMIUM
+===================================== */
+
+body[data-page="home"] .product-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* Carte produit */
+body[data-page="home"] .globexa-product-card {
+  overflow: hidden;
+  background: #0b1d33;
+  border: 1px solid #29415d;
+  border-radius: 13px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.22);
+  transition: transform .25s ease, border-color .25s ease;
+}
+
+body[data-page="home"] .globexa-product-card:hover {
+  transform: translateY(-5px);
+  border-color: #f58220;
+  box-shadow: 0 12px 28px rgba(0,0,0,.3);
+}
+
+/* Zone photo */
+body[data-page="home"] .globexa-product-open {
+  cursor: pointer;
+}
+
+body[data-page="home"] .globexa-product-card img {
+  width: 100%;
+  height: 185px;
+  object-fit: cover;
+  background: #172d47;
+  border-bottom: 1px solid #29415d;
+}
+
+/* Nom du produit */
+body[data-page="home"] .globexa-product-card h3 {
+  min-height: 58px;
+  padding: 13px 12px 5px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Prix */
+body[data-page="home"] .globexa-product-card .price {
+  padding: 8px 12px;
+  color: #ff9b43;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+/* Minimum et stock */
+body[data-page="home"] .globexa-product-card p:not(.price) {
+  padding: 4px 12px;
+  color: #b7c7da;
+  font-size: 12px;
+}
+
+/* Boutons */
+body[data-page="home"] .globexa-product-card > button:not(.globexa-product-open) {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 9px 12px;
+  padding: 10px;
+  border-radius: 7px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Favoris */
+body[data-page="home"] .globexa-product-card button[data-favorite] {
+  background: #192f49;
+  color: #ffad68;
+  border: 1px solid #8d542d;
+}
+
+/* Ajouter au panier */
+body[data-page="home"] .globexa-product-card button[data-add] {
+  margin-bottom: 14px;
+  background: #f58220;
+  color: #ffffff;
+  border: 1px solid #f58220;
+}
+
+body[data-page="home"] .globexa-product-card button[data-add]:hover {
+  background: #df6c10;
+}
+
+/* Tablette */
+@media (max-width: 1050px) {
+  body[data-page="home"] .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Téléphone */
+@media (max-width: 600px) {
+  body[data-page="home"] .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  body[data-page="home"] .globexa-product-card img {
+    height: 135px;
+  }
+
+  body[data-page="home"] .globexa-product-card h3 {
+    min-height: 54px;
+    font-size: 13px;
+  }
+
+  body[data-page="home"] .globexa-product-card .price {
+    font-size: 17px;
+  }
+}
