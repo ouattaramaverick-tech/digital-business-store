@@ -278,7 +278,51 @@
       </section>
     `;
   }
-function renderSupplierForm() {
+  function renderAdminCommissionMethodForm() {
+    return `
+      <section>
+        <h2>Ajouter un moyen de réception des commissions</h2>
+
+        <form id="globexaAdminCommissionMethodForm">
+
+          <label>Type de moyen</label>
+          <select name="method_code" required
+            style="width:100%;padding:10px;margin:7px 0 12px">
+            <option value="">Choisir</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="wave">Wave</option>
+            <option value="visa">Visa</option>
+          </select>
+
+          <label>Nom du titulaire</label>
+          <input name="account_holder" required minlength="2"
+            maxlength="120"
+            style="width:100%;padding:10px;margin:7px 0 12px">
+
+          <label>Numéro ou référence du compte</label>
+          <input name="account_reference" required minlength="3"
+            maxlength="200"
+            style="width:100%;padding:10px;margin:7px 0 12px">
+
+          <label>Pays</label>
+          <input name="country" value="BF" required
+            style="width:100%;padding:10px;margin:7px 0 12px">
+
+          <label>Devise</label>
+          <input name="currency" value="XOF" required
+            maxlength="3" pattern="[A-Za-z]{3}"
+            style="width:100%;padding:10px;margin:7px 0 12px">
+
+          <button type="submit" style="${financeButton()}">
+            Enregistrer
+          </button>
+        </form>
+
+        <div id="financeAdminCommissionFormMessage"></div>
+      </section>
+    `;
+  }
+   function renderSupplierForm() {
     return `
       <form id="globexaSupplierPayoutForm">
 
