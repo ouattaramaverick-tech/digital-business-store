@@ -870,6 +870,61 @@ async function loadSuppliers(search = "") {
     });
 }
 
+/* FAVORIS GLOBEXA */
+
+async function loadFavorites() {
+  const container = $("favoriteProductList");
+  const info = $("favoritesMessage");
+
+  if (!state.user) {
+    state.favorites = [];
+    if (container) container.innerHTML = "";
+    if (info) info.textContent = "Connectez-vous pour retrouver vos favoris.";
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("globexa_favorites")
+    .select(`
+      product_id,
+      globexa_market_products (
+        id,
+        title,
+        description,
+        currency,
+        base_price,
+        moq,
+        stock_quantity,
+        images,
+        created_at
+      )
+    `)
+    .eq("user_id", state.user.id);
+
+  if (error) {
+    console.error("Chargement des favoris :", error);
+    if (info) info.textContent = "Impossible de charger vos favoris.";
+    return;
+  }
+
+  state.favorites = (data || [])
+    .map(item => item.globexa_market_products)
+    .filter(Boolean);
+
+  if (container) {
+    container.innerHTML = state.favorites.length
+      ? state.favorites.map(createProductCard).join("")
+      : "<p>Vous n'avez pas encore de favoris.</p>";
+
+    attachProductEvents(container);
+  }
+
+  if (info) {
+    info.textContent = state.favorites.length
+      ? "Vos produits favoris."
+      : "Vous n'avez pas encore enregistré de produits.";
+  }
+     }
 /* 13. PANIER */
 
 async function loadCart() {
