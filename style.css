@@ -568,7 +568,17 @@ main {
   font-size: 12px;
   font-weight: 700;
 }
+.globexa-product-card button[data-favorite] {
+  background: #fff0e8;
+  color: #e66a20;
+  border: 1px solid #e66a20;
+  cursor: pointer;
+}
 
+.globexa-product-card button[data-favorite][aria-pressed="true"] {
+  background: #e66a20;
+  color: white;
+}
 /* FOURNISSEURS */
 
 .supplier-grid {
