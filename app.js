@@ -442,8 +442,9 @@ function handleAuthStateChange(event, session) {
     showAccount();
     await loadOrders();
     await loadCart();
-
-    // Actualiser les espaces après connexion ou déconnexion.
+await loadFavorites();
+    
+     // Actualiser les espaces après connexion ou déconnexion.
     // INITIAL_SESSION est déjà traité au démarrage de l'application.
     if (event !== "INITIAL_SESSION") {
       await Promise.allSettled([
