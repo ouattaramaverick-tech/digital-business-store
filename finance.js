@@ -478,37 +478,48 @@
 
                 <section>
                   <h2>Demander un retrait administrateur</h2>
-                  <p>
-                    Le retrait est réservé à l'administrateur
-                    et passe par Yiriwa Pay.
+                                    <p>
+                    Le retrait est réservé à l'administrateur.
+                    Choisis un moyen actif parmi tes moyens de réception enregistrés.
                   </p>
 
                   ${
-                    summary.length
+                    summary.some(function (item) {
+                      return Number(item.available_balance) > 0;
+                    }) && adminCommissionMethods.some(function (method) {
+                      return method.is_active;
+                    })
                       ? `
                         <form id="globexaAdminPayoutForm">
-                          <label>Devise du retrait</label>
-                          <select name="currency" required
+                          <label>Moyen de réception actif</label>
+                          <select name="method_id" required
                             style="width:100%;padding:10px;margin:8px 0">
-                            ${summary.filter(function (item) {
-                              return Number(item.available_balance) > 0;
-                            }).map(function (item) {
+                            <option value="">Choisir un moyen</option>
+                            ${adminCommissionMethods.filter(function (method) {
+                              return method.is_active;
+                            }).map(function (method) {
+                              const labels = {
+                                mobile_money: "Mobile Money",
+                                wave: "Wave",
+                                visa: "Visa"
+                              };
                               return `
-                                <option value="${financeEscape(item.currency)}">
-                                  ${financeEscape(item.currency)}
-                                  — disponible :
-                                  ${financeMoney(item.available_balance, item.currency)}
+                                <option value="${financeEscape(method.id)}"
+                                  data-currency="${financeEscape(method.currency)}">
+                                  ${labels[method.method_code] || financeEscape(method.method_code)}
+                                  — ${financeEscape(method.account_reference)}
+                                  — ${financeEscape(method.currency)}
                                 </option>
                               `;
                             }).join("")}
                           </select>
-
+                          <p>La devise du retrait sera celle du moyen sélectionné.</p>
                           <button type="submit" style="${financeButton()}">
-                            Demander le retrait Yiriwa Pay
+                            Demander le retrait
                           </button>
                         </form>
                       `
-                      : "<p>Aucun solde disponible pour le moment.</p>"
+                      : "<p>Ajoute et active un moyen de réception et attends qu’un solde soit disponible.</p>"
                   }
 
                   <div id="financeAdminMessage"></div>
